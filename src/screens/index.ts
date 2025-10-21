@@ -4,3 +4,4 @@ export { Profile } from './Profile/Profile';
 export { Home } from './Home/Home';
 export { Settings } from './Settings/Settings';
 export { Search } from './Search/Search';
+export { PaintingDetail } from './PaintingDetail/PaintingDetail';

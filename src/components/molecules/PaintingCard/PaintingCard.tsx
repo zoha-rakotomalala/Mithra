@@ -7,7 +7,9 @@ import {
   Dimensions,
   Animated,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import type { Painting } from '@/types/painting';
+import { Paths } from '@/navigation/paths';
 
 const { width } = Dimensions.get('window');
 // Much bigger cards - nearly full width divided by 3
@@ -21,6 +23,7 @@ type PaintingCardProps = {
 };
 
 export function PaintingCard({ painting, isFlipped, onPress }: PaintingCardProps) {
+  const navigation = useNavigation();
   const flipAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -56,6 +59,7 @@ export function PaintingCard({ painting, isFlipped, onPress }: PaintingCardProps
     <TouchableOpacity
       style={styles.container}
       onPress={onPress}
+      onLongPress={() => navigation.navigate(Paths.PaintingDetail, { painting })}
       activeOpacity={0.7}
     >
       <View style={styles.cardContainer}>

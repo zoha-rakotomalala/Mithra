@@ -1,5 +1,6 @@
 import type { StackScreenProps } from '@react-navigation/stack';
 import { Paths } from '@/navigation/paths';
+import type { Painting } from '@/types/painting';
 
 export type RootScreenProps<
   S extends keyof RootStackParamList = keyof RootStackParamList,
@@ -12,5 +13,6 @@ export type RootStackParamList = {
   [Paths.Profile]: undefined;
   [Paths.Settings]: undefined;
   [Paths.Search]: undefined;
+  [Paths.PaintingDetail]: { painting: Painting };
   Main: undefined;
 };

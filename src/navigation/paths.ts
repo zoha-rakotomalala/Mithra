@@ -5,4 +5,5 @@ export const enum Paths {
   Profile = 'profile',
   Settings = 'settings',
   Search = 'search',
+  PaintingDetail = 'paintingDetail',
 }
