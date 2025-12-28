@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -7,15 +7,15 @@ import {
   Dimensions,
   Animated,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { Painting } from '@/types/painting';
 import { Paths } from '@/navigation/paths';
 
 const { width } = Dimensions.get('window');
-// Much bigger cards - nearly full width divided by 3
 const CARD_WIDTH = (width - 48) / 3;
-const CARD_HEIGHT = CARD_WIDTH * 1.3; // Rectangular, not square!
+const CARD_HEIGHT = CARD_WIDTH * 1.3;
 
 type PaintingCardProps = {
   painting: Painting;
@@ -26,6 +26,8 @@ type PaintingCardProps = {
 export function PaintingCard({ painting, isFlipped, onPress }: PaintingCardProps) {
   const navigation = useNavigation();
   const flipAnimation = useRef(new Animated.Value(0)).current;
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     Animated.spring(flipAnimation, {
@@ -76,12 +78,23 @@ export function PaintingCard({ painting, isFlipped, onPress }: PaintingCardProps
           ]}
         >
           <View style={styles.paintingFront}>
-            {painting.imageUrl ? (
+            {painting.imageUrl && !imageError ? (
               <>
+                {imageLoading && (
+                  <View style={styles.imageLoadingContainer}>
+                    <ActivityIndicator size="small" color="#2d6a4f" />
+                  </View>
+                )}
                 <Image
                   source={{ uri: painting.imageUrl }}
                   style={styles.paintingImage}
                   resizeMode="cover"
+                  onLoadStart={() => setImageLoading(true)}
+                  onLoadEnd={() => setImageLoading(false)}
+                  onError={() => {
+                    setImageLoading(false);
+                    setImageError(true);
+                  }}
                 />
                 <View style={styles.imageOverlay} />
               </>
@@ -158,6 +171,14 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 12,
     overflow: 'hidden',
+    position: 'relative',
+  },
+  imageLoadingContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    zIndex: 10,
   },
   paintingImage: {
     width: '100%',

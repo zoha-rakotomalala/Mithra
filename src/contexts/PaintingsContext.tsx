@@ -1,168 +1,96 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { storage } from '@/App';
-import { mockPaintings as initialPaintings } from '@/data/mockPaintings';
-import { LoadingScreen } from '@/components/templates/LoadingScreen/LoadingScreen';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { Painting } from '@/types/painting';
+import { mockPaintings } from '@/data/mockPaintings';
 
 type PaintingsContextType = {
   paintings: Painting[];
-  palettePaintingIds: number[]; // Max 8 IDs (excluding profile at position 3)
+  palettePaintingIds: number[];
   toggleSeen: (paintingId: number) => void;
-  addToPalette: (paintingId: number) => boolean; // Returns true if successful
+  addToPalette: (paintingId: number) => boolean;
   removeFromPalette: (paintingId: number) => void;
   isPaintingInPalette: (paintingId: number) => boolean;
-  addPaintingToCollection: (painting: Painting) => boolean; // NEW: Add from search
-  isPaintingInCollection: (painting: Painting) => boolean; // NEW: Check if exists
+  addPaintingToCollection: (painting: Painting) => void;
+  getPalettePaintings: () => Painting[];
 };
 
 const PaintingsContext = createContext<PaintingsContextType | undefined>(undefined);
 
-const STORAGE_KEYS = {
-  PAINTINGS: 'palette_paintings',
-  PALETTE_IDS: 'palette_palette_ids',
-  VERSION: 'palette_data_version',
-};
+export function PaintingsProvider({ children }: { children: React.ReactNode }) {
+  // Start with mock paintings
+  const [paintings, setPaintings] = useState<Painting[]>(mockPaintings);
 
-const DATA_VERSION = '1.0'; // Increment when data structure changes
-
-export function PaintingsProvider({ children }: { children: ReactNode }) {
-  const [paintings, setPaintings] = useState<Painting[]>([]);
+  // Palette holds IDs of user's top 8 paintings
   const [palettePaintingIds, setPalettePaintingIds] = useState<number[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load data from storage on mount
+  // Initialize palette with first 5 mock paintings that are "seen"
   useEffect(() => {
-    loadFromStorage();
+    const initialPalette = mockPaintings
+      .filter(p => p.isSeen)
+      .slice(0, 5)
+      .map(p => p.id);
+    setPalettePaintingIds(initialPalette);
   }, []);
 
-  // Save to storage whenever data changes
-  useEffect(() => {
-    if (isLoaded) {
-      saveToStorage();
-    }
-  }, [paintings, palettePaintingIds, isLoaded]);
-
-  const loadFromStorage = () => {
-    try {
-      const storedVersion = storage.getString(STORAGE_KEYS.VERSION);
-
-      // Check if we need to migrate or use fresh data
-      if (storedVersion !== DATA_VERSION) {
-        console.log('Data version mismatch or first load, using initial data');
-        initializeWithDefaults();
-        return;
-      }
-
-      const storedPaintings = storage.getString(STORAGE_KEYS.PAINTINGS);
-      const storedPaletteIds = storage.getString(STORAGE_KEYS.PALETTE_IDS);
-
-      if (storedPaintings && storedPaletteIds) {
-        setPaintings(JSON.parse(storedPaintings));
-        setPalettePaintingIds(JSON.parse(storedPaletteIds));
-        console.log('✅ Loaded data from storage');
-      } else {
-        initializeWithDefaults();
-      }
-    } catch (error) {
-      console.error('Error loading from storage:', error);
-      initializeWithDefaults();
-    } finally {
-      setIsLoaded(true);
-    }
-  };
-
-  const saveToStorage = () => {
-    try {
-      storage.set(STORAGE_KEYS.PAINTINGS, JSON.stringify(paintings));
-      storage.set(STORAGE_KEYS.PALETTE_IDS, JSON.stringify(palettePaintingIds));
-      storage.set(STORAGE_KEYS.VERSION, DATA_VERSION);
-      console.log('💾 Saved to storage');
-    } catch (error) {
-      console.error('Error saving to storage:', error);
-    }
-  };
-
-  const initializeWithDefaults = () => {
-    setPaintings(initialPaintings);
-    // Initial palette: first 8 paintings
-    setPalettePaintingIds(initialPaintings.slice(0, 8).map(p => p.id));
-    console.log('🎨 Initialized with default data');
-  };
-
-  const toggleSeen = (paintingId: number) => {
+  // Toggle painting as seen/unseen
+  const toggleSeen = useCallback((paintingId: number) => {
     setPaintings(prev =>
-      prev.map(p =>
-        p.id === paintingId ? { ...p, isSeen: !p.isSeen } : p
+      prev.map(painting =>
+        painting.id === paintingId
+          ? { ...painting, isSeen: !painting.isSeen }
+          : painting
       )
     );
-  };
+  }, []);
 
-  const addToPalette = (paintingId: number): boolean => {
-    // Max 8 paintings in palette
+  // Add painting to palette (max 8)
+  const addToPalette = useCallback((paintingId: number): boolean => {
+    if (palettePaintingIds.includes(paintingId)) {
+      return true; // Already in palette
+    }
+
     if (palettePaintingIds.length >= 8) {
-      return false;
+      return false; // Palette full
     }
 
-    if (!palettePaintingIds.includes(paintingId)) {
-      setPalettePaintingIds(prev => [...prev, paintingId]);
-      setPaintings(prev =>
-        prev.map(p =>
-          p.id === paintingId ? { ...p, isInPalette: true } : p
-        )
-      );
-      return true;
-    }
-    return false;
-  };
-
-  const removeFromPalette = (paintingId: number) => {
-    setPalettePaintingIds(prev => prev.filter(id => id !== paintingId));
-    setPaintings(prev =>
-      prev.map(p =>
-        p.id === paintingId ? { ...p, isInPalette: false } : p
-      )
-    );
-  };
-
-  const isPaintingInPalette = (paintingId: number): boolean => {
-    return palettePaintingIds.includes(paintingId);
-  };
-
-  const addPaintingToCollection = (painting: Painting): boolean => {
-    // Check if already exists (by title and artist)
-    const exists = paintings.some(
-      p => p.title.toLowerCase() === painting.title.toLowerCase() &&
-           p.artist.toLowerCase() === painting.artist.toLowerCase()
-    );
-
-    if (exists) {
-      return false; // Already in collection
-    }
-
-    // Find the highest ID and add 1
-    const maxId = paintings.reduce((max, p) => Math.max(max, p.id), 0);
-    const newPainting = {
-      ...painting,
-      id: maxId + 1,
-      isSeen: false,
-      isInPalette: false,
-    };
-
-    setPaintings(prev => [...prev, newPainting]);
+    setPalettePaintingIds(prev => [...prev, paintingId]);
     return true;
-  };
+  }, [palettePaintingIds]);
 
-  const isPaintingInCollection = (painting: Painting): boolean => {
-    return paintings.some(
-      p => p.title.toLowerCase() === painting.title.toLowerCase() &&
-           p.artist.toLowerCase() === painting.artist.toLowerCase()
-    );
-  };
+  // Remove painting from palette
+  const removeFromPalette = useCallback((paintingId: number) => {
+    setPalettePaintingIds(prev => prev.filter(id => id !== paintingId));
+  }, []);
 
-  // Don't render children until data is loaded
-  if (!isLoaded) {
-    return <LoadingScreen />;
-  }
+  // Check if painting is in palette
+  const isPaintingInPalette = useCallback((paintingId: number): boolean => {
+    return palettePaintingIds.includes(paintingId);
+  }, [palettePaintingIds]);
+
+  // Add a new painting to collection (from Met API search)
+  const addPaintingToCollection = useCallback((painting: Painting) => {
+    setPaintings(prev => {
+      // Check if painting already exists (by ID or title+artist combo)
+      const exists = prev.some(
+        p => p.id === painting.id ||
+        (p.title.toLowerCase() === painting.title.toLowerCase() &&
+         p.artist.toLowerCase() === painting.artist.toLowerCase())
+      );
+
+      if (exists) {
+        return prev; // Don't add duplicates
+      }
+
+      // Add to collection
+      return [...prev, painting];
+    });
+  }, []);
+
+  // Get palette paintings in order
+  const getPalettePaintings = useCallback((): Painting[] => {
+    return palettePaintingIds
+      .map(id => paintings.find(p => p.id === id))
+      .filter((p): p is Painting => p !== undefined);
+  }, [palettePaintingIds, paintings]);
 
   return (
     <PaintingsContext.Provider
@@ -174,7 +102,7 @@ export function PaintingsProvider({ children }: { children: ReactNode }) {
         removeFromPalette,
         isPaintingInPalette,
         addPaintingToCollection,
-        isPaintingInCollection,
+        getPalettePaintings,
       }}
     >
       {children}
@@ -184,8 +112,8 @@ export function PaintingsProvider({ children }: { children: ReactNode }) {
 
 export function usePaintings() {
   const context = useContext(PaintingsContext);
-  if (context === undefined) {
-    throw new Error('usePaintings must be used within a PaintingsProvider');
+  if (!context) {
+    throw new Error('usePaintings must be used within PaintingsProvider');
   }
   return context;
 }

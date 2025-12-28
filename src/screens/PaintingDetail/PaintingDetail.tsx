@@ -1,23 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  StatusBar,
-  Dimensions,
-  Alert,
   Image,
+  Alert,
+  ActivityIndicator,
+  StatusBar,
 } from 'react-native';
-import type { RootScreenProps } from '@/navigation/types';
-import { Paths } from '@/navigation/paths';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import { usePaintings } from '@/contexts/PaintingsContext';
+import type { Painting } from '@/types/painting';
 
-const { width, height } = Dimensions.get('window');
+export function PaintingDetail() {
+  const route = useRoute();
+  const navigation = useNavigation();
+  const { painting: routePainting } = route.params as { painting: Painting };
 
-export function PaintingDetail({ route, navigation }: RootScreenProps<Paths.PaintingDetail>) {
-  const { painting: routePainting } = route.params;
   const {
     paintings,
     toggleSeen,
@@ -25,198 +26,202 @@ export function PaintingDetail({ route, navigation }: RootScreenProps<Paths.Pain
     removeFromPalette,
     isPaintingInPalette,
     addPaintingToCollection,
-    isPaintingInCollection,
   } = usePaintings();
 
-  // Check if painting is in collection
-  const inCollection = isPaintingInCollection(routePainting);
-
-  // Get the current painting from context if it exists (for real-time updates)
-  const painting = inCollection
-    ? paintings.find(p =>
-        p.title.toLowerCase() === routePainting.title.toLowerCase() &&
-        p.artist.toLowerCase() === routePainting.artist.toLowerCase()
-      ) || routePainting
-    : routePainting;
-
-  const isInPalette = inCollection ? isPaintingInPalette(painting.id) : false;
-
-  const handleAddToCollection = () => {
-    const success = addPaintingToCollection(routePainting);
-    if (success) {
-      Alert.alert(
-        'Added to Collection!',
-        `${routePainting.title} has been added to your collection.`,
-        [
-          { text: 'View Collection', onPress: () => navigation.goBack() },
-          { text: 'OK' },
-        ]
-      );
-    } else {
-      Alert.alert('Already in Collection', 'This painting is already in your collection.');
+  // Add painting to collection if it's from Met API (not already in collection)
+  useEffect(() => {
+    const exists = paintings.find(p => p.id === routePainting.id);
+    if (!exists) {
+      addPaintingToCollection(routePainting);
     }
-  };
+  }, [routePainting.id]);
+
+  // Get current state from context (this ensures we have latest data)
+  const currentPainting = paintings.find(p => p.id === routePainting.id) || routePainting;
+  const isInPalette = isPaintingInPalette(currentPainting.id);
+
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
 
   const handleToggleSeen = () => {
-    if (!inCollection) {
-      Alert.alert('Not in Collection', 'Add this painting to your collection first.');
-      return;
-    }
-    toggleSeen(painting.id);
+    toggleSeen(currentPainting.id);
   };
 
   const handleTogglePalette = () => {
-    if (!inCollection) {
-      Alert.alert('Not in Collection', 'Add this painting to your collection first.');
-      return;
-    }
-
     if (isInPalette) {
-      removeFromPalette(painting.id);
-      Alert.alert('Removed', `${painting.title} removed from your Palette`);
+      removeFromPalette(currentPainting.id);
+      Alert.alert('Removed from Palette', `${currentPainting.title} removed from your palette.`);
     } else {
-      const success = addToPalette(painting.id);
+      const success = addToPalette(currentPainting.id);
       if (success) {
-        Alert.alert('Added', `${painting.title} added to your Palette!`);
+        Alert.alert('Added to Palette!', `${currentPainting.title} added to your palette.`);
       } else {
-        Alert.alert('Palette Full', 'Your Palette can only hold 8 paintings. Remove one to add this.');
+        Alert.alert(
+          'Palette Full',
+          'Your palette can only hold 8 paintings. Remove one to add this painting.',
+          [{ text: 'OK' }]
+        );
       }
     }
   };
 
   const handleShare = () => {
-    Alert.alert('Share', 'Share functionality coming soon!');
+    Alert.alert('Coming Soon', 'Share functionality will be available soon!');
   };
+
+  // Extract the best quality image URL
+  const getImageUrl = (painting: Painting): string | undefined => {
+    // Met API paintings use imageUrl (already set by service)
+    if (painting.imageUrl) {
+      return painting.imageUrl;
+    }
+    return undefined;
+  };
+
+  const imageUrl = getImageUrl(currentPainting);
 
   return (
     <>
-      <StatusBar barStyle="light-content" backgroundColor={painting.color} />
-      <ScrollView style={styles.container} bounces={false}>
-        {/* Header with back button */}
+      <StatusBar barStyle="light-content" backgroundColor="#1a4d3e" />
+      <View style={styles.container}>
+        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
-            style={styles.backButton}
             onPress={() => navigation.goBack()}
+            style={styles.backButton}
           >
-            <Text style={styles.backButtonText}>←</Text>
+            <Text style={styles.backButtonText}>← Details</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Details</Text>
-          <View style={styles.placeholder} />
         </View>
 
-        {/* Full painting display */}
-        <View style={[styles.paintingContainer, { backgroundColor: painting.color }]}>
-          <View style={styles.artFrame}>
-            <Text style={styles.largeIcon}>🎨</Text>
-          </View>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Image Section */}
+          <View style={styles.imageSection}>
+            {imageUrl ? (
+              <>
+                {imageLoading && (
+                  <View style={styles.imageLoadingContainer}>
+                    <ActivityIndicator size="large" color="#2d6a4f" />
+                    <Text style={styles.imageLoadingText}>Loading image...</Text>
+                  </View>
+                )}
+                <Image
+                  source={{ uri: imageUrl }}
+                  style={styles.paintingImage}
+                  resizeMode="contain"
+                  onLoadStart={() => setImageLoading(true)}
+                  onLoadEnd={() => setImageLoading(false)}
+                  onError={() => {
+                    setImageLoading(false);
+                    setImageError(true);
+                  }}
+                />
+                {imageError && (
+                  <View style={styles.imageErrorContainer}>
+                    <Text style={styles.imageErrorText}>Unable to load image</Text>
+                  </View>
+                )}
+              </>
+            ) : (
+              <View style={[styles.placeholderImage, { backgroundColor: currentPainting.color }]}>
+                <Text style={styles.placeholderIcon}>🎨</Text>
+                <Text style={styles.placeholderText}>No image available</Text>
+              </View>
+            )}
 
-          {/* Seen badge */}
-          {painting.isSeen && (
-            <View style={styles.seenBadge}>
-              <Text style={styles.seenBadgeText}>✓ Seen</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Painting info */}
-        <View style={styles.infoContainer}>
-          {/* Title and artist */}
-          <View style={styles.titleSection}>
-            <Text style={styles.title}>{painting.title}</Text>
-            <Text style={styles.artist}>by {painting.artist}</Text>
-            {painting.year && (
-              <Text style={styles.year}>{painting.year}</Text>
+            {/* Seen Badge */}
+            {currentPainting.isSeen && (
+              <View style={styles.seenBadge}>
+                <Text style={styles.seenBadgeText}>✓ Seen</Text>
+              </View>
             )}
           </View>
 
-          {/* Details */}
-          {painting.description && (
-            <View style={styles.section}>
-              <Text style={styles.description}>{painting.description}</Text>
-            </View>
-          )}
-
-          {/* Technical details */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Details</Text>
-            <View style={styles.detailsGrid}>
-              {painting.medium && (
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Medium</Text>
-                  <Text style={styles.detailValue}>{painting.medium}</Text>
-                </View>
-              )}
-              {painting.dimensions && (
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Dimensions</Text>
-                  <Text style={styles.detailValue}>{painting.dimensions}</Text>
-                </View>
-              )}
-            </View>
+          {/* Title Section */}
+          <View style={styles.titleSection}>
+            <Text style={styles.paintingTitle}>{currentPainting.title}</Text>
+            <Text style={styles.paintingArtist}>by {currentPainting.artist}</Text>
+            {currentPainting.year && (
+              <Text style={styles.paintingYear}>{currentPainting.year}</Text>
+            )}
           </View>
 
-          {/* Location */}
-          {painting.museum && (
+          {/* Description */}
+          {currentPainting.description && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Location</Text>
-              <View style={styles.locationCard}>
-                <Text style={styles.museumName}>{painting.museum}</Text>
-                {painting.location && (
-                  <Text style={styles.locationText}>📍 {painting.location}</Text>
-                )}
-              </View>
+              <Text style={styles.descriptionText}>{currentPainting.description}</Text>
             </View>
           )}
 
-          {/* Action buttons */}
-          <View style={styles.actionsSection}>
-            {!inCollection ? (
-              // Not in collection - show Add button
+          {/* Details Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>DETAILS</Text>
+            {currentPainting.medium && (
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Medium</Text>
+                <Text style={styles.detailValue}>{currentPainting.medium}</Text>
+              </View>
+            )}
+            {currentPainting.dimensions && (
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Dimensions</Text>
+                <Text style={styles.detailValue}>{currentPainting.dimensions}</Text>
+              </View>
+            )}
+          </View>
+
+          {/* Location Section */}
+          {currentPainting.museum && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>LOCATION</Text>
+              <Text style={styles.museumName}>{currentPainting.museum}</Text>
+              {currentPainting.location && (
+                <Text style={styles.museumLocation}>📍 {currentPainting.location}</Text>
+              )}
+            </View>
+          )}
+
+          {/* Action Buttons */}
+          <View style={styles.actionSection}>
+            <TouchableOpacity
+              style={[
+                styles.actionButton,
+                styles.primaryButton,
+                currentPainting.isSeen && styles.actionButtonActive,
+              ]}
+              onPress={handleToggleSeen}
+            >
+              <Text style={styles.actionButtonText}>
+                {currentPainting.isSeen ? '✓ Marked as Seen' : 'Mark as Seen'}
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.secondaryButtonsRow}>
               <TouchableOpacity
-                style={[styles.actionButton, styles.addToCollectionButton]}
-                onPress={handleAddToCollection}
+                style={[
+                  styles.actionButton,
+                  styles.secondaryButton,
+                  isInPalette && styles.actionButtonActive,
+                ]}
+                onPress={handleTogglePalette}
               >
-                <Text style={styles.primaryButtonText}>
-                  ➕ Add to Collection
+                <Text style={styles.secondaryButtonText}>
+                  {isInPalette ? '★ In Palette' : '☆ Add to Palette'}
                 </Text>
               </TouchableOpacity>
-            ) : (
-              // In collection - show normal buttons
-              <>
-                <TouchableOpacity
-                  style={[
-                    styles.actionButton,
-                    styles.primaryButton,
-                    painting.isSeen && styles.primaryButtonActive,
-                  ]}
-                  onPress={handleToggleSeen}
-                >
-                  <Text style={styles.primaryButtonText}>
-                    {painting.isSeen ? '✓ Marked as Seen' : 'Mark as Seen'}
-                  </Text>
-                </TouchableOpacity>
 
-                <View style={styles.buttonRow}>
-                  <TouchableOpacity
-                    style={styles.secondaryButton}
-                    onPress={handleTogglePalette}
-                  >
-                    <Text style={styles.secondaryButtonText}>
-                      {isInPalette ? '★ In Palette' : '☆ Add to Palette'}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.secondaryButton}
-                    onPress={handleShare}
-                  >
-                    <Text style={styles.secondaryButtonText}>↗ Share</Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
+              <TouchableOpacity
+                style={[styles.actionButton, styles.secondaryButton]}
+                onPress={handleShare}
+              >
+                <Text style={styles.secondaryButtonText}>↗ Share</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </ScrollView>
+
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      </View>
     </>
   );
 }
@@ -224,210 +229,190 @@ export function PaintingDetail({ route, navigation }: RootScreenProps<Paths.Pain
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FAFAFA',
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
     paddingTop: 50,
-    paddingBottom: 16,
-    backgroundColor: '#fff',
+    paddingBottom: 12,
+    paddingHorizontal: 20,
+    backgroundColor: '#1a4d3e',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 8,
   },
   backButtonText: {
-    fontSize: 28,
-    color: '#1a4d3e',
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1a4d3e',
-    letterSpacing: 1,
-  },
-  placeholder: {
-    width: 40,
-  },
-  paintingContainer: {
-    width: width,
-    height: width * 1.1,
-    backgroundColor: '#000',
+  imageSection: {
+    width: '100%',
+    aspectRatio: 1,
+    backgroundColor: '#fff',
     position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   paintingImage: {
     width: '100%',
     height: '100%',
+    backgroundColor: '#f5f5f5',
   },
-  paintingPlaceholder: {
+  imageLoadingContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    zIndex: 10,
+  },
+  imageLoadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
+  },
+  imageErrorContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  imageErrorText: {
+    fontSize: 14,
+    color: '#999',
+  },
+  placeholderImage: {
     width: '100%',
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  artFrame: {
-    width: '80%',
-    height: '70%',
-    borderWidth: 3,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+  placeholderIcon: {
+    fontSize: 80,
+    marginBottom: 12,
+    opacity: 0.5,
   },
-  artFrame: {
-    width: '80%',
-    height: '80%',
-    borderWidth: 3,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  largeIcon: {
-    fontSize: 120,
-    opacity: 0.9,
+  placeholderText: {
+    fontSize: 14,
+    color: 'rgba(0, 0, 0, 0.4)',
+    fontWeight: '500',
   },
   seenBadge: {
     position: 'absolute',
     top: 20,
     right: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    backgroundColor: '#2d6a4f',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   seenBadgeText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '600',
   },
-  infoContainer: {
-    padding: 24,
-  },
   titleSection: {
-    marginBottom: 24,
+    padding: 24,
+    backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#E8E8E8',
-    paddingBottom: 20,
   },
-  title: {
+  paintingTitle: {
     fontSize: 28,
     fontWeight: '600',
     color: '#1a1a1a',
     marginBottom: 8,
-    lineHeight: 34,
+    lineHeight: 36,
   },
-  artist: {
+  paintingArtist: {
     fontSize: 18,
-    color: '#2d6a4f',
-    fontStyle: 'italic',
-    marginBottom: 6,
-  },
-  year: {
-    fontSize: 16,
     color: '#666',
+    fontStyle: 'italic',
+    marginBottom: 4,
+  },
+  paintingYear: {
+    fontSize: 16,
+    color: '#999',
   },
   section: {
-    marginBottom: 24,
+    padding: 24,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
     color: '#1a4d3e',
-    marginBottom: 12,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 1.5,
+    marginBottom: 16,
   },
-  description: {
+  descriptionText: {
     fontSize: 15,
-    lineHeight: 24,
     color: '#333',
-  },
-  detailsGrid: {
-    gap: 12,
+    lineHeight: 24,
   },
   detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    marginBottom: 12,
   },
   detailLabel: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#666',
-    fontWeight: '500',
+    marginBottom: 4,
+    fontWeight: '600',
   },
   detailValue: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#1a1a1a',
-    flex: 1,
-    textAlign: 'right',
-    marginLeft: 16,
-  },
-  locationCard: {
-    backgroundColor: '#f8f8f8',
-    padding: 16,
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#2d6a4f',
   },
   museumName: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
     color: '#1a1a1a',
-    marginBottom: 6,
+    marginBottom: 8,
   },
-  locationText: {
-    fontSize: 14,
+  museumLocation: {
+    fontSize: 15,
     color: '#666',
   },
-  actionsSection: {
-    marginTop: 8,
-    gap: 12,
+  actionSection: {
+    padding: 24,
   },
   actionButton: {
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
+    marginBottom: 12,
   },
   primaryButton: {
-    backgroundColor: '#2d6a4f',
-  },
-  primaryButtonActive: {
     backgroundColor: '#1a4d3e',
   },
-  addToCollectionButton: {
+  secondaryButton: {
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: '#1a4d3e',
+    flex: 1,
+  },
+  actionButtonActive: {
     backgroundColor: '#2d6a4f',
   },
-  primaryButtonText: {
+  actionButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
-  buttonRow: {
+  secondaryButtonsRow: {
     flexDirection: 'row',
     gap: 12,
   },
-  secondaryButton: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
   secondaryButtonText: {
     color: '#1a4d3e',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
 });

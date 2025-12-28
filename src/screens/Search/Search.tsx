@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TextInput,
-  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   Image,
   StatusBar,
   Dimensions,
   Alert,
+  FlatList,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { searchMetMuseum, searchMetByArtist, getPopularMetArtists } from '@/services/metMuseumService';
@@ -20,6 +20,57 @@ import type { Painting } from '@/types/painting';
 
 const { width } = Dimensions.get('window');
 const CARD_SIZE = (width - 48) / 3;
+
+// Memoized grid item component for performance
+const GridItem = React.memo(({
+  painting,
+  onPress,
+  inCollection
+}: {
+  painting: Painting;
+  onPress: () => void;
+  inCollection: boolean;
+}) => (
+  <TouchableOpacity
+    style={styles.resultCard}
+    onPress={onPress}
+    activeOpacity={0.7}
+  >
+    <View style={styles.imageContainer}>
+      {painting.imageUrl ? (
+        <Image
+          source={{ uri: painting.imageUrl }}
+          style={styles.resultImage}
+          resizeMode="cover"
+        />
+      ) : (
+        <View style={[styles.placeholderImage, { backgroundColor: painting.color }]}>
+          <Text style={styles.placeholderIcon}>🎨</Text>
+        </View>
+      )}
+
+      {inCollection && (
+        <View style={styles.inCollectionBadge}>
+          <Text style={styles.inCollectionText}>✓</Text>
+        </View>
+      )}
+
+      <View style={styles.museumBadge}>
+        <Text style={styles.museumBadgeText}>MET</Text>
+      </View>
+    </View>
+
+    <Text style={styles.resultTitle} numberOfLines={2}>
+      {painting.title}
+    </Text>
+    <Text style={styles.resultArtist} numberOfLines={1}>
+      {painting.artist}
+    </Text>
+    {painting.year && (
+      <Text style={styles.resultYear}>{painting.year}</Text>
+    )}
+  </TouchableOpacity>
+));
 
 export function Search() {
   const navigation = useNavigation();
@@ -78,16 +129,38 @@ export function Search() {
     }
   };
 
-  const handlePaintingPress = (painting: Painting) => {
+  const handlePaintingPress = useCallback((painting: Painting) => {
     navigation.navigate(Paths.PaintingDetail, { painting });
-  };
+  }, [navigation]);
 
-  const isAlreadyInCollection = (painting: Painting): boolean => {
+  const isAlreadyInCollection = useCallback((painting: Painting): boolean => {
     return existingPaintings.some(
       p => p.title.toLowerCase() === painting.title.toLowerCase() &&
            p.artist.toLowerCase() === painting.artist.toLowerCase()
     );
-  };
+  }, [existingPaintings]);
+
+  // Render item for FlatList (3 columns)
+  const renderItem = useCallback(({ item, index }: { item: Painting; index: number }) => {
+    const inCollection = isAlreadyInCollection(item);
+    return (
+      <GridItem
+        painting={item}
+        onPress={() => handlePaintingPress(item)}
+        inCollection={inCollection}
+      />
+    );
+  }, [handlePaintingPress, isAlreadyInCollection]);
+
+  // Key extractor
+  const keyExtractor = useCallback((item: Painting) => `painting-${item.id}`, []);
+
+  // Calculate item layout (fixed size optimization)
+  const getItemLayout = useCallback((data: any, index: number) => ({
+    length: CARD_SIZE + 20, // height + marginBottom
+    offset: (CARD_SIZE + 20) * Math.floor(index / 3),
+    index,
+  }), []);
 
   return (
     <>
@@ -100,173 +173,139 @@ export function Search() {
           <Text style={styles.headerSubtitle}>The Metropolitan Museum</Text>
         </View>
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Search Bar */}
-          <View style={styles.searchSection}>
-            <View style={styles.searchBar}>
-              <Text style={styles.searchIcon}>🔍</Text>
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Artist or painting name..."
-                placeholderTextColor="#999"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                onSubmitEditing={handleSearch}
-                returnKeyType="search"
-                autoCapitalize="words"
-                autoCorrect={false}
-              />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity
-                  onPress={() => {
-                    setSearchQuery('');
-                    setSearchResults([]);
-                    setHasSearched(false);
-                  }}
-                  style={styles.clearButton}
-                >
-                  <Text style={styles.clearButtonText}>✕</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            <TouchableOpacity
-              style={[styles.searchButton, !searchQuery.trim() && styles.searchButtonDisabled]}
-              onPress={handleSearch}
-              disabled={!searchQuery.trim() || isLoading}
-            >
-              <Text style={styles.searchButtonText}>
-                {isLoading ? 'Searching Met Museum...' : 'Search'}
-              </Text>
-            </TouchableOpacity>
+        {/* Search Bar - Fixed at top */}
+        <View style={styles.searchSection}>
+          <View style={styles.searchBar}>
+            <Text style={styles.searchIcon}>🔍</Text>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Artist or painting name..."
+              placeholderTextColor="#999"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              onSubmitEditing={handleSearch}
+              returnKeyType="search"
+              autoCapitalize="words"
+              autoCorrect={false}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity
+                onPress={() => {
+                  setSearchQuery('');
+                  setSearchResults([]);
+                  setHasSearched(false);
+                }}
+                style={styles.clearButton}
+              >
+                <Text style={styles.clearButtonText}>✕</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
-          {/* Popular Artists */}
-          {!hasSearched && (
-            <View style={styles.popularSection}>
-              <Text style={styles.sectionTitle}>🏛️ FEATURED ARTISTS</Text>
-              <Text style={styles.sectionSubtitle}>
-                Explore works from The Met's collection
-              </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.artistChips}
-              >
-                {getPopularMetArtists().map((artist) => (
-                  <TouchableOpacity
-                    key={artist}
-                    style={styles.artistChip}
-                    onPress={() => handleArtistSearch(artist)}
-                  >
-                    <Text style={styles.artistChipText}>{artist}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
+          <TouchableOpacity
+            style={[styles.searchButton, !searchQuery.trim() && styles.searchButtonDisabled]}
+            onPress={handleSearch}
+            disabled={!searchQuery.trim() || isLoading}
+          >
+            <Text style={styles.searchButtonText}>
+              {isLoading ? 'Searching Met Museum...' : 'Search'}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-          {/* Info Banner */}
-          {!hasSearched && (
-            <View style={styles.infoBanner}>
-              <Text style={styles.infoBannerIcon}>🏛️</Text>
-              <View style={styles.infoBannerText}>
-                <Text style={styles.infoBannerTitle}>The Met Collection</Text>
-                <Text style={styles.infoBannerSubtitle}>
-                  Search 470,000+ artworks from one of the world's greatest museums
+        {/* Results with FlatList */}
+        <FlatList
+          data={searchResults}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          numColumns={3}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.flatListContent}
+          // Performance optimizations
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={15}
+          updateCellsBatchingPeriod={50}
+          initialNumToRender={15}
+          windowSize={7}
+          // Separator
+          ItemSeparatorComponent={() => <View style={{ height: 4 }} />}
+          // Header
+          ListHeaderComponent={() => (
+            <>
+              {/* Popular Artists - only when not searched */}
+              {!hasSearched && (
+                <View style={styles.popularSection}>
+                  <Text style={styles.sectionTitle}>🏛️ FEATURED ARTISTS</Text>
+                  <Text style={styles.sectionSubtitle}>
+                    Explore works from The Met's collection
+                  </Text>
+                  <FlatList
+                    horizontal
+                    data={getPopularMetArtists()}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={styles.artistChip}
+                        onPress={() => handleArtistSearch(item)}
+                      >
+                        <Text style={styles.artistChipText}>{item}</Text>
+                      </TouchableOpacity>
+                    )}
+                    keyExtractor={(item) => item}
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.artistChips}
+                  />
+                </View>
+              )}
+
+              {/* Info Banner */}
+              {!hasSearched && (
+                <View style={styles.infoBanner}>
+                  <Text style={styles.infoBannerIcon}>🏛️</Text>
+                  <View style={styles.infoBannerText}>
+                    <Text style={styles.infoBannerTitle}>The Met Collection</Text>
+                    <Text style={styles.infoBannerSubtitle}>
+                      Search 470,000+ artworks from one of the world's greatest museums
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              {/* Loading State */}
+              {isLoading && (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#2d6a4f" />
+                  <Text style={styles.loadingText}>Searching The Met's collection...</Text>
+                  <Text style={styles.loadingSubtext}>Finding paintings with images...</Text>
+                </View>
+              )}
+
+              {/* Results Title */}
+              {!isLoading && hasSearched && searchResults.length > 0 && (
+                <Text style={styles.resultsTitle}>
+                  {searchResults.length} {searchResults.length === 1 ? 'Painting' : 'Paintings'} Found
                 </Text>
-              </View>
-            </View>
+              )}
+            </>
           )}
-
-          {/* Loading State */}
-          {isLoading && (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#2d6a4f" />
-              <Text style={styles.loadingText}>Searching The Met's collection...</Text>
-              <Text style={styles.loadingSubtext}>Finding paintings with images...</Text>
-            </View>
-          )}
-
-          {/* Search Results */}
-          {!isLoading && hasSearched && (
-            <View style={styles.resultsSection}>
-              <Text style={styles.resultsTitle}>
-                {searchResults.length} {searchResults.length === 1 ? 'Painting' : 'Paintings'} Found
-              </Text>
-
-              <View style={styles.resultsGrid}>
-                {searchResults.map((painting) => {
-                  const inCollection = isAlreadyInCollection(painting);
-
-                  return (
-                    <TouchableOpacity
-                      key={painting.id}
-                      style={styles.resultCard}
-                      onPress={() => handlePaintingPress(painting)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={styles.imageContainer}>
-                        {painting.imageUrl ? (
-                          <Image
-                            source={{ uri: painting.imageUrl }}
-                            style={styles.resultImage}
-                            resizeMode="cover"
-                          />
-                        ) : (
-                          <View style={[styles.placeholderImage, { backgroundColor: painting.color }]}>
-                            <Text style={styles.placeholderIcon}>🎨</Text>
-                          </View>
-                        )}
-
-                        {inCollection && (
-                          <View style={styles.inCollectionBadge}>
-                            <Text style={styles.inCollectionText}>✓</Text>
-                          </View>
-                        )}
-
-                        {/* Met Museum badge */}
-                        <View style={styles.museumBadge}>
-                          <Text style={styles.museumBadgeText}>MET</Text>
-                        </View>
-                      </View>
-
-                      <Text style={styles.resultTitle} numberOfLines={2}>
-                        {painting.title}
-                      </Text>
-                      <Text style={styles.resultArtist} numberOfLines={1}>
-                        {painting.artist}
-                      </Text>
-                      {painting.year && (
-                        <Text style={styles.resultYear}>{painting.year}</Text>
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-          )}
-
-          {/* Empty State */}
-          {!isLoading && !hasSearched && (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>🖼️</Text>
-              <Text style={styles.emptyTitle}>Discover Masterpieces</Text>
-              <Text style={styles.emptyText}>
-                Search The Metropolitan Museum's collection of European and American paintings, spanning from the Renaissance to Modern art.
-              </Text>
-              <View style={styles.exampleSearches}>
-                <Text style={styles.exampleTitle}>Popular searches:</Text>
-                <Text style={styles.exampleText}>
-                  "Van Gogh", "Monet", "Rembrandt", "Renaissance", "Impressionism"
+          // Empty state
+          ListEmptyComponent={() => (
+            !isLoading && !hasSearched ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyIcon}>🖼️</Text>
+                <Text style={styles.emptyTitle}>Discover Masterpieces</Text>
+                <Text style={styles.emptyText}>
+                  Search The Metropolitan Museum's collection of European and American paintings, spanning from the Renaissance to Modern art.
                 </Text>
+                <View style={styles.exampleSearches}>
+                  <Text style={styles.exampleTitle}>Popular searches:</Text>
+                  <Text style={styles.exampleText}>
+                    "Van Gogh", "Monet", "Rembrandt", "Renaissance", "Impressionism"
+                  </Text>
+                </View>
               </View>
-            </View>
+            ) : null
           )}
-        </ScrollView>
+        />
       </View>
     </>
   );
@@ -353,9 +392,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  flatListContent: {
+    paddingHorizontal: 16,
+  },
   popularSection: {
-    padding: 20,
-    paddingBottom: 12,
+    paddingVertical: 20,
   },
   sectionTitle: {
     fontSize: 12,
@@ -380,11 +421,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#2d6a4f',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    marginRight: 8,
   },
   artistChipText: {
     fontSize: 14,
@@ -394,7 +431,6 @@ const styles = StyleSheet.create({
   infoBanner: {
     flexDirection: 'row',
     backgroundColor: '#f0f7f4',
-    marginHorizontal: 20,
     padding: 16,
     borderRadius: 12,
     marginBottom: 20,
@@ -434,19 +470,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999',
   },
-  resultsSection: {
-    padding: 20,
-  },
   resultsTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1a4d3e',
     marginBottom: 16,
-  },
-  resultsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -4,
   },
   resultCard: {
     width: CARD_SIZE,
@@ -483,11 +511,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#2d6a4f',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 4,
   },
   inCollectionText: {
     color: '#fff',
