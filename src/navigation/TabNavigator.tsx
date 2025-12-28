@@ -39,8 +39,8 @@ export function TabNavigator() {
         component={Collection}
         options={{
           tabBarLabel: 'Collection',
-          tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: 24, color }}>📚</Text>
+          tabBarIcon: ({ color }) => (
+            <Text style={{ fontSize: 20, color }}>📚</Text>
           ),
         }}
       />
@@ -49,8 +49,8 @@ export function TabNavigator() {
         component={Search}
         options={{
           tabBarLabel: 'Search',
-          tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: 24, color }}>🔍</Text>
+          tabBarIcon: ({ color }) => (
+            <Text style={{ fontSize: 20, color }}>🔍</Text>
           ),
         }}
       />
@@ -59,8 +59,8 @@ export function TabNavigator() {
         component={Profile}
         options={{
           tabBarLabel: 'Palette',
-          tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: 24, color }}>🎨</Text>
+          tabBarIcon: ({ color }) => (
+            <Text style={{ fontSize: 20, color }}>🎨</Text>
           ),
         }}
       />
@@ -69,8 +69,8 @@ export function TabNavigator() {
         component={Settings}
         options={{
           tabBarLabel: 'Settings',
-          tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: 24, color }}>⚙️</Text>
+          tabBarIcon: ({ color }) => (
+            <Text style={{ fontSize: 20, color }}>⚙️</Text>
           ),
         }}
       />
