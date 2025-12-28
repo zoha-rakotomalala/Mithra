@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,15 +7,25 @@ import {
   Dimensions,
   StatusBar,
 } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 import { PaintingCard } from '@/components/molecules/PaintingCard/PaintingCard';
 import { ProfileCard } from '@/components/molecules/ProfileCard/ProfileCard';
-import { mockPaintings, mockUserProfile } from '@/data/mockPaintings';
+import { mockUserProfile, mockPaintings } from '@/data/mockPaintings';
+import { usePaintings } from '@/contexts/PaintingsContext';
 
 const { width } = Dimensions.get('window');
 
 export function Profile() {
+  const isFocused = useIsFocused();
   // Only one card can be flipped at a time
   const [flippedCardId, setFlippedCardId] = useState<number | null>(null);
+
+  // Reset flipped cards when tab loses focus
+  useEffect(() => {
+    if (!isFocused) {
+      setFlippedCardId(null);
+    }
+  }, [isFocused]);
 
   const handleCardPress = (cardId: number) => {
     // If clicking the same card, flip it back

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,14 +7,86 @@ import {
   TouchableOpacity,
   StatusBar,
   Dimensions,
+  Alert,
+  Image,
 } from 'react-native';
 import type { RootScreenProps } from '@/navigation/types';
 import { Paths } from '@/navigation/paths';
+import { usePaintings } from '@/contexts/PaintingsContext';
 
 const { width, height } = Dimensions.get('window');
 
 export function PaintingDetail({ route, navigation }: RootScreenProps<Paths.PaintingDetail>) {
-  const { painting } = route.params;
+  const { painting: routePainting } = route.params;
+  const {
+    paintings,
+    toggleSeen,
+    addToPalette,
+    removeFromPalette,
+    isPaintingInPalette,
+    addPaintingToCollection,
+    isPaintingInCollection,
+  } = usePaintings();
+
+  // Check if painting is in collection
+  const inCollection = isPaintingInCollection(routePainting);
+
+  // Get the current painting from context if it exists (for real-time updates)
+  const painting = inCollection
+    ? paintings.find(p =>
+        p.title.toLowerCase() === routePainting.title.toLowerCase() &&
+        p.artist.toLowerCase() === routePainting.artist.toLowerCase()
+      ) || routePainting
+    : routePainting;
+
+  const isInPalette = inCollection ? isPaintingInPalette(painting.id) : false;
+
+  const handleAddToCollection = () => {
+    const success = addPaintingToCollection(routePainting);
+    if (success) {
+      Alert.alert(
+        'Added to Collection!',
+        `${routePainting.title} has been added to your collection.`,
+        [
+          { text: 'View Collection', onPress: () => navigation.goBack() },
+          { text: 'OK' },
+        ]
+      );
+    } else {
+      Alert.alert('Already in Collection', 'This painting is already in your collection.');
+    }
+  };
+
+  const handleToggleSeen = () => {
+    if (!inCollection) {
+      Alert.alert('Not in Collection', 'Add this painting to your collection first.');
+      return;
+    }
+    toggleSeen(painting.id);
+  };
+
+  const handleTogglePalette = () => {
+    if (!inCollection) {
+      Alert.alert('Not in Collection', 'Add this painting to your collection first.');
+      return;
+    }
+
+    if (isInPalette) {
+      removeFromPalette(painting.id);
+      Alert.alert('Removed', `${painting.title} removed from your Palette`);
+    } else {
+      const success = addToPalette(painting.id);
+      if (success) {
+        Alert.alert('Added', `${painting.title} added to your Palette!`);
+      } else {
+        Alert.alert('Palette Full', 'Your Palette can only hold 8 paintings. Remove one to add this.');
+      }
+    }
+  };
+
+  const handleShare = () => {
+    Alert.alert('Share', 'Share functionality coming soon!');
+  };
 
   return (
     <>
@@ -98,28 +170,50 @@ export function PaintingDetail({ route, navigation }: RootScreenProps<Paths.Pain
 
           {/* Action buttons */}
           <View style={styles.actionsSection}>
-            <TouchableOpacity
-              style={[
-                styles.actionButton,
-                styles.primaryButton,
-                painting.isSeen && styles.primaryButtonActive,
-              ]}
-            >
-              <Text style={styles.primaryButtonText}>
-                {painting.isSeen ? '✓ Marked as Seen' : 'Mark as Seen'}
-              </Text>
-            </TouchableOpacity>
-
-            <View style={styles.buttonRow}>
-              <TouchableOpacity style={styles.secondaryButton}>
-                <Text style={styles.secondaryButtonText}>
-                  {painting.isInPalette ? '★ In Palette' : '☆ Add to Palette'}
+            {!inCollection ? (
+              // Not in collection - show Add button
+              <TouchableOpacity
+                style={[styles.actionButton, styles.addToCollectionButton]}
+                onPress={handleAddToCollection}
+              >
+                <Text style={styles.primaryButtonText}>
+                  ➕ Add to Collection
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.secondaryButton}>
-                <Text style={styles.secondaryButtonText}>↗ Share</Text>
-              </TouchableOpacity>
-            </View>
+            ) : (
+              // In collection - show normal buttons
+              <>
+                <TouchableOpacity
+                  style={[
+                    styles.actionButton,
+                    styles.primaryButton,
+                    painting.isSeen && styles.primaryButtonActive,
+                  ]}
+                  onPress={handleToggleSeen}
+                >
+                  <Text style={styles.primaryButtonText}>
+                    {painting.isSeen ? '✓ Marked as Seen' : 'Mark as Seen'}
+                  </Text>
+                </TouchableOpacity>
+
+                <View style={styles.buttonRow}>
+                  <TouchableOpacity
+                    style={styles.secondaryButton}
+                    onPress={handleTogglePalette}
+                  >
+                    <Text style={styles.secondaryButtonText}>
+                      {isInPalette ? '★ In Palette' : '☆ Add to Palette'}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.secondaryButton}
+                    onPress={handleShare}
+                  >
+                    <Text style={styles.secondaryButtonText}>↗ Share</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -163,9 +257,29 @@ const styles = StyleSheet.create({
   paintingContainer: {
     width: width,
     height: width * 1.1,
+    backgroundColor: '#000',
+    position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'relative',
+  },
+  paintingImage: {
+    width: '100%',
+    height: '100%',
+  },
+  paintingPlaceholder: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  artFrame: {
+    width: '80%',
+    height: '70%',
+    borderWidth: 3,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   artFrame: {
     width: '80%',
@@ -289,6 +403,9 @@ const styles = StyleSheet.create({
   },
   primaryButtonActive: {
     backgroundColor: '#1a4d3e',
+  },
+  addToCollectionButton: {
+    backgroundColor: '#2d6a4f',
   },
   primaryButtonText: {
     color: '#fff',

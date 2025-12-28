@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Dimensions,
   Animated,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { Painting } from '@/types/painting';
@@ -74,12 +75,23 @@ export function PaintingCard({ painting, isFlipped, onPress }: PaintingCardProps
             },
           ]}
         >
-          <View
-            style={[styles.paintingFront, { backgroundColor: painting.color }]}
-          >
-            <View style={styles.artFrame}>
-              <Text style={styles.paintingIcon}>🎨</Text>
-            </View>
+          <View style={styles.paintingFront}>
+            {painting.imageUrl ? (
+              <>
+                <Image
+                  source={{ uri: painting.imageUrl }}
+                  style={styles.paintingImage}
+                  resizeMode="cover"
+                />
+                <View style={styles.imageOverlay} />
+              </>
+            ) : (
+              <View style={[styles.paintingPlaceholder, { backgroundColor: painting.color }]}>
+                <View style={styles.artFrame}>
+                  <Text style={styles.paintingIcon}>🎨</Text>
+                </View>
+              </View>
+            )}
           </View>
         </Animated.View>
 
@@ -144,10 +156,21 @@ const styles = StyleSheet.create({
   },
   paintingFront: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     borderRadius: 12,
     overflow: 'hidden',
+  },
+  paintingImage: {
+    width: '100%',
+    height: '100%',
+  },
+  imageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  paintingPlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   artFrame: {
     width: '85%',
