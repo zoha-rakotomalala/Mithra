@@ -30,10 +30,7 @@ export function PaintingDetail() {
     isPaintingInPalette,
   } = usePaintings();
 
-  // Check if in collection
   const inCollection = isInCollection(routePainting.id);
-
-  // Get current state from context if in collection
   const currentPainting = inCollection
     ? paintings.find(p => p.id === routePainting.id) || routePainting
     : routePainting;
@@ -47,53 +44,29 @@ export function PaintingDetail() {
     addToCollection(currentPainting);
     Alert.alert(
       'Added to Collection!',
-      `${currentPainting.title} has been added to your collection.`,
+      `${currentPainting.title} has been added with "Want to Visit" status.`,
       [{ text: 'OK' }]
     );
   };
 
   const handleToggleSeen = () => {
-    if (!inCollection) {
-      Alert.alert(
-        'Add to Collection First',
-        'Please add this painting to your collection before marking it as seen.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
+    if (!inCollection) return;
     toggleSeen(currentPainting.id);
   };
 
   const handleToggleWantToVisit = () => {
-    if (!inCollection) {
-      Alert.alert(
-        'Add to Collection First',
-        'Please add this painting to your collection first.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
+    if (!inCollection) return;
     toggleWantToVisit(currentPainting.id);
   };
 
   const handleTogglePalette = () => {
-    if (!inCollection) {
-      Alert.alert(
-        'Add to Collection First',
-        'Please add this painting to your collection before adding it to your palette.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
+    if (!inCollection) return;
 
     if (isInPalette) {
       removeFromPalette(currentPainting.id);
-      Alert.alert('Removed from Palette', `${currentPainting.title} removed from your palette.`);
     } else {
       const success = addToPalette(currentPainting.id);
-      if (success) {
-        Alert.alert('Added to Palette!', `${currentPainting.title} added to your palette.`);
-      } else {
+      if (!success) {
         Alert.alert(
           'Palette Full',
           'Your palette can only hold 8 paintings. Remove one to add this painting.',
@@ -103,24 +76,63 @@ export function PaintingDetail() {
     }
   };
 
-  const handleShare = () => {
-    Alert.alert('Coming Soon', 'Share functionality will be available soon!');
-  };
-
   const imageUrl = currentPainting.imageUrl;
 
   return (
     <>
-      <StatusBar barStyle="light-content" backgroundColor="#1a4d3e" />
+      <StatusBar barStyle="light-content" backgroundColor="rgba(0,0,0,0.8)" translucent />
       <View style={styles.container}>
-        {/* Header */}
+        {/* Instagram-Style Header */}
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
-            style={styles.backButton}
+            style={styles.headerButton}
           >
-            <Text style={styles.backButtonText}>← Back</Text>
+            <Text style={styles.headerButtonText}>←</Text>
           </TouchableOpacity>
+
+          <View style={styles.headerActions}>
+            {inCollection && (
+              <>
+                {/* Want to Visit */}
+                <TouchableOpacity
+                  onPress={handleToggleWantToVisit}
+                  style={[
+                    styles.headerIconButton,
+                    currentPainting.wantToVisit && styles.headerIconButtonActive
+                  ]}
+                >
+                  <Text style={styles.headerIconText}>⭐</Text>
+                </TouchableOpacity>
+
+                {/* Seen (Heart) */}
+                <TouchableOpacity
+                  onPress={handleToggleSeen}
+                  style={[
+                    styles.headerIconButton,
+                    currentPainting.isSeen && styles.headerIconButtonActive
+                  ]}
+                >
+                  <Text style={styles.headerIconText}>
+                    {currentPainting.isSeen ? '❤️' : '🤍'}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Palette */}
+                <TouchableOpacity
+                  onPress={handleTogglePalette}
+                  style={[
+                    styles.headerIconButton,
+                    isInPalette && styles.headerIconButtonActive
+                  ]}
+                >
+                  <Text style={styles.headerIconText}>
+                    {isInPalette ? '★' : '☆'}
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false}>
@@ -131,7 +143,6 @@ export function PaintingDetail() {
                 {imageLoading && (
                   <View style={styles.imageLoadingContainer}>
                     <ActivityIndicator size="large" color="#2d6a4f" />
-                    <Text style={styles.imageLoadingText}>Loading image...</Text>
                   </View>
                 )}
                 <Image
@@ -157,30 +168,50 @@ export function PaintingDetail() {
                 <Text style={styles.placeholderText}>No image available</Text>
               </View>
             )}
-
-            {/* Status Badges */}
-            {inCollection && (
-              <View style={styles.badgeContainer}>
-                {currentPainting.isSeen && (
-                  <View style={styles.seenBadge}>
-                    <Text style={styles.badgeText}>✓ Seen</Text>
-                  </View>
-                )}
-                {currentPainting.wantToVisit && (
-                  <View style={styles.wantToVisitBadge}>
-                    <Text style={styles.badgeText}>⭐ Want to Visit</Text>
-                  </View>
-                )}
-              </View>
-            )}
           </View>
+
+          {/* Add to Collection CTA */}
+          {!inCollection && (
+            <View style={styles.ctaSection}>
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={handleAddToCollection}
+              >
+                <Text style={styles.addButtonText}>➕ Add to Collection</Text>
+              </TouchableOpacity>
+              <Text style={styles.ctaHint}>
+                Add to your collection to mark as seen, want to visit, or add to palette
+              </Text>
+            </View>
+          )}
 
           {/* Title Section */}
           <View style={styles.titleSection}>
             <Text style={styles.paintingTitle}>{currentPainting.title}</Text>
-            <Text style={styles.paintingArtist}>by {currentPainting.artist}</Text>
+            <Text style={styles.paintingArtist}>{currentPainting.artist}</Text>
             {currentPainting.year && (
               <Text style={styles.paintingYear}>{currentPainting.year}</Text>
+            )}
+
+            {/* Status Pills */}
+            {inCollection && (
+              <View style={styles.statusPills}>
+                {currentPainting.isSeen && (
+                  <View style={styles.statusPill}>
+                    <Text style={styles.statusPillText}>❤️ Seen & Loved</Text>
+                  </View>
+                )}
+                {currentPainting.wantToVisit && (
+                  <View style={[styles.statusPill, styles.statusPillWant]}>
+                    <Text style={styles.statusPillText}>⭐ Want to Visit</Text>
+                  </View>
+                )}
+                {isInPalette && (
+                  <View style={[styles.statusPill, styles.statusPillPalette]}>
+                    <Text style={styles.statusPillText}>★ In Palette</Text>
+                  </View>
+                )}
+              </View>
             )}
           </View>
 
@@ -193,17 +224,26 @@ export function PaintingDetail() {
 
           {/* Details Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>DETAILS</Text>
+            <Text style={styles.sectionTitle}>Details</Text>
+
             {currentPainting.medium && (
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Medium</Text>
                 <Text style={styles.detailValue}>{currentPainting.medium}</Text>
               </View>
             )}
+
             {currentPainting.dimensions && (
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Dimensions</Text>
                 <Text style={styles.detailValue}>{currentPainting.dimensions}</Text>
+              </View>
+            )}
+
+            {currentPainting.year && (
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Year</Text>
+                <Text style={styles.detailValue}>{currentPainting.year}</Text>
               </View>
             )}
           </View>
@@ -211,99 +251,13 @@ export function PaintingDetail() {
           {/* Location Section */}
           {currentPainting.museum && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>LOCATION</Text>
+              <Text style={styles.sectionTitle}>Location</Text>
               <Text style={styles.museumName}>{currentPainting.museum}</Text>
               {currentPainting.location && (
                 <Text style={styles.museumLocation}>📍 {currentPainting.location}</Text>
               )}
             </View>
           )}
-
-          {/* Action Buttons */}
-          <View style={styles.actionSection}>
-            {/* Primary Action: Add to Collection */}
-            {!inCollection && (
-              <TouchableOpacity
-                style={[styles.actionButton, styles.primaryButton]}
-                onPress={handleAddToCollection}
-              >
-                <Text style={styles.actionButtonText}>➕ Add to Collection</Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Collection Status */}
-            {inCollection && (
-              <View style={styles.collectionStatusBanner}>
-                <Text style={styles.collectionStatusText}>✓ In your collection</Text>
-              </View>
-            )}
-
-            {/* Secondary Actions */}
-            <View style={styles.secondaryButtonsContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.actionButton,
-                  styles.secondaryButton,
-                  currentPainting.isSeen && styles.actionButtonActive,
-                  !inCollection && styles.actionButtonDisabled,
-                ]}
-                onPress={handleToggleSeen}
-                disabled={!inCollection}
-              >
-                <Text style={[
-                  styles.secondaryButtonText,
-                  !inCollection && styles.disabledButtonText
-                ]}>
-                  {currentPainting.isSeen ? '✓ Seen' : '👁️ Mark as Seen'}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.actionButton,
-                  styles.secondaryButton,
-                  currentPainting.wantToVisit && styles.actionButtonActive,
-                  !inCollection && styles.actionButtonDisabled,
-                ]}
-                onPress={handleToggleWantToVisit}
-                disabled={!inCollection}
-              >
-                <Text style={[
-                  styles.secondaryButtonText,
-                  !inCollection && styles.disabledButtonText
-                ]}>
-                  {currentPainting.wantToVisit ? '⭐ Want to Visit' : '⭐ Want to Visit'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Palette Action */}
-            <TouchableOpacity
-              style={[
-                styles.actionButton,
-                styles.paletteButton,
-                isInPalette && styles.actionButtonActive,
-                !inCollection && styles.actionButtonDisabled,
-              ]}
-              onPress={handleTogglePalette}
-              disabled={!inCollection}
-            >
-              <Text style={[
-                styles.paletteButtonText,
-                !inCollection && styles.disabledButtonText
-              ]}>
-                {isInPalette ? '★ In Palette' : '☆ Add to Palette'}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Share Button */}
-            <TouchableOpacity
-              style={[styles.actionButton, styles.shareButton]}
-              onPress={handleShare}
-            >
-              <Text style={styles.shareButtonText}>↗ Share</Text>
-            </TouchableOpacity>
-          </View>
 
           <View style={{ height: 40 }} />
         </ScrollView>
@@ -315,57 +269,76 @@ export function PaintingDetail() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#000',
   },
   header: {
-    paddingTop: 50,
-    paddingBottom: 12,
-    paddingHorizontal: 20,
-    backgroundColor: '#1a4d3e',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingTop: 50,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    zIndex: 100,
   },
-  backButton: {
-    padding: 8,
+  headerButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  backButtonText: {
+  headerButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 28,
+    fontWeight: '300',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  headerIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerIconButtonActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  headerIconText: {
+    fontSize: 20,
   },
   imageSection: {
     width: '100%',
     aspectRatio: 1,
-    backgroundColor: '#fff',
-    position: 'relative',
+    backgroundColor: '#000',
+    marginTop: 100,
   },
   paintingImage: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#f5f5f5',
   },
   imageLoadingContainer: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    zIndex: 10,
-  },
-  imageLoadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#666',
+    backgroundColor: '#000',
   },
   imageErrorContainer: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#1a1a1a',
   },
   imageErrorText: {
     fontSize: 14,
-    color: '#999',
+    color: '#666',
   },
   placeholderImage: {
     width: '100%',
@@ -380,41 +353,32 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     fontSize: 14,
-    color: 'rgba(0, 0, 0, 0.4)',
+    color: 'rgba(255, 255, 255, 0.5)',
     fontWeight: '500',
   },
-  badgeContainer: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    gap: 8,
+  ctaSection: {
+    padding: 24,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
   },
-  seenBadge: {
-    backgroundColor: '#2d6a4f',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+  addButton: {
+    backgroundColor: '#1a4d3e',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
   },
-  wantToVisitBadge: {
-    backgroundColor: '#f59e0b',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  badgeText: {
+  addButtonText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
+  },
+  ctaHint: {
+    marginTop: 12,
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 18,
   },
   titleSection: {
     padding: 24,
@@ -423,21 +387,49 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E8E8E8',
   },
   paintingTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '600',
     color: '#1a1a1a',
     marginBottom: 8,
-    lineHeight: 36,
+    lineHeight: 32,
   },
   paintingArtist: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#666',
     fontStyle: 'italic',
     marginBottom: 4,
   },
   paintingYear: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#999',
+    marginBottom: 12,
+  },
+  statusPills: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 12,
+  },
+  statusPill: {
+    backgroundColor: '#fef2f2',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+  },
+  statusPillWant: {
+    backgroundColor: '#fffbeb',
+    borderColor: '#fed7aa',
+  },
+  statusPillPalette: {
+    backgroundColor: '#f0f7f4',
+    borderColor: '#a7f3d0',
+  },
+  statusPillText: {
+    fontSize: 12,
+    color: '#1a1a1a',
+    fontWeight: '600',
   },
   section: {
     padding: 24,
@@ -446,11 +438,12 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E8E8E8',
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
     color: '#1a4d3e',
-    letterSpacing: 1.5,
+    letterSpacing: 1,
     marginBottom: 16,
+    textTransform: 'uppercase',
   },
   descriptionText: {
     fontSize: 15,
@@ -461,10 +454,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   detailLabel: {
-    fontSize: 13,
-    color: '#666',
+    fontSize: 12,
+    color: '#999',
     marginBottom: 4,
-    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   detailValue: {
     fontSize: 15,
@@ -479,77 +473,5 @@ const styles = StyleSheet.create({
   museumLocation: {
     fontSize: 15,
     color: '#666',
-  },
-  actionSection: {
-    padding: 24,
-  },
-  collectionStatusBanner: {
-    backgroundColor: '#f0f7f4',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#2d6a4f',
-  },
-  collectionStatusText: {
-    fontSize: 14,
-    color: '#1a4d3e',
-    fontWeight: '600',
-  },
-  actionButton: {
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  primaryButton: {
-    backgroundColor: '#1a4d3e',
-  },
-  secondaryButtonsContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  secondaryButton: {
-    backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: '#1a4d3e',
-    flex: 1,
-  },
-  paletteButton: {
-    backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: '#2d6a4f',
-  },
-  shareButton: {
-    backgroundColor: '#f0f0f0',
-  },
-  actionButtonActive: {
-    backgroundColor: '#2d6a4f',
-  },
-  actionButtonDisabled: {
-    opacity: 0.3,
-  },
-  actionButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  secondaryButtonText: {
-    color: '#1a4d3e',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  paletteButtonText: {
-    color: '#2d6a4f',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  shareButtonText: {
-    color: '#666',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  disabledButtonText: {
-    color: '#999',
   },
 });

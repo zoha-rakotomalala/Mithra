@@ -8,7 +8,7 @@ import {
   StatusBar,
   Image,
   FlatList,
-  SectionList,
+  ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Paths } from '@/navigation/paths';
@@ -16,7 +16,7 @@ import type { Painting } from '@/types/painting';
 import { usePaintings } from '@/contexts/PaintingsContext';
 
 const { width } = Dimensions.get('window');
-const CARD_SIZE = (width - 48) / 3;
+const CARD_SIZE = (width - 64) / 3;
 
 type FilterType = 'all' | 'seen' | 'wantToVisit' | 'artist' | 'museum';
 type SortType = 'recentlyAdded' | 'alphabetical' | 'yearNewest' | 'yearOldest';
@@ -47,7 +47,6 @@ const PaintingCard = React.memo(({
             style={styles.paintingImage}
             resizeMode="cover"
           />
-          {!painting.isSeen && <View style={styles.unseenFilter} />}
         </>
       ) : (
         <View style={[styles.paintingPlaceholder, { backgroundColor: painting.color }]}>
@@ -57,13 +56,13 @@ const PaintingCard = React.memo(({
         </View>
       )}
 
-      {/* Badges */}
+      {/* Status Badge */}
       {painting.isSeen && (
         <View style={styles.seenBadge}>
-          <Text style={styles.badgeText}>✓</Text>
+          <Text style={styles.badgeText}>❤️</Text>
         </View>
       )}
-      {painting.wantToVisit && !painting.isSeen && (
+      {painting.wantToVisit && (
         <View style={styles.wantToVisitBadge}>
           <Text style={styles.badgeText}>⭐</Text>
         </View>
@@ -156,30 +155,8 @@ export function Collection() {
     navigation.navigate(Paths.PaintingDetail, { painting });
   }, [navigation]);
 
-  // Render item for grid
-  const renderGridItem = useCallback(({ item }: { item: Painting }) => (
-    <PaintingCard painting={item} onPress={() => handlePaintingPress(item)} />
-  ), [handlePaintingPress]);
-
-  // Key extractor
-  const keyExtractor = useCallback((item: Painting) => `painting-${item.id}`, []);
-
-  // Render section header
-  const renderSectionHeader = useCallback(({ section }: { section: GroupedSection }) => {
-    if (!section.title) return null;
-
-    return (
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionHeaderText}>{section.title}</Text>
-        <Text style={styles.sectionHeaderCount}>
-          {section.data.length} {section.data.length === 1 ? 'painting' : 'paintings'}
-        </Text>
-      </View>
-    );
-  }, []);
-
   // Empty state
-  const renderEmpty = useCallback(() => (
+  const renderEmpty = () => (
     <View style={styles.emptyState}>
       <Text style={styles.emptyIcon}>🖼️</Text>
       <Text style={styles.emptyTitle}>No Paintings Yet</Text>
@@ -187,7 +164,7 @@ export function Collection() {
         Start building your collection by searching for paintings in the Search tab.
       </Text>
     </View>
-  ), []);
+  );
 
   return (
     <>
@@ -267,24 +244,50 @@ export function Collection() {
           </View>
         )}
 
-        {/* Paintings Grid */}
-        <SectionList
-          sections={preparedData}
-          renderItem={renderGridItem}
-          renderSectionHeader={renderSectionHeader}
-          keyExtractor={keyExtractor}
-          numColumns={3}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.gridContent}
-          ListEmptyComponent={renderEmpty}
-          // Performance optimizations
-          removeClippedSubviews={true}
-          maxToRenderPerBatch={15}
-          updateCellsBatchingPeriod={50}
-          initialNumToRender={15}
-          windowSize={7}
-          stickySectionHeadersEnabled={true}
-        />
+        {/* Content */}
+        {paintings.length === 0 ? (
+          renderEmpty()
+        ) : (
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {isGroupedView ? (
+              // Grouped view with horizontal carousels
+              preparedData.map((section, index) => (
+                <View key={`section-${index}`} style={styles.groupSection}>
+                  <View style={styles.groupHeader}>
+                    <Text style={styles.groupTitle}>{section.title}</Text>
+                    <Text style={styles.groupCount}>
+                      {section.data.length} {section.data.length === 1 ? 'painting' : 'paintings'}
+                    </Text>
+                  </View>
+                  <FlatList
+                    horizontal
+                    data={section.data}
+                    renderItem={({ item }) => (
+                      <PaintingCard
+                        painting={item}
+                        onPress={() => handlePaintingPress(item)}
+                      />
+                    )}
+                    keyExtractor={item => `painting-${item.id}`}
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.horizontalList}
+                  />
+                </View>
+              ))
+            ) : (
+              // Grid view for All, Seen, Want to Visit
+              <View style={styles.grid}>
+                {preparedData[0].data.map((painting) => (
+                  <PaintingCard
+                    key={painting.id}
+                    painting={painting}
+                    onPress={() => handlePaintingPress(painting)}
+                  />
+                ))}
+              </View>
+            )}
+          </ScrollView>
+        )}
       </View>
     </>
   );
@@ -364,7 +367,7 @@ const styles = StyleSheet.create({
     color: '#1a1a1a',
   },
   seenNumber: {
-    color: '#2d6a4f',
+    color: '#e63946',
   },
   wantNumber: {
     color: '#f59e0b',
@@ -447,37 +450,44 @@ const styles = StyleSheet.create({
   sortOptionTextActive: {
     color: '#fff',
   },
-  gridContent: {
-    paddingHorizontal: 16,
+  groupSection: {
+    marginBottom: 24,
   },
-  sectionHeader: {
-    backgroundColor: '#f0f7f4',
+  groupHeader: {
     paddingHorizontal: 20,
     paddingVertical: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
-    marginTop: 8,
+    backgroundColor: '#f0f7f4',
   },
-  sectionHeaderText: {
+  groupTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1a4d3e',
   },
-  sectionHeaderCount: {
+  groupCount: {
     fontSize: 12,
     color: '#666',
+  },
+  horizontalList: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   gridItem: {
     width: CARD_SIZE,
     marginBottom: 20,
-    padding: 4,
+    marginHorizontal: 4,
   },
   paintingCard: {
     width: '100%',
-    aspectRatio: 1,
+    aspectRatio: 0.75,
     borderRadius: 12,
     position: 'relative',
     overflow: 'hidden',
@@ -491,10 +501,6 @@ const styles = StyleSheet.create({
   paintingImage: {
     width: '100%',
     height: '100%',
-  },
-  unseenFilter: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
   },
   paintingPlaceholder: {
     flex: 1,
@@ -518,28 +524,36 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#2d6a4f',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(230, 57, 70, 0.95)',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
   },
   wantToVisitBadge: {
     position: 'absolute',
     top: 8,
     right: 8,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#f59e0b',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(245, 158, 11, 0.95)',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
   },
   badgeText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 16,
   },
   paintingTitle: {
     fontSize: 12,
@@ -560,6 +574,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   emptyState: {
+    flex: 1,
     paddingVertical: 80,
     paddingHorizontal: 40,
     alignItems: 'center',

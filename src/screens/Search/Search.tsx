@@ -25,11 +25,13 @@ const CARD_SIZE = (width - 48) / 3;
 const GridItem = React.memo(({
   painting,
   onPress,
-  inCollection
+  inCollection,
+  collectionStatus
 }: {
   painting: Painting;
   onPress: () => void;
   inCollection: boolean;
+  collectionStatus?: { isSeen: boolean; wantToVisit: boolean };
 }) => (
   <TouchableOpacity
     style={styles.resultCard}
@@ -49,9 +51,14 @@ const GridItem = React.memo(({
         </View>
       )}
 
-      {inCollection && (
-        <View style={styles.inCollectionBadge}>
-          <Text style={styles.inCollectionText}>✓</Text>
+      {inCollection && collectionStatus && (
+        <View style={styles.statusBadge}>
+          {collectionStatus.isSeen && (
+            <Text style={styles.statusBadgeText}>❤️</Text>
+          )}
+          {collectionStatus.wantToVisit && (
+            <Text style={styles.statusBadgeText}>⭐</Text>
+          )}
         </View>
       )}
 
@@ -133,21 +140,27 @@ export function Search() {
     navigation.navigate(Paths.PaintingDetail, { painting });
   }, [navigation]);
 
-  const isAlreadyInCollection = useCallback((painting: Painting): boolean => {
-    return existingPaintings.some(
-      p => p.title.toLowerCase() === painting.title.toLowerCase() &&
-           p.artist.toLowerCase() === painting.artist.toLowerCase()
+  const isAlreadyInCollection = useCallback((painting: Painting) => {
+    const found = existingPaintings.find(
+      p => p.id === painting.id ||
+      (p.title.toLowerCase() === painting.title.toLowerCase() &&
+       p.artist.toLowerCase() === painting.artist.toLowerCase())
     );
+    return found ? {
+      inCollection: true,
+      status: { isSeen: found.isSeen || false, wantToVisit: found.wantToVisit || false }
+    } : { inCollection: false };
   }, [existingPaintings]);
 
   // Render item for FlatList (3 columns)
   const renderItem = useCallback(({ item, index }: { item: Painting; index: number }) => {
-    const inCollection = isAlreadyInCollection(item);
+    const collectionInfo = isAlreadyInCollection(item);
     return (
       <GridItem
         painting={item}
         onPress={() => handlePaintingPress(item)}
-        inCollection={inCollection}
+        inCollection={collectionInfo.inCollection}
+        collectionStatus={collectionInfo.status}
       />
     );
   }, [handlePaintingPress, isAlreadyInCollection]);
@@ -508,7 +521,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#2d6a4f',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -516,6 +529,23 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  statusBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    minWidth: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    flexDirection: 'row',
+    gap: 2,
+  },
+  statusBadgeText: {
+    fontSize: 16,
   },
   museumBadge: {
     position: 'absolute',
