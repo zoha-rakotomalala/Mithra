@@ -37,7 +37,7 @@ function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider storage={storage}>
-          <PaintingsProvider>
+          <PaintingsProvider storage={storage}>
             <ApplicationNavigator />
           </PaintingsProvider>
         </ThemeProvider>

@@ -1,13 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   Dimensions,
   StatusBar,
   Image,
+  FlatList,
+  SectionList,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Paths } from '@/navigation/paths';
@@ -17,44 +18,122 @@ import { usePaintings } from '@/contexts/PaintingsContext';
 const { width } = Dimensions.get('window');
 const CARD_SIZE = (width - 48) / 3;
 
-type FilterType = 'all' | 'seen' | 'unseen' | 'museum' | 'artist';
-type SortType = 'seenFirst' | 'alphabetical' | 'yearNewest' | 'yearOldest';
+type FilterType = 'all' | 'seen' | 'wantToVisit' | 'artist' | 'museum';
+type SortType = 'recentlyAdded' | 'alphabetical' | 'yearNewest' | 'yearOldest';
+
+type GroupedSection = {
+  title: string;
+  data: Painting[];
+};
+
+// Memoized painting card
+const PaintingCard = React.memo(({
+  painting,
+  onPress
+}: {
+  painting: Painting;
+  onPress: () => void;
+}) => (
+  <TouchableOpacity
+    style={styles.gridItem}
+    onPress={onPress}
+    activeOpacity={0.7}
+  >
+    <View style={styles.paintingCard}>
+      {painting.imageUrl ? (
+        <>
+          <Image
+            source={{ uri: painting.imageUrl }}
+            style={styles.paintingImage}
+            resizeMode="cover"
+          />
+          {!painting.isSeen && <View style={styles.unseenFilter} />}
+        </>
+      ) : (
+        <View style={[styles.paintingPlaceholder, { backgroundColor: painting.color }]}>
+          <View style={styles.artFrame}>
+            <Text style={styles.paintingIcon}>🎨</Text>
+          </View>
+        </View>
+      )}
+
+      {/* Badges */}
+      {painting.isSeen && (
+        <View style={styles.seenBadge}>
+          <Text style={styles.badgeText}>✓</Text>
+        </View>
+      )}
+      {painting.wantToVisit && !painting.isSeen && (
+        <View style={styles.wantToVisitBadge}>
+          <Text style={styles.badgeText}>⭐</Text>
+        </View>
+      )}
+    </View>
+
+    <Text style={styles.paintingTitle} numberOfLines={2}>
+      {painting.title}
+    </Text>
+    <Text style={styles.paintingArtist} numberOfLines={1}>
+      {painting.artist}
+    </Text>
+    {painting.year && (
+      <Text style={styles.paintingYear}>{painting.year}</Text>
+    )}
+  </TouchableOpacity>
+));
 
 export function Collection() {
   const navigation = useNavigation();
-  const { paintings } = usePaintings();
+  const { paintings, getPaintingsByArtist, getPaintingsByMuseum } = usePaintings();
+
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
-  const [sortBy, setSortBy] = useState<SortType>('seenFirst');
+  const [sortBy, setSortBy] = useState<SortType>('recentlyAdded');
 
   // Calculate stats
   const stats = useMemo(() => {
     const total = paintings.length;
     const seen = paintings.filter(p => p.isSeen).length;
-    const unseen = total - seen;
-    return { total, seen, unseen };
+    const wantToVisit = paintings.filter(p => p.wantToVisit).length;
+    return { total, seen, wantToVisit };
   }, [paintings]);
 
-  // Filter and sort paintings
-  const filteredAndSortedPaintings = useMemo(() => {
+  // Prepare data based on filter
+  const preparedData = useMemo(() => {
+    if (activeFilter === 'artist') {
+      const grouped = getPaintingsByArtist();
+      return Array.from(grouped.entries()).map(([artist, paintingsData]) => ({
+        title: artist,
+        data: paintingsData,
+      }));
+    }
+
+    if (activeFilter === 'museum') {
+      const grouped = getPaintingsByMuseum();
+      return Array.from(grouped.entries()).map(([museum, paintingsData]) => ({
+        title: museum,
+        data: paintingsData,
+      }));
+    }
+
+    // For flat filters, return single section
     let filtered = [...paintings];
 
-    // Apply filters
     switch (activeFilter) {
       case 'seen':
         filtered = filtered.filter(p => p.isSeen);
         break;
-      case 'unseen':
-        filtered = filtered.filter(p => !p.isSeen);
+      case 'wantToVisit':
+        filtered = filtered.filter(p => p.wantToVisit);
         break;
-      // Add more filters as needed
     }
 
     // Apply sorting
     switch (sortBy) {
-      case 'seenFirst':
+      case 'recentlyAdded':
         filtered.sort((a, b) => {
-          if (a.isSeen === b.isSeen) return 0;
-          return a.isSeen ? -1 : 1;
+          const dateA = new Date(a.dateAdded || 0).getTime();
+          const dateB = new Date(b.dateAdded || 0).getTime();
+          return dateB - dateA;
         });
         break;
       case 'alphabetical':
@@ -68,12 +147,47 @@ export function Collection() {
         break;
     }
 
-    return filtered;
-  }, [paintings, activeFilter, sortBy]);
+    return [{ title: '', data: filtered }];
+  }, [paintings, activeFilter, sortBy, getPaintingsByArtist, getPaintingsByMuseum]);
 
-  const handlePaintingPress = (painting: Painting) => {
+  const isGroupedView = activeFilter === 'artist' || activeFilter === 'museum';
+
+  const handlePaintingPress = useCallback((painting: Painting) => {
     navigation.navigate(Paths.PaintingDetail, { painting });
-  };
+  }, [navigation]);
+
+  // Render item for grid
+  const renderGridItem = useCallback(({ item }: { item: Painting }) => (
+    <PaintingCard painting={item} onPress={() => handlePaintingPress(item)} />
+  ), [handlePaintingPress]);
+
+  // Key extractor
+  const keyExtractor = useCallback((item: Painting) => `painting-${item.id}`, []);
+
+  // Render section header
+  const renderSectionHeader = useCallback(({ section }: { section: GroupedSection }) => {
+    if (!section.title) return null;
+
+    return (
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionHeaderText}>{section.title}</Text>
+        <Text style={styles.sectionHeaderCount}>
+          {section.data.length} {section.data.length === 1 ? 'painting' : 'paintings'}
+        </Text>
+      </View>
+    );
+  }, []);
+
+  // Empty state
+  const renderEmpty = useCallback(() => (
+    <View style={styles.emptyState}>
+      <Text style={styles.emptyIcon}>🖼️</Text>
+      <Text style={styles.emptyTitle}>No Paintings Yet</Text>
+      <Text style={styles.emptyText}>
+        Start building your collection by searching for paintings in the Search tab.
+      </Text>
+    </View>
+  ), []);
 
   return (
     <>
@@ -98,138 +212,79 @@ export function Collection() {
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={[styles.statNumber, styles.unseenNumber]}>{stats.unseen}</Text>
-            <Text style={styles.statLabel}>To Discover</Text>
+            <Text style={[styles.statNumber, styles.wantNumber]}>{stats.wantToVisit}</Text>
+            <Text style={styles.statLabel}>Want to Visit</Text>
           </View>
         </View>
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {/* Filter Chips */}
-          <ScrollView
+        {/* Filters */}
+        <View style={styles.filtersSection}>
+          <FlatList
             horizontal
+            data={[
+              { key: 'all', label: 'All' },
+              { key: 'artist', label: 'By Artist' },
+              { key: 'museum', label: 'By Museum' },
+              { key: 'seen', label: 'Seen' },
+              { key: 'wantToVisit', label: 'Want to Visit' },
+            ]}
+            renderItem={({ item }) => (
+              <FilterChip
+                label={item.label}
+                isActive={activeFilter === item.key}
+                onPress={() => setActiveFilter(item.key as FilterType)}
+              />
+            )}
+            keyExtractor={item => item.key}
             showsHorizontalScrollIndicator={false}
-            style={styles.filtersContainer}
             contentContainerStyle={styles.filtersContent}
-          >
-            <FilterChip
-              label="All"
-              isActive={activeFilter === 'all'}
-              onPress={() => setActiveFilter('all')}
-            />
-            <FilterChip
-              label="Seen"
-              isActive={activeFilter === 'seen'}
-              onPress={() => setActiveFilter('seen')}
-            />
-            <FilterChip
-              label="Unseen"
-              isActive={activeFilter === 'unseen'}
-              onPress={() => setActiveFilter('unseen')}
-            />
-            <FilterChip
-              label="By Museum"
-              isActive={activeFilter === 'museum'}
-              onPress={() => setActiveFilter('museum')}
-            />
-            <FilterChip
-              label="By Artist"
-              isActive={activeFilter === 'artist'}
-              onPress={() => setActiveFilter('artist')}
-            />
-          </ScrollView>
+          />
+        </View>
 
-          {/* Sort Options */}
+        {/* Sort Options (only for non-grouped views) */}
+        {!isGroupedView && (
           <View style={styles.sortContainer}>
             <Text style={styles.sortLabel}>Sort by:</Text>
-            <ScrollView
+            <FlatList
               horizontal
+              data={[
+                { key: 'recentlyAdded', label: 'Recently Added' },
+                { key: 'alphabetical', label: 'A-Z' },
+                { key: 'yearNewest', label: 'Newest' },
+                { key: 'yearOldest', label: 'Oldest' },
+              ]}
+              renderItem={({ item }) => (
+                <SortOption
+                  label={item.label}
+                  isActive={sortBy === item.key}
+                  onPress={() => setSortBy(item.key as SortType)}
+                />
+              )}
+              keyExtractor={item => item.key}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.sortOptions}
-            >
-              <SortOption
-                label="Seen First"
-                isActive={sortBy === 'seenFirst'}
-                onPress={() => setSortBy('seenFirst')}
-              />
-              <SortOption
-                label="A-Z"
-                isActive={sortBy === 'alphabetical'}
-                onPress={() => setSortBy('alphabetical')}
-              />
-              <SortOption
-                label="Newest"
-                isActive={sortBy === 'yearNewest'}
-                onPress={() => setSortBy('yearNewest')}
-              />
-              <SortOption
-                label="Oldest"
-                isActive={sortBy === 'yearOldest'}
-                onPress={() => setSortBy('yearOldest')}
-              />
-            </ScrollView>
+            />
           </View>
+        )}
 
-          {/* Paintings Grid */}
-          <View style={styles.grid}>
-            {filteredAndSortedPaintings.map((painting) => (
-              <TouchableOpacity
-                key={painting.id}
-                style={styles.gridItem}
-                onPress={() => handlePaintingPress(painting)}
-                activeOpacity={0.7}
-              >
-                <View
-                  style={[
-                    styles.paintingCard,
-                    !painting.isSeen && styles.unseenCard,
-                  ]}
-                >
-                  {painting.imageUrl ? (
-                    <>
-                      <Image
-                        source={{ uri: painting.imageUrl }}
-                        style={styles.paintingImage}
-                        resizeMode="cover"
-                      />
-                      {!painting.isSeen && <View style={styles.unseenFilter} />}
-                    </>
-                  ) : (
-                    <View style={[styles.paintingPlaceholder, { backgroundColor: painting.color }]}>
-                      <View style={styles.artFrame}>
-                        <Text style={[
-                          styles.paintingIcon,
-                          !painting.isSeen && styles.unseenIcon
-                        ]}>
-                          🎨
-                        </Text>
-                      </View>
-                    </View>
-                  )}
-
-                  {!painting.isSeen && (
-                    <View style={styles.unseenOverlay}>
-                      <Text style={styles.unseenLabel}>Not Seen</Text>
-                    </View>
-                  )}
-                  {painting.isSeen && (
-                    <View style={styles.seenBadge}>
-                      <Text style={styles.seenBadgeText}>✓</Text>
-                    </View>
-                  )}
-                </View>
-                <Text style={styles.paintingTitle} numberOfLines={2}>
-                  {painting.title}
-                </Text>
-                <Text style={styles.paintingArtist} numberOfLines={1}>
-                  {painting.artist}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </ScrollView>
+        {/* Paintings Grid */}
+        <SectionList
+          sections={preparedData}
+          renderItem={renderGridItem}
+          renderSectionHeader={renderSectionHeader}
+          keyExtractor={keyExtractor}
+          numColumns={3}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.gridContent}
+          ListEmptyComponent={renderEmpty}
+          // Performance optimizations
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={15}
+          updateCellsBatchingPeriod={50}
+          initialNumToRender={15}
+          windowSize={7}
+          stickySectionHeadersEnabled={true}
+        />
       </View>
     </>
   );
@@ -311,8 +366,8 @@ const styles = StyleSheet.create({
   seenNumber: {
     color: '#2d6a4f',
   },
-  unseenNumber: {
-    color: '#999',
+  wantNumber: {
+    color: '#f59e0b',
   },
   statLabel: {
     fontSize: 11,
@@ -326,12 +381,11 @@ const styles = StyleSheet.create({
     height: 30,
     backgroundColor: '#E8E8E8',
   },
-  scrollContent: {
-    paddingBottom: 24,
-  },
-  filtersContainer: {
-    marginTop: 16,
-    marginBottom: 8,
+  filtersSection: {
+    paddingVertical: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
   },
   filtersContent: {
     paddingHorizontal: 20,
@@ -344,6 +398,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#E8E8E8',
+    marginRight: 8,
   },
   filterChipActive: {
     backgroundColor: '#1a4d3e',
@@ -360,6 +415,9 @@ const styles = StyleSheet.create({
   sortContainer: {
     paddingHorizontal: 20,
     paddingVertical: 12,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
   },
   sortLabel: {
     fontSize: 12,
@@ -376,6 +434,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 6,
     backgroundColor: '#f0f0f0',
+    marginRight: 8,
   },
   sortOptionActive: {
     backgroundColor: '#2d6a4f',
@@ -388,11 +447,28 @@ const styles = StyleSheet.create({
   sortOptionTextActive: {
     color: '#fff',
   },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  gridContent: {
     paddingHorizontal: 16,
-    paddingTop: 16,
+  },
+  sectionHeader: {
+    backgroundColor: '#f0f7f4',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
+    marginTop: 8,
+  },
+  sectionHeaderText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1a4d3e',
+  },
+  sectionHeaderCount: {
+    fontSize: 12,
+    color: '#666',
   },
   gridItem: {
     width: CARD_SIZE,
@@ -407,10 +483,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#f0f0f0',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
@@ -421,15 +494,12 @@ const styles = StyleSheet.create({
   },
   unseenFilter: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
   },
   paintingPlaceholder: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  unseenCard: {
-    opacity: 0.4,
   },
   artFrame: {
     width: '80%',
@@ -444,25 +514,6 @@ const styles = StyleSheet.create({
     fontSize: 40,
     opacity: 0.9,
   },
-  unseenIcon: {
-    opacity: 0.5,
-  },
-  unseenOverlay: {
-    position: 'absolute',
-    bottom: 8,
-    left: 8,
-    right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  unseenLabel: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
   seenBadge: {
     position: 'absolute',
     top: 8,
@@ -474,7 +525,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  seenBadgeText: {
+  wantToVisitBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#f59e0b',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
@@ -491,5 +553,31 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 2,
     fontStyle: 'italic',
+  },
+  paintingYear: {
+    fontSize: 10,
+    color: '#999',
+    marginTop: 2,
+  },
+  emptyState: {
+    paddingVertical: 80,
+    paddingHorizontal: 40,
+    alignItems: 'center',
+  },
+  emptyIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1a4d3e',
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
