@@ -13,7 +13,7 @@ import {
   FlatList,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import FastImage from 'react-native-fast-image';
+import FastImage from 'react-native-fast-image'; // Added this import
 import { searchMetMuseum, searchMetByArtist, getPopularMetArtists } from '@/services/metMuseumService';
 import { usePaintings } from '@/contexts/PaintingsContext';
 import { Paths } from '@/navigation/paths';
@@ -33,24 +33,36 @@ const GridItem = React.memo(({
   onPress: () => void;
   inCollection: boolean;
   collectionStatus?: { isSeen: boolean; wantToVisit: boolean };
-}) => (
-  <TouchableOpacity
-    style={styles.resultCard}
-    onPress={onPress}
-    activeOpacity={0.7}
-  >
-    <View style={styles.imageContainer}>
-      {painting.imageUrl ? (
-        <FastImage
-          source={{
-            uri: painting.thumbnailUrl || painting.imageUrl,
-            priority: FastImage.priority.normal,
-            cache: FastImage.cacheControl.immutable,
-          }}
-          style={styles.resultImage}
-          resizeMode={FastImage.resizeMode.cover}
-        />
-      ) : (
+}) => {
+  const [imageLoading, setImageLoading] = React.useState(true);
+
+  return (
+    <TouchableOpacity
+      style={styles.resultCard}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <View style={styles.imageContainer}>
+        {painting.imageUrl ? (
+          <>
+            {imageLoading && (
+              <View style={styles.imageLoadingOverlay}>
+                <ActivityIndicator size="small" color="#d4af37" />
+              </View>
+            )}
+            <FastImage
+              source={{
+                uri: painting.thumbnailUrl || painting.imageUrl,
+                priority: FastImage.priority.normal,
+                cache: FastImage.cacheControl.immutable,
+              }}
+              style={styles.resultImage}
+              resizeMode={FastImage.resizeMode.cover}
+              onLoadStart={() => setImageLoading(true)}
+              onLoadEnd={() => setImageLoading(false)}
+            />
+          </>
+        ) : (
         <View style={[styles.placeholderImage, { backgroundColor: painting.color }]}>
           <Text style={styles.placeholderIcon}>🎨</Text>
         </View>
@@ -82,7 +94,8 @@ const GridItem = React.memo(({
       <Text style={styles.resultYear}>{painting.year}</Text>
     )}
   </TouchableOpacity>
-));
+  );
+});
 
 export function Search() {
   const navigation = useNavigation();
@@ -502,6 +515,14 @@ const styles = StyleSheet.create({
   imageContainer: {
     position: 'relative',
     marginBottom: 8,
+  },
+  imageLoadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 12,
+    zIndex: 10,
   },
   resultImage: {
     width: '100%',

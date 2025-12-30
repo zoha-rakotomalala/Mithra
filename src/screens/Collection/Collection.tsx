@@ -550,8 +550,11 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   badgeIcon: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#fff',
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 14, // Add this for vertical centering
   },
   paintingTitle: {
     fontSize: 12,

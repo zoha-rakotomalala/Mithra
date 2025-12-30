@@ -93,13 +93,17 @@ export function PaintingDetail() {
     );
   };
 
+  const navigateToArtist = () => {
+    navigation.navigate(Paths.ArtistProfile, { artistName: currentPainting.artist });
+  };
+
   const imageUrl = currentPainting.imageUrl;
 
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
       <View style={styles.container}>
-        {/* Fixed Header with Actions */}
+        {/* Art Deco Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Text style={styles.backText}>←</Text>
@@ -109,48 +113,51 @@ export function PaintingDetail() {
             <View style={styles.headerActions}>
               <TouchableOpacity
                 onPress={handleToggleSeen}
-                style={[styles.actionIcon, currentPainting.isSeen && styles.actionIconActive]}
+                style={[styles.actionButton, currentPainting.isSeen && styles.actionButtonActive]}
               >
-                <View style={styles.iconCircle}>
-                  <Text style={[styles.iconText, currentPainting.isSeen && styles.iconTextActive]}>S</Text>
-                </View>
+                <Text style={[styles.actionText, currentPainting.isSeen && styles.actionTextActive]}>S</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={handleToggleWantToVisit}
-                style={[styles.actionIcon, currentPainting.wantToVisit && styles.actionIconActive]}
+                style={[styles.actionButton, currentPainting.wantToVisit && styles.actionButtonActive]}
               >
-                <View style={styles.iconCircle}>
-                  <Text style={[styles.iconText, currentPainting.wantToVisit && styles.iconTextActive]}>W</Text>
-                </View>
+                <Text style={[styles.actionText, currentPainting.wantToVisit && styles.actionTextActive]}>W</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={handleTogglePalette}
-                style={[styles.actionIcon, isInPalette && styles.actionIconActive]}
+                style={[styles.actionButton, isInPalette && styles.actionButtonActive]}
               >
-                <View style={styles.iconCircle}>
-                  <Text style={[styles.iconText, isInPalette && styles.iconTextActive]}>P</Text>
-                </View>
+                <Text style={[styles.actionText, isInPalette && styles.actionTextActive]}>P</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={handleRemoveFromCollection} style={styles.deleteIcon}>
-                <View style={styles.iconCircle}>
-                  <Text style={styles.deleteText}>×</Text>
-                </View>
+              <View style={styles.dividerVertical} />
+
+              <TouchableOpacity onPress={handleRemoveFromCollection} style={styles.deleteButton}>
+                <Text style={styles.deleteText}>×</Text>
               </TouchableOpacity>
             </View>
           )}
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Image Section */}
-          <View style={styles.imageSection}>
+        <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
+          {/* Black Gallery Background for Image */}
+          <View style={styles.gallerySection}>
+            {/* Art Deco Corner Ornaments */}
+            <View style={styles.cornerTopLeft}>
+              <Text style={styles.cornerOrnament}>◆</Text>
+            </View>
+            <View style={styles.cornerTopRight}>
+              <Text style={styles.cornerOrnament}>◆</Text>
+            </View>
+
             {imageUrl ? (
               <>
                 {imageLoading && (
                   <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#1a4d3e" />
+                    <ActivityIndicator size="large" color="#d4af37" />
+                    <Text style={styles.loadingText}>Loading artwork...</Text>
                   </View>
                 )}
                 <FastImage
@@ -170,7 +177,8 @@ export function PaintingDetail() {
                 />
                 {imageError && (
                   <View style={styles.errorContainer}>
-                    <Text style={styles.errorText}>Unable to load image</Text>
+                    <Text style={styles.errorText}>Unable to load artwork</Text>
+                    <Text style={styles.errorSubtext}>Image may be unavailable</Text>
                   </View>
                 )}
               </>
@@ -179,37 +187,56 @@ export function PaintingDetail() {
                 <Text style={styles.placeholderText}>No image available</Text>
               </View>
             )}
+
+            <View style={styles.cornerBottomLeft}>
+              <Text style={styles.cornerOrnament}>◆</Text>
+            </View>
+            <View style={styles.cornerBottomRight}>
+              <Text style={styles.cornerOrnament}>◆</Text>
+            </View>
           </View>
 
-          {/* Quick Add Section */}
+          {/* Quick Add Section - Art Deco Style */}
           {!inCollection && (
             <View style={styles.quickAddSection}>
-              <Text style={styles.quickAddTitle}>Add to Collection</Text>
+              <View style={styles.quickAddDivider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>ADD TO COLLECTION</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
               <View style={styles.quickAddRow}>
                 <TouchableOpacity
-                  style={styles.quickAddButton}
+                  style={styles.artDecoButton}
                   onPress={() => handleQuickAdd('seen')}
                 >
-                  <Text style={styles.quickAddLabel}>Seen</Text>
+                  <Text style={styles.artDecoButtonText}>SEEN</Text>
                 </TouchableOpacity>
+
                 <TouchableOpacity
-                  style={styles.quickAddButton}
+                  style={[styles.artDecoButton, styles.artDecoButtonSecondary]}
                   onPress={() => handleQuickAdd('wantToVisit')}
                 >
-                  <Text style={styles.quickAddLabel}>Want to Visit</Text>
+                  <Text style={[styles.artDecoButtonText, styles.artDecoButtonTextSecondary]}>WANT TO VISIT</Text>
                 </TouchableOpacity>
               </View>
             </View>
           )}
 
-          {/* Title Section */}
+          {/* Information Section - Cream Background */}
           <View style={styles.infoSection}>
+            {/* Title with Art Deco styling */}
             <Text style={styles.title}>{currentPainting.title}</Text>
-            <TouchableOpacity onPress={() => navigation.navigate(Paths.ArtistProfile, { artistName: currentPainting.artist })}>
-              <Text style={styles.artist}>{currentPainting.artist}</Text>
-            </TouchableOpacity>
+
+            <View style={styles.artistRow}>
+              <Text style={styles.artistLabel}>by</Text>
+              <TouchableOpacity onPress={navigateToArtist}>
+                <Text style={styles.artist}>{currentPainting.artist}</Text>
+              </TouchableOpacity>
+            </View>
+
             {currentPainting.year && (
-              <Text style={styles.year}>{currentPainting.year}</Text>
+              <Text style={styles.year}>· {currentPainting.year} ·</Text>
             )}
 
             {/* Status Tags */}
@@ -217,17 +244,17 @@ export function PaintingDetail() {
               <View style={styles.tags}>
                 {currentPainting.isSeen && (
                   <View style={styles.tag}>
-                    <Text style={styles.tagText}>Seen</Text>
+                    <Text style={styles.tagText}>SEEN</Text>
                   </View>
                 )}
                 {currentPainting.wantToVisit && (
                   <View style={[styles.tag, styles.tagWant]}>
-                    <Text style={styles.tagText}>Want to Visit</Text>
+                    <Text style={styles.tagText}>WANT TO VISIT</Text>
                   </View>
                 )}
                 {isInPalette && (
                   <View style={[styles.tag, styles.tagPalette]}>
-                    <Text style={styles.tagText}>In Palette</Text>
+                    <Text style={styles.tagText}>IN PALETTE</Text>
                   </View>
                 )}
               </View>
@@ -241,9 +268,14 @@ export function PaintingDetail() {
             </View>
           )}
 
-          {/* Details */}
+          {/* Details Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Details</Text>
+            <View style={styles.sectionHeader}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.sectionTitle}>DETAILS</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
             {currentPainting.medium && (
               <View style={styles.detailRow}>
                 <Text style={styles.label}>Medium</Text>
@@ -264,10 +296,15 @@ export function PaintingDetail() {
             )}
           </View>
 
-          {/* Location */}
+          {/* Location Section */}
           {currentPainting.museum && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Location</Text>
+              <View style={styles.sectionHeader}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.sectionTitle}>LOCATION</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
               <Text style={styles.museum}>{currentPainting.museum}</Text>
               {currentPainting.location && (
                 <Text style={styles.location}>{currentPainting.location}</Text>
@@ -285,7 +322,10 @@ export function PaintingDetail() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#f5f3ed', // Cream
+  },
+  scrollView: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
@@ -294,145 +334,238 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     paddingBottom: 12,
     paddingHorizontal: 20,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
+    backgroundColor: '#1a1a1a',
+    borderBottomWidth: 2,
+    borderBottomColor: '#d4af37', // Gold
   },
   backButton: {
     width: 44,
     height: 44,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   backText: {
     fontSize: 28,
-    color: '#1a4d3e',
+    color: '#d4af37',
     fontWeight: '300',
   },
   headerActions: {
     flexDirection: 'row',
-    gap: 12,
+    alignItems: 'center',
+    gap: 8,
   },
-  actionIcon: {
-    opacity: 0.4,
-  },
-  actionIconActive: {
-    opacity: 1,
-  },
-  deleteIcon: {
-    opacity: 0.4,
-  },
-  iconCircle: {
+  actionButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  iconText: {
+  actionButtonActive: {
+    backgroundColor: '#d4af37',
+    borderColor: '#d4af37',
+  },
+  actionText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.5)',
+    textAlign: 'center',
+    lineHeight: 14,
   },
-  iconTextActive: {
-    color: '#1a4d3e',
+  actionTextActive: {
+    color: '#1a1a1a',
+  },
+  dividerVertical: {
+    width: 1,
+    height: 24,
+    backgroundColor: 'rgba(212, 175, 55, 0.3)',
+    marginHorizontal: 4,
+  },
+  deleteButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   deleteText: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '300',
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.5)',
+    lineHeight: 28,
+    textAlign: 'center',
+    marginTop: -4,
   },
-  imageSection: {
-    width: '100%',
-    aspectRatio: 1,
-    backgroundColor: '#fff',
+  gallerySection: {
+    backgroundColor: '#1a1a1a',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+    position: 'relative',
+  },
+  cornerTopLeft: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    zIndex: 10,
+  },
+  cornerTopRight: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    zIndex: 10,
+  },
+  cornerBottomLeft: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    zIndex: 10,
+  },
+  cornerBottomRight: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    zIndex: 10,
+  },
+  cornerOrnament: {
+    fontSize: 16,
+    color: '#d4af37',
+    opacity: 0.6,
   },
   image: {
     width: '100%',
-    height: '100%',
+    aspectRatio: 1,
   },
   loadingContainer: {
-    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    aspectRatio: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 14,
+    color: '#d4af37',
+    letterSpacing: 1,
   },
   errorContainer: {
-    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    aspectRatio: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
   },
   errorText: {
-    fontSize: 14,
-    color: '#999',
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginBottom: 8,
+  },
+  errorSubtext: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.5)',
   },
   placeholderImage: {
-    flex: 1,
+    width: '100%',
+    aspectRatio: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   placeholderText: {
     fontSize: 14,
-    color: 'rgba(0,0,0,0.4)',
+    color: 'rgba(255, 255, 255, 0.5)',
+    letterSpacing: 1,
   },
   quickAddSection: {
     padding: 24,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
+    backgroundColor: '#f5f3ed',
   },
-  quickAddTitle: {
-    fontSize: 12,
+  quickAddDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#d4af37',
+  },
+  dividerText: {
+    fontSize: 11,
     fontWeight: '700',
-    color: '#1a4d3e',
-    letterSpacing: 1,
-    marginBottom: 16,
-    textTransform: 'uppercase',
+    color: '#004d40',
+    letterSpacing: 2,
+    marginHorizontal: 16,
   },
   quickAddRow: {
     flexDirection: 'row',
     gap: 12,
   },
-  quickAddButton: {
+  artDecoButton: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#1a4d3e',
-    borderRadius: 8,
+    paddingVertical: 16,
+    backgroundColor: '#004d40',
+    borderWidth: 2,
+    borderColor: '#d4af37',
     alignItems: 'center',
+    borderRadius: 2,
   },
-  quickAddLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+  artDecoButtonSecondary: {
+    backgroundColor: 'transparent',
+  },
+  artDecoButtonText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#d4af37',
+    letterSpacing: 2,
+  },
+  artDecoButtonTextSecondary: {
+    color: '#004d40',
   },
   infoSection: {
     padding: 24,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f3ed',
     borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
+    borderBottomColor: '#d4af37',
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: '#2c2c2c',
+    marginBottom: 12,
+    lineHeight: 36,
+    textAlign: 'center',
+  },
+  artistRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
     marginBottom: 8,
-    lineHeight: 32,
+  },
+  artistLabel: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
   },
   artist: {
     fontSize: 16,
-    color: '#666',
+    color: '#004d40',
     fontStyle: 'italic',
-    marginBottom: 4,
+    textDecorationLine: 'underline',
   },
   year: {
     fontSize: 14,
     color: '#999',
-    marginBottom: 12,
+    textAlign: 'center',
+    letterSpacing: 2,
+    marginBottom: 16,
   },
   tags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'center',
     gap: 8,
     marginTop: 12,
   },
@@ -440,38 +573,45 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     backgroundColor: '#e8f5e9',
-    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#004d40',
+    borderRadius: 2,
   },
   tagWant: {
     backgroundColor: '#fff3e0',
+    borderColor: '#cd7f32',
   },
   tagPalette: {
-    backgroundColor: '#e3f2fd',
+    backgroundColor: '#fffbeb',
+    borderColor: '#d4af37',
   },
   tagText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#1a4d3e',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#2c2c2c',
+    letterSpacing: 1.5,
   },
   section: {
     padding: 24,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f3ed',
     borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
+    borderBottomColor: '#e0e0e0',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
-    color: '#1a4d3e',
-    letterSpacing: 1,
-    marginBottom: 16,
-    textTransform: 'uppercase',
+    color: '#004d40',
+    letterSpacing: 2,
+    marginHorizontal: 16,
   },
   description: {
     fontSize: 15,
-    color: '#333',
+    color: '#4a4a4a',
     lineHeight: 24,
   },
   detailRow: {
@@ -482,16 +622,16 @@ const styles = StyleSheet.create({
     color: '#999',
     marginBottom: 4,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
   value: {
     fontSize: 15,
-    color: '#1a1a1a',
+    color: '#2c2c2c',
   },
   museum: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: '#2c2c2c',
     marginBottom: 8,
   },
   location: {
