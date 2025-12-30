@@ -6,11 +6,11 @@ import {
   TouchableOpacity,
   Dimensions,
   StatusBar,
-  Image,
   FlatList,
   ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import FastImage from 'react-native-fast-image';
 import { Paths } from '@/navigation/paths';
 import type { Painting } from '@/types/painting';
 import { usePaintings } from '@/contexts/PaintingsContext';
@@ -41,13 +41,15 @@ const PaintingCard = React.memo(({
   >
     <View style={styles.paintingCard}>
       {painting.imageUrl ? (
-        <>
-          <Image
-            source={{ uri: painting.imageUrl }}
-            style={styles.paintingImage}
-            resizeMode="cover"
-          />
-        </>
+        <FastImage
+          source={{
+            uri: painting.thumbnailUrl || painting.imageUrl,
+            priority: FastImage.priority.normal,
+            cache: FastImage.cacheControl.immutable,
+          }}
+          style={styles.paintingImage}
+          resizeMode={FastImage.resizeMode.cover}
+        />
       ) : (
         <View style={[styles.paintingPlaceholder, { backgroundColor: painting.color }]}>
           <View style={styles.artFrame}>
@@ -59,12 +61,12 @@ const PaintingCard = React.memo(({
       {/* Status Badge */}
       {painting.isSeen && (
         <View style={styles.seenBadge}>
-          <Text style={styles.badgeText}>❤️</Text>
+          <Text style={styles.badgeIcon}>♥</Text>
         </View>
       )}
       {painting.wantToVisit && (
         <View style={styles.wantToVisitBadge}>
-          <Text style={styles.badgeText}>⭐</Text>
+          <Text style={styles.badgeIcon}>◆</Text>
         </View>
       )}
     </View>
@@ -502,11 +504,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  paintingPlaceholder: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   artFrame: {
     width: '80%',
     height: '80%',
@@ -552,8 +549,9 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 4,
   },
-  badgeText: {
+  badgeIcon: {
     fontSize: 16,
+    color: '#fff',
   },
   paintingTitle: {
     fontSize: 12,

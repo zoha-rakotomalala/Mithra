@@ -14,5 +14,6 @@ export type RootStackParamList = {
   [Paths.Settings]: undefined;
   [Paths.Search]: undefined;
   [Paths.PaintingDetail]: { painting: Painting };
+  [Paths.ArtistProfile]: { artistName: string };
   Main: undefined;
 };

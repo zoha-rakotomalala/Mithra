@@ -105,7 +105,7 @@ export function PaintingsProvider({ children, storage }: PaintingsProviderProps)
   }, [paintings, palettePaintingIds]);
 
   // Add painting to collection (explicit action)
-  // Defaults to "Want to Visit" state
+  // Can specify initial state
   const addToCollection = useCallback((painting: Painting) => {
     setPaintings(prev => {
       // Check if already exists
@@ -119,12 +119,12 @@ export function PaintingsProvider({ children, storage }: PaintingsProviderProps)
         return prev;
       }
 
-      // Add with metadata - DEFAULT to "Want to Visit"
+      // Add with metadata - preserve any state passed in, or default to Want to Visit
       const newPainting: Painting = {
         ...painting,
-        dateAdded: new Date().toISOString(),
-        isSeen: false,
-        wantToVisit: true, // Default state
+        dateAdded: painting.dateAdded || new Date().toISOString(),
+        isSeen: painting.isSeen || false,
+        wantToVisit: painting.wantToVisit !== undefined ? painting.wantToVisit : true,
       };
 
       return [...prev, newPainting];

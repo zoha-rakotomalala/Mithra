@@ -6,5 +6,6 @@ export const enum Paths {
   Settings = 'settings',
   Search = 'search',
   PaintingDetail = 'paintingDetail',
-  Collection = 'collection'
+  Collection = 'collection',
+  ArtistProfile = 'artistProfile'
 }

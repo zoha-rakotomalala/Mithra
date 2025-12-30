@@ -13,6 +13,7 @@ import {
   FlatList,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import FastImage from 'react-native-fast-image';
 import { searchMetMuseum, searchMetByArtist, getPopularMetArtists } from '@/services/metMuseumService';
 import { usePaintings } from '@/contexts/PaintingsContext';
 import { Paths } from '@/navigation/paths';
@@ -40,10 +41,14 @@ const GridItem = React.memo(({
   >
     <View style={styles.imageContainer}>
       {painting.imageUrl ? (
-        <Image
-          source={{ uri: painting.imageUrl }}
+        <FastImage
+          source={{
+            uri: painting.thumbnailUrl || painting.imageUrl,
+            priority: FastImage.priority.normal,
+            cache: FastImage.cacheControl.immutable,
+          }}
           style={styles.resultImage}
-          resizeMode="cover"
+          resizeMode={FastImage.resizeMode.cover}
         />
       ) : (
         <View style={[styles.placeholderImage, { backgroundColor: painting.color }]}>
@@ -54,10 +59,10 @@ const GridItem = React.memo(({
       {inCollection && collectionStatus && (
         <View style={styles.statusBadge}>
           {collectionStatus.isSeen && (
-            <Text style={styles.statusBadgeText}>❤️</Text>
+            <Text style={styles.statusBadgeHeart}>♥</Text>
           )}
           {collectionStatus.wantToVisit && (
-            <Text style={styles.statusBadgeText}>⭐</Text>
+            <Text style={styles.statusBadgeDiamond}>◆</Text>
           )}
         </View>
       )}
@@ -534,18 +539,23 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    minWidth: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    minWidth: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
     flexDirection: 'row',
-    gap: 2,
+    gap: 4,
   },
-  statusBadgeText: {
-    fontSize: 16,
+  statusBadgeHeart: {
+    fontSize: 18,
+    color: '#e63946',
+  },
+  statusBadgeDiamond: {
+    fontSize: 18,
+    color: '#f59e0b',
   },
   museumBadge: {
     position: 'absolute',

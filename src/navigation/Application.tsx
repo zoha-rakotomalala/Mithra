@@ -9,7 +9,7 @@ import { TabNavigator } from '@/navigation/TabNavigator';
 import { Paths } from '@/navigation/paths';
 import { useTheme } from '@/theme';
 
-import { Example, Startup, Home, Profile, Settings, PaintingDetail } from '@/screens';
+import { Example, Startup, Home, Profile, Settings, PaintingDetail, ArtistProfile } from '@/screens';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -35,6 +35,11 @@ function ApplicationNavigator() {
               name={Paths.PaintingDetail}
               options={{ headerShown: false }}
               />
+            <Stack.Screen
+              component={ArtistProfile}
+              name={Paths.ArtistProfile}
+              options={{ headerShown: false }}
+            />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

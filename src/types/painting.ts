@@ -8,7 +8,8 @@ export type Painting = {
   museum?: string;
   location?: string;
   description?: string;
-  imageUrl?: string;
+  imageUrl?: string;          // Full size image for detail view
+  thumbnailUrl?: string;      // Small thumbnail for lists/grids
   color: string;
 
   // User interaction metadata
