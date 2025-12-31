@@ -14,7 +14,7 @@ import { usePaintings } from '@/contexts/PaintingsContext';
 import type { UserProfile } from '@/types/painting';
 
 const { width } = Dimensions.get('window');
-const CARD_SIZE = (width - 48) / 3;
+const CARD_SIZE = (width - 64) / 3;
 
 export function Profile() {
   const isFocused = useIsFocused();
@@ -22,13 +22,11 @@ export function Profile() {
 
   const [flippedCardId, setFlippedCardId] = useState<number | 'profile' | null>(null);
 
-  // Get the actual paintings in the palette
   const palettePaintings = getPalettePaintings();
 
-  // User profile data
   const userProfile: UserProfile = {
     username: 'artlover',
-    profileColor: '#2d6a4f',
+    profileColor: '#004d40',
     stats: {
       paintings: paintings.length,
       followers: '1.2k',
@@ -36,51 +34,61 @@ export function Profile() {
     },
   };
 
-  // Reset flipped state when leaving the tab
   useEffect(() => {
-    if (!isFocused) {
-      setFlippedCardId(null);
-    }
+    if (!isFocused) setFlippedCardId(null);
   }, [isFocused]);
 
   const handleCardPress = (cardId: number | 'profile') => {
     setFlippedCardId(prev => (prev === cardId ? null : cardId));
   };
 
-  // Grid positions (3x3):
-  // [0] [1] [2]
-  // [3] [P] [4]  <- P = Profile in center
-  // [5] [6] [7]
   const gridPositions = [0, 1, 2, 3, 'profile', 4, 5, 6, 7];
 
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
       <View style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Header */}
+          {/* Art Deco Header */}
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Palette</Text>
-            <View style={styles.brushStroke} />
-            <Text style={styles.headerSubtitle}>Your Top 8 Paintings</Text>
+            <Text style={styles.headerTitle}>PALETTE</Text>
+            <View style={styles.headerDivider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerOrnament}>◆</Text>
+              <View style={styles.dividerLine} />
+            </View>
           </View>
 
-          {/* Info Text */}
+          {/* Stats Bar */}
+          <View style={styles.statsBar}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{palettePaintings.length}</Text>
+              <Text style={styles.statLabel}>IN PALETTE</Text>
+            </View>
+            <View style={styles.statDivider}>
+              <Text style={styles.statDividerText}>·</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{paintings.length}</Text>
+              <Text style={styles.statLabel}>COLLECTED</Text>
+            </View>
+          </View>
+
+          {/* Info */}
           <View style={styles.infoSection}>
             <Text style={styles.infoText}>
               {palettePaintings.length === 0
-                ? '🎨 Your palette is empty. Add paintings from search or your collection!'
+                ? 'Your palette is empty. Add paintings from your collection.'
                 : palettePaintings.length < 8
-                ? `✨ ${8 - palettePaintings.length} more ${8 - palettePaintings.length === 1 ? 'spot' : 'spots'} available in your palette`
-                : '🎨 Your palette is complete! Tap cards to see details, long press to view full info.'}
+                ? `${8 - palettePaintings.length} open spots remain in your palette.`
+                : 'Your palette is complete.'}
             </Text>
           </View>
 
-          {/* 3x3 Grid */}
-          <View style={styles.gridContainer}>
+          {/* Gallery Grid */}
+          <View style={styles.grid}>
             {gridPositions.map((position, index) => {
               if (position === 'profile') {
-                // Center position: Profile Card
                 return (
                   <ProfileCard
                     key="profile"
@@ -91,22 +99,19 @@ export function Profile() {
                 );
               }
 
-              // Get the painting for this position
               const painting = palettePaintings[position as number];
 
               if (!painting) {
-                // Empty slot
                 return (
                   <View key={`empty-${index}`} style={styles.emptySlot}>
-                    <View style={styles.emptySlotInner}>
-                      <Text style={styles.emptySlotIcon}>+</Text>
-                      <Text style={styles.emptySlotText}>Empty</Text>
+                    <View style={styles.emptyFrame}>
+                      <Text style={styles.emptyIcon}>+</Text>
+                      <Text style={styles.emptyText}>EMPTY</Text>
                     </View>
                   </View>
                 );
               }
 
-              // Painting card
               return (
                 <PaintingCard
                   key={painting.id}
@@ -119,28 +124,22 @@ export function Profile() {
           </View>
 
           {/* Instructions */}
-          <View style={styles.instructionsSection}>
-            <Text style={styles.instructionsTitle}>How to use your Palette</Text>
-            <View style={styles.instructionItem}>
-              <Text style={styles.instructionIcon}>👆</Text>
-              <Text style={styles.instructionText}>
-                <Text style={styles.instructionBold}>Tap</Text> any card to flip and see details
-              </Text>
+          <View style={styles.instructions}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.sectionTitle}>HOW IT WORKS</Text>
+              <View style={styles.dividerLine} />
             </View>
-            <View style={styles.instructionItem}>
-              <Text style={styles.instructionIcon}>👇</Text>
-              <Text style={styles.instructionText}>
-                <Text style={styles.instructionBold}>Long press</Text> to view full painting information
-              </Text>
-            </View>
-            <View style={styles.instructionItem}>
-              <Text style={styles.instructionIcon}>⭐</Text>
-              <Text style={styles.instructionText}>
-                Add paintings to your Palette from the{' '}
-                <Text style={styles.instructionBold}>Search</Text> or{' '}
-                <Text style={styles.instructionBold}>Collection</Text> tabs
-              </Text>
-            </View>
+
+            <Text style={styles.instructionText}>
+              Tap a card to flip and preview details.
+            </Text>
+            <Text style={styles.instructionText}>
+              Long press to view the full artwork page.
+            </Text>
+            <Text style={styles.instructionText}>
+              Add paintings from Search or Collection.
+            </Text>
           </View>
 
           <View style={{ height: 40 }} />
@@ -153,116 +152,136 @@ export function Profile() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#f5f3ed',
   },
+
+  /* Header */
   header: {
     paddingTop: 60,
     paddingBottom: 20,
-    paddingHorizontal: 24,
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1a1a',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
+    borderBottomWidth: 2,
+    borderBottomColor: '#d4af37',
   },
   headerTitle: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: '300',
-    letterSpacing: 2,
-    color: '#1a4d3e',
-    fontStyle: 'italic',
+    letterSpacing: 4,
+    color: '#d4af37',
+    marginBottom: 12,
   },
-  brushStroke: {
-    marginTop: 4,
-    width: 100,
-    height: 2,
-    backgroundColor: '#2d6a4f',
-    borderRadius: 2,
-    opacity: 0.6,
-    marginBottom: 8,
+  headerDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '60%',
   },
-  headerSubtitle: {
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#d4af37',
+    opacity: 0.5,
+  },
+  dividerOrnament: {
     fontSize: 12,
-    color: '#666',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
+    color: '#d4af37',
+    marginHorizontal: 12,
   },
+
+  /* Stats */
+  statsBar: {
+    flexDirection: 'row',
+    backgroundColor: '#1a1a1a',
+    paddingVertical: 16,
+    justifyContent: 'space-around',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(212,175,55,0.3)',
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 28,
+    fontWeight: '300',
+    color: '#d4af37',
+  },
+  statLabel: {
+    fontSize: 10,
+    color: 'rgba(212,175,55,0.7)',
+    letterSpacing: 2,
+    marginTop: 4,
+  },
+  statDivider: {
+    justifyContent: 'center',
+  },
+  statDividerText: {
+    fontSize: 24,
+    color: 'rgba(212,175,55,0.3)',
+  },
+
+  /* Info */
   infoSection: {
     padding: 20,
-    backgroundColor: '#f0f7f4',
     borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
+    borderBottomColor: '#e0ddd5',
   },
   infoText: {
-    fontSize: 14,
-    color: '#1a4d3e',
     textAlign: 'center',
-    lineHeight: 20,
+    color: '#004d40',
+    fontSize: 14,
+    letterSpacing: 1,
   },
-  gridContainer: {
+
+  /* Grid */
+  grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    padding: 12,
-    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 20,
   },
   emptySlot: {
     width: CARD_SIZE,
-    height: CARD_SIZE * 1.3,
-    padding: 4,
+    margin: 4,
   },
-  emptySlotInner: {
-    flex: 1,
-    borderRadius: 12,
+  emptyFrame: {
+    aspectRatio: 0.75,
     borderWidth: 2,
-    borderColor: '#E8E8E8',
-    borderStyle: 'dashed',
-    backgroundColor: '#FAFAFA',
+    borderColor: 'rgba(212,175,55,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  emptySlotIcon: {
+  emptyIcon: {
     fontSize: 32,
-    color: '#ccc',
-    marginBottom: 4,
-  },
-  emptySlotText: {
-    fontSize: 11,
     color: '#999',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
-  instructionsSection: {
-    margin: 20,
-    padding: 20,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
+  emptyText: {
+    fontSize: 10,
+    color: '#999',
+    letterSpacing: 1,
+    marginTop: 4,
   },
-  instructionsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1a4d3e',
-    marginBottom: 16,
-    textAlign: 'center',
+
+  /* Instructions */
+  instructions: {
+    padding: 24,
   },
-  instructionItem: {
+  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
-  instructionIcon: {
-    fontSize: 24,
-    marginRight: 12,
-    width: 32,
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#004d40',
+    letterSpacing: 2,
+    marginHorizontal: 16,
   },
   instructionText: {
-    flex: 1,
     fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-  },
-  instructionBold: {
-    fontWeight: '600',
-    color: '#1a4d3e',
+    color: '#4a4a4a',
+    textAlign: 'center',
+    marginBottom: 8,
+    lineHeight: 22,
   },
 });

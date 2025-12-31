@@ -61,12 +61,12 @@ const PaintingCard = React.memo(({
       {/* Status Badge */}
       {painting.isSeen && (
         <View style={styles.seenBadge}>
-          <Text style={styles.badgeIcon}>♥</Text>
+          <Text style={styles.badgeIcon}>S</Text>
         </View>
       )}
       {painting.wantToVisit && (
         <View style={styles.wantToVisitBadge}>
-          <Text style={styles.badgeIcon}>◆</Text>
+          <Text style={styles.badgeIcon}>W</Text>
         </View>
       )}
     </View>
@@ -116,7 +116,6 @@ export function Collection() {
       }));
     }
 
-    // For flat filters, return single section
     let filtered = [...paintings];
 
     switch (activeFilter) {
@@ -157,7 +156,6 @@ export function Collection() {
     navigation.navigate(Paths.PaintingDetail, { painting });
   }, [navigation]);
 
-  // Empty state
   const renderEmpty = () => (
     <View style={styles.emptyState}>
       <Text style={styles.emptyIcon}>🖼️</Text>
@@ -170,29 +168,37 @@ export function Collection() {
 
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
       <View style={styles.container}>
-        {/* Header */}
+        {/* Art Deco Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Collection</Text>
-          <View style={styles.brushStroke} />
+          <Text style={styles.headerTitle}>COLLECTION</Text>
+          <View style={styles.headerDivider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerOrnament}>◆</Text>
+            <View style={styles.dividerLine} />
+          </View>
         </View>
 
-        {/* Stats Bar */}
+        {/* Art Deco Stats Bar */}
         <View style={styles.statsBar}>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{stats.total}</Text>
-            <Text style={styles.statLabel}>Total</Text>
+            <Text style={styles.statLabel}>PAINTINGS</Text>
           </View>
-          <View style={styles.statDivider} />
+          <View style={styles.statDivider}>
+            <Text style={styles.statDividerText}>·</Text>
+          </View>
           <View style={styles.statItem}>
             <Text style={[styles.statNumber, styles.seenNumber]}>{stats.seen}</Text>
-            <Text style={styles.statLabel}>Seen</Text>
+            <Text style={styles.statLabel}>SEEN</Text>
           </View>
-          <View style={styles.statDivider} />
+          <View style={styles.statDivider}>
+            <Text style={styles.statDividerText}>·</Text>
+          </View>
           <View style={styles.statItem}>
             <Text style={[styles.statNumber, styles.wantNumber]}>{stats.wantToVisit}</Text>
-            <Text style={styles.statLabel}>Want to Visit</Text>
+            <Text style={styles.statLabel}>TO VISIT</Text>
           </View>
         </View>
 
@@ -208,11 +214,14 @@ export function Collection() {
               { key: 'wantToVisit', label: 'Want to Visit' },
             ]}
             renderItem={({ item }) => (
-              <FilterChip
-                label={item.label}
-                isActive={activeFilter === item.key}
+              <TouchableOpacity
+                style={[styles.filterChip, activeFilter === item.key && styles.filterChipActive]}
                 onPress={() => setActiveFilter(item.key as FilterType)}
-              />
+              >
+                <Text style={[styles.filterChipText, activeFilter === item.key && styles.filterChipTextActive]}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
             )}
             keyExtractor={item => item.key}
             showsHorizontalScrollIndicator={false}
@@ -223,7 +232,6 @@ export function Collection() {
         {/* Sort Options (only for non-grouped views) */}
         {!isGroupedView && (
           <View style={styles.sortContainer}>
-            <Text style={styles.sortLabel}>Sort by:</Text>
             <FlatList
               horizontal
               data={[
@@ -233,11 +241,14 @@ export function Collection() {
                 { key: 'yearOldest', label: 'Oldest' },
               ]}
               renderItem={({ item }) => (
-                <SortOption
-                  label={item.label}
-                  isActive={sortBy === item.key}
+                <TouchableOpacity
+                  style={[styles.sortOption, sortBy === item.key && styles.sortOptionActive]}
                   onPress={() => setSortBy(item.key as SortType)}
-                />
+                >
+                  <Text style={[styles.sortOptionText, sortBy === item.key && styles.sortOptionTextActive]}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
               )}
               keyExtractor={item => item.key}
               showsHorizontalScrollIndicator={false}
@@ -258,7 +269,7 @@ export function Collection() {
                   <View style={styles.groupHeader}>
                     <Text style={styles.groupTitle}>{section.title}</Text>
                     <Text style={styles.groupCount}>
-                      {section.data.length} {section.data.length === 1 ? 'painting' : 'paintings'}
+                      {section.data.length}
                     </Text>
                   </View>
                   <FlatList
@@ -295,78 +306,60 @@ export function Collection() {
   );
 }
 
-// Filter Chip Component
-function FilterChip({ label, isActive, onPress }: { label: string; isActive: boolean; onPress: () => void }) {
-  return (
-    <TouchableOpacity
-      style={[styles.filterChip, isActive && styles.filterChipActive]}
-      onPress={onPress}
-    >
-      <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-}
-
-// Sort Option Component
-function SortOption({ label, isActive, onPress }: { label: string; isActive: boolean; onPress: () => void }) {
-  return (
-    <TouchableOpacity
-      style={[styles.sortOption, isActive && styles.sortOptionActive]}
-      onPress={onPress}
-    >
-      <Text style={[styles.sortOptionText, isActive && styles.sortOptionTextActive]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#f5f3ed', // Cream
   },
   header: {
     paddingTop: 60,
-    paddingBottom: 16,
+    paddingBottom: 20,
     paddingHorizontal: 24,
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1a1a',
     alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: '#d4af37',
   },
   headerTitle: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: '300',
-    letterSpacing: 2,
-    color: '#1a4d3e',
-    fontStyle: 'italic',
+    letterSpacing: 4,
+    color: '#d4af37',
+    marginBottom: 12,
   },
-  brushStroke: {
-    marginTop: 4,
-    width: 100,
-    height: 2,
-    backgroundColor: '#2d6a4f',
-    borderRadius: 2,
-    opacity: 0.6,
+  headerDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '60%',
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#d4af37',
+    opacity: 0.5,
+  },
+  dividerOrnament: {
+    fontSize: 12,
+    color: '#d4af37',
+    marginHorizontal: 12,
   },
   statsBar: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1a1a',
     paddingVertical: 16,
     paddingHorizontal: 24,
     justifyContent: 'space-around',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
+    borderBottomColor: 'rgba(212, 175, 55, 0.3)',
   },
   statItem: {
     alignItems: 'center',
   },
   statNumber: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1a1a1a',
+    fontSize: 28,
+    fontWeight: '300',
+    color: '#d4af37',
   },
   seenNumber: {
     color: '#e63946',
@@ -375,22 +368,23 @@ const styles = StyleSheet.create({
     color: '#f59e0b',
   },
   statLabel: {
-    fontSize: 11,
-    color: '#666',
+    fontSize: 10,
+    color: 'rgba(212, 175, 55, 0.7)',
     marginTop: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 2,
   },
   statDivider: {
-    width: 1,
-    height: 30,
-    backgroundColor: '#E8E8E8',
+    justifyContent: 'center',
+  },
+  statDividerText: {
+    fontSize: 24,
+    color: 'rgba(212, 175, 55, 0.3)',
   },
   filtersSection: {
     paddingVertical: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f3ed',
     borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
+    borderBottomColor: '#e0ddd5',
   },
   filtersContent: {
     paddingHorizontal: 20,
@@ -399,37 +393,31 @@ const styles = StyleSheet.create({
   filterChip: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#fff',
+    borderRadius: 2,
+    backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#E8E8E8',
+    borderColor: '#004d40',
     marginRight: 8,
   },
   filterChipActive: {
-    backgroundColor: '#1a4d3e',
-    borderColor: '#1a4d3e',
+    backgroundColor: '#004d40',
+    borderColor: '#d4af37',
   },
   filterChipText: {
-    fontSize: 13,
-    color: '#666',
-    fontWeight: '500',
+    fontSize: 11,
+    color: '#004d40',
+    fontWeight: '600',
+    letterSpacing: 1,
   },
   filterChipTextActive: {
-    color: '#fff',
+    color: '#d4af37',
   },
   sortContainer: {
     paddingHorizontal: 20,
     paddingVertical: 12,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f3ed',
     borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
-  },
-  sortLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    borderBottomColor: '#e0ddd5',
   },
   sortOptions: {
     gap: 8,
@@ -437,20 +425,24 @@ const styles = StyleSheet.create({
   sortOption: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 6,
-    backgroundColor: '#f0f0f0',
+    borderRadius: 2,
+    backgroundColor: 'transparent',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
     marginRight: 8,
   },
   sortOptionActive: {
-    backgroundColor: '#2d6a4f',
+    borderBottomColor: '#d4af37',
   },
   sortOptionText: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#666',
     fontWeight: '500',
+    letterSpacing: 1,
   },
   sortOptionTextActive: {
-    color: '#fff',
+    color: '#004d40',
+    fontWeight: '700',
   },
   groupSection: {
     marginBottom: 24,
@@ -461,16 +453,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#f0f7f4',
+    backgroundColor: 'rgba(0, 77, 64, 0.05)',
+    borderLeftWidth: 4,
+    borderLeftColor: '#d4af37',
   },
   groupTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a4d3e',
+    color: '#004d40',
+    letterSpacing: 0.5,
   },
   groupCount: {
     fontSize: 12,
     color: '#666',
+    letterSpacing: 1,
   },
   horizontalList: {
     paddingHorizontal: 16,
@@ -490,10 +486,12 @@ const styles = StyleSheet.create({
   paintingCard: {
     width: '100%',
     aspectRatio: 0.75,
-    borderRadius: 12,
+    borderRadius: 2,
     position: 'relative',
     overflow: 'hidden',
     backgroundColor: '#f0f0f0',
+    borderWidth: 2,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -504,12 +502,17 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  paintingPlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   artFrame: {
     width: '80%',
     height: '80%',
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 6,
+    borderRadius: 2,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -521,9 +524,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: 'rgba(230, 57, 70, 0.95)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -537,9 +540,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: 'rgba(245, 158, 11, 0.95)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -550,16 +553,16 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   badgeIcon: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#fff',
-    fontWeight: '600',
+    fontWeight: '700',
     textAlign: 'center',
-    lineHeight: 14, // Add this for vertical centering
+    lineHeight: 12,
   },
   paintingTitle: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: '#2c2c2c',
     marginTop: 8,
     lineHeight: 16,
   },
@@ -570,9 +573,10 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   paintingYear: {
-    fontSize: 10,
+    fontSize: 9,
     color: '#999',
     marginTop: 2,
+    letterSpacing: 0.5,
   },
   emptyState: {
     flex: 1,
@@ -583,12 +587,14 @@ const styles = StyleSheet.create({
   emptyIcon: {
     fontSize: 64,
     marginBottom: 16,
+    opacity: 0.5,
   },
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#1a4d3e',
+    color: '#004d40',
     marginBottom: 12,
+    letterSpacing: 1,
   },
   emptyText: {
     fontSize: 14,

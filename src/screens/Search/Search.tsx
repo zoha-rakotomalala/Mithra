@@ -6,14 +6,13 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Image,
   StatusBar,
   Dimensions,
   Alert,
   FlatList,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import FastImage from 'react-native-fast-image'; // Added this import
+import FastImage from 'react-native-fast-image';
 import { searchMetMuseum, searchMetByArtist, getPopularMetArtists } from '@/services/metMuseumService';
 import { usePaintings } from '@/contexts/PaintingsContext';
 import { Paths } from '@/navigation/paths';
@@ -22,7 +21,6 @@ import type { Painting } from '@/types/painting';
 const { width } = Dimensions.get('window');
 const CARD_SIZE = (width - 48) / 3;
 
-// Memoized grid item component for performance
 const GridItem = React.memo(({
   painting,
   onPress,
@@ -63,37 +61,37 @@ const GridItem = React.memo(({
             />
           </>
         ) : (
-        <View style={[styles.placeholderImage, { backgroundColor: painting.color }]}>
-          <Text style={styles.placeholderIcon}>🎨</Text>
-        </View>
-      )}
+          <View style={[styles.placeholderImage, { backgroundColor: painting.color }]}>
+            <Text style={styles.placeholderIcon}>🎨</Text>
+          </View>
+        )}
 
-      {inCollection && collectionStatus && (
-        <View style={styles.statusBadge}>
-          {collectionStatus.isSeen && (
-            <Text style={styles.statusBadgeHeart}>♥</Text>
-          )}
-          {collectionStatus.wantToVisit && (
-            <Text style={styles.statusBadgeDiamond}>◆</Text>
-          )}
-        </View>
-      )}
+        {inCollection && collectionStatus && (
+          <View style={styles.statusBadge}>
+            {collectionStatus.isSeen && (
+              <Text style={styles.badgeTextSeen}>S</Text>
+            )}
+            {collectionStatus.wantToVisit && (
+              <Text style={styles.badgeTextWant}>W</Text>
+            )}
+          </View>
+        )}
 
-      <View style={styles.museumBadge}>
-        <Text style={styles.museumBadgeText}>MET</Text>
+        <View style={styles.museumBadge}>
+          <Text style={styles.museumBadgeText}>MET</Text>
+        </View>
       </View>
-    </View>
 
-    <Text style={styles.resultTitle} numberOfLines={2}>
-      {painting.title}
-    </Text>
-    <Text style={styles.resultArtist} numberOfLines={1}>
-      {painting.artist}
-    </Text>
-    {painting.year && (
-      <Text style={styles.resultYear}>{painting.year}</Text>
-    )}
-  </TouchableOpacity>
+      <Text style={styles.resultTitle} numberOfLines={2}>
+        {painting.title}
+      </Text>
+      <Text style={styles.resultArtist} numberOfLines={1}>
+        {painting.artist}
+      </Text>
+      {painting.year && (
+        <Text style={styles.resultYear}>{painting.year}</Text>
+      )}
+    </TouchableOpacity>
   );
 });
 
@@ -170,8 +168,7 @@ export function Search() {
     } : { inCollection: false };
   }, [existingPaintings]);
 
-  // Render item for FlatList (3 columns)
-  const renderItem = useCallback(({ item, index }: { item: Painting; index: number }) => {
+  const renderItem = useCallback(({ item }: { item: Painting }) => {
     const collectionInfo = isAlreadyInCollection(item);
     return (
       <GridItem
@@ -183,31 +180,26 @@ export function Search() {
     );
   }, [handlePaintingPress, isAlreadyInCollection]);
 
-  // Key extractor
   const keyExtractor = useCallback((item: Painting) => `painting-${item.id}`, []);
-
-  // Calculate item layout (fixed size optimization)
-  const getItemLayout = useCallback((data: any, index: number) => ({
-    length: CARD_SIZE + 20, // height + marginBottom
-    offset: (CARD_SIZE + 20) * Math.floor(index / 3),
-    index,
-  }), []);
 
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
       <View style={styles.container}>
-        {/* Header */}
+        {/* Art Deco Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Search Art</Text>
-          <View style={styles.brushStroke} />
+          <Text style={styles.headerTitle}>SEARCH ART</Text>
+          <View style={styles.headerDivider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerOrnament}>◆</Text>
+            <View style={styles.dividerLine} />
+          </View>
           <Text style={styles.headerSubtitle}>The Metropolitan Museum</Text>
         </View>
 
-        {/* Search Bar - Fixed at top */}
+        {/* Search Bar */}
         <View style={styles.searchSection}>
           <View style={styles.searchBar}>
-            <Text style={styles.searchIcon}>🔍</Text>
             <TextInput
               style={styles.searchInput}
               placeholder="Artist or painting name..."
@@ -228,7 +220,7 @@ export function Search() {
                 }}
                 style={styles.clearButton}
               >
-                <Text style={styles.clearButtonText}>✕</Text>
+                <Text style={styles.clearButtonText}>×</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -239,7 +231,7 @@ export function Search() {
             disabled={!searchQuery.trim() || isLoading}
           >
             <Text style={styles.searchButtonText}>
-              {isLoading ? 'Searching Met Museum...' : 'Search'}
+              {isLoading ? 'SEARCHING...' : 'SEARCH'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -252,24 +244,20 @@ export function Search() {
           numColumns={3}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.flatListContent}
-          // Performance optimizations
           removeClippedSubviews={true}
           maxToRenderPerBatch={15}
           updateCellsBatchingPeriod={50}
           initialNumToRender={15}
           windowSize={7}
-          // Separator
-          ItemSeparatorComponent={() => <View style={{ height: 4 }} />}
-          // Header
           ListHeaderComponent={() => (
             <>
-              {/* Popular Artists - only when not searched */}
               {!hasSearched && (
                 <View style={styles.popularSection}>
-                  <Text style={styles.sectionTitle}>🏛️ FEATURED ARTISTS</Text>
-                  <Text style={styles.sectionSubtitle}>
-                    Explore works from The Met's collection
-                  </Text>
+                  <View style={styles.sectionDivider}>
+                    <View style={styles.dividerLine} />
+                    <Text style={styles.sectionTitle}>FEATURED ARTISTS</Text>
+                    <View style={styles.dividerLine} />
+                  </View>
                   <FlatList
                     horizontal
                     data={getPopularMetArtists()}
@@ -288,51 +276,43 @@ export function Search() {
                 </View>
               )}
 
-              {/* Info Banner */}
               {!hasSearched && (
                 <View style={styles.infoBanner}>
-                  <Text style={styles.infoBannerIcon}>🏛️</Text>
-                  <View style={styles.infoBannerText}>
-                    <Text style={styles.infoBannerTitle}>The Met Collection</Text>
-                    <Text style={styles.infoBannerSubtitle}>
-                      Search 470,000+ artworks from one of the world's greatest museums
+                  <Text style={styles.infoBannerTitle}>470,000+ artworks await</Text>
+                  <Text style={styles.infoBannerText}>
+                    Search The Met's collection of European and American masterpieces
+                  </Text>
+                </View>
+              )}
+
+              {isLoading && (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#d4af37" />
+                  <Text style={styles.loadingText}>Searching collection...</Text>
+                </View>
+              )}
+
+              {!isLoading && hasSearched && searchResults.length > 0 && (
+                <View style={styles.resultsHeader}>
+                  <View style={styles.sectionDivider}>
+                    <View style={styles.dividerLine} />
+                    <Text style={styles.resultsTitle}>
+                      {searchResults.length} {searchResults.length === 1 ? 'PAINTING' : 'PAINTINGS'}
                     </Text>
+                    <View style={styles.dividerLine} />
                   </View>
                 </View>
               )}
-
-              {/* Loading State */}
-              {isLoading && (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="large" color="#2d6a4f" />
-                  <Text style={styles.loadingText}>Searching The Met's collection...</Text>
-                  <Text style={styles.loadingSubtext}>Finding paintings with images...</Text>
-                </View>
-              )}
-
-              {/* Results Title */}
-              {!isLoading && hasSearched && searchResults.length > 0 && (
-                <Text style={styles.resultsTitle}>
-                  {searchResults.length} {searchResults.length === 1 ? 'Painting' : 'Paintings'} Found
-                </Text>
-              )}
             </>
           )}
-          // Empty state
           ListEmptyComponent={() => (
             !isLoading && !hasSearched ? (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyIcon}>🖼️</Text>
-                <Text style={styles.emptyTitle}>Discover Masterpieces</Text>
+                <Text style={styles.emptyTitle}>Begin Your Search</Text>
                 <Text style={styles.emptyText}>
-                  Search The Metropolitan Museum's collection of European and American paintings, spanning from the Renaissance to Modern art.
+                  Explore paintings by artist, title, or movement
                 </Text>
-                <View style={styles.exampleSearches}>
-                  <Text style={styles.exampleTitle}>Popular searches:</Text>
-                  <Text style={styles.exampleText}>
-                    "Van Gogh", "Monet", "Rembrandt", "Renaissance", "Impressionism"
-                  </Text>
-                </View>
               </View>
             ) : null
           )}
@@ -345,83 +325,93 @@ export function Search() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#f5f3ed',
   },
   header: {
     paddingTop: 60,
     paddingBottom: 16,
     paddingHorizontal: 24,
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1a1a',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
+    borderBottomWidth: 2,
+    borderBottomColor: '#d4af37',
   },
   headerTitle: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: '300',
-    letterSpacing: 2,
-    color: '#1a4d3e',
-    fontStyle: 'italic',
+    letterSpacing: 4,
+    color: '#d4af37',
+    marginBottom: 12,
   },
-  brushStroke: {
-    marginTop: 4,
-    width: 100,
-    height: 2,
-    backgroundColor: '#2d6a4f',
-    borderRadius: 2,
-    opacity: 0.6,
-    marginBottom: 8,
+  headerDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '60%',
+    marginBottom: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#d4af37',
+    opacity: 0.5,
+  },
+  dividerOrnament: {
+    fontSize: 12,
+    color: '#d4af37',
+    marginHorizontal: 12,
   },
   headerSubtitle: {
-    fontSize: 12,
-    color: '#666',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
+    fontSize: 10,
+    color: 'rgba(212, 175, 55, 0.7)',
+    letterSpacing: 2,
   },
   searchSection: {
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f3ed',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0ddd5',
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
+    backgroundColor: '#fff',
+    borderRadius: 2,
     paddingHorizontal: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-  },
-  searchIcon: {
-    fontSize: 20,
-    marginRight: 8,
+    borderWidth: 2,
+    borderColor: '#004d40',
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
     paddingVertical: 14,
-    color: '#1a1a1a',
+    color: '#2c2c2c',
   },
   clearButton: {
     padding: 4,
   },
   clearButtonText: {
-    fontSize: 18,
+    fontSize: 24,
     color: '#999',
+    fontWeight: '300',
   },
   searchButton: {
-    backgroundColor: '#2d6a4f',
+    backgroundColor: '#004d40',
     padding: 14,
-    borderRadius: 12,
+    borderRadius: 2,
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#d4af37',
   },
   searchButtonDisabled: {
     backgroundColor: '#ccc',
+    borderColor: '#999',
   },
   searchButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: '#d4af37',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 2,
   },
   flatListContent: {
     paddingHorizontal: 16,
@@ -429,62 +419,56 @@ const styles = StyleSheet.create({
   popularSection: {
     paddingVertical: 20,
   },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#666',
-    letterSpacing: 1,
-    marginBottom: 4,
+  sectionDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
   },
-  sectionSubtitle: {
+  sectionTitle: {
     fontSize: 11,
-    color: '#999',
-    marginBottom: 12,
+    fontWeight: '700',
+    color: '#004d40',
+    letterSpacing: 2,
+    marginHorizontal: 12,
   },
   artistChips: {
     gap: 8,
     paddingRight: 20,
   },
   artistChip: {
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: 2,
     borderWidth: 1,
-    borderColor: '#2d6a4f',
+    borderColor: '#004d40',
     marginRight: 8,
   },
   artistChipText: {
-    fontSize: 14,
-    color: '#1a4d3e',
-    fontWeight: '500',
+    fontSize: 11,
+    color: '#004d40',
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
   infoBanner: {
-    flexDirection: 'row',
-    backgroundColor: '#f0f7f4',
-    padding: 16,
-    borderRadius: 12,
+    backgroundColor: 'rgba(0, 77, 64, 0.05)',
+    padding: 20,
+    borderRadius: 2,
     marginBottom: 20,
     borderLeftWidth: 4,
-    borderLeftColor: '#2d6a4f',
-  },
-  infoBannerIcon: {
-    fontSize: 32,
-    marginRight: 12,
-  },
-  infoBannerText: {
-    flex: 1,
+    borderLeftColor: '#d4af37',
   },
   infoBannerTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1a4d3e',
-    marginBottom: 4,
+    color: '#004d40',
+    marginBottom: 8,
+    letterSpacing: 0.5,
   },
-  infoBannerSubtitle: {
-    fontSize: 12,
+  infoBannerText: {
+    fontSize: 13,
     color: '#666',
-    lineHeight: 18,
+    lineHeight: 20,
   },
   loadingContainer: {
     paddingVertical: 60,
@@ -492,20 +476,20 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-  },
-  loadingSubtext: {
-    marginTop: 4,
     fontSize: 12,
-    color: '#999',
+    fontWeight: '600',
+    color: '#d4af37',
+    letterSpacing: 1,
+  },
+  resultsHeader: {
+    marginBottom: 16,
   },
   resultsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1a4d3e',
-    marginBottom: 16,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#004d40',
+    letterSpacing: 2,
+    marginHorizontal: 12,
   },
   resultCard: {
     width: CARD_SIZE,
@@ -521,62 +505,55 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: 2,
     zIndex: 10,
   },
   resultImage: {
     width: '100%',
     aspectRatio: 1,
-    borderRadius: 12,
+    borderRadius: 2,
     backgroundColor: '#f0f0f0',
+    borderWidth: 2,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
   },
   placeholderImage: {
     width: '100%',
     aspectRatio: 1,
-    borderRadius: 12,
+    borderRadius: 2,
     justifyContent: 'center',
     alignItems: 'center',
   },
   placeholderIcon: {
     fontSize: 40,
   },
-  inCollectionBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  inCollectionText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   statusBadge: {
     position: 'absolute',
     top: 8,
     right: 8,
-    minWidth: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 8,
     flexDirection: 'row',
     gap: 4,
   },
-  statusBadgeHeart: {
-    fontSize: 18,
-    color: '#e63946',
+  badgeTextSeen: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(230, 57, 70, 0.95)',
+    fontSize: 12,
+    color: '#fff',
+    fontWeight: '700',
+    textAlign: 'center',
+    lineHeight: 24,
   },
-  statusBadgeDiamond: {
-    fontSize: 18,
-    color: '#f59e0b',
+  badgeTextWant: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(245, 158, 11, 0.95)',
+    fontSize: 12,
+    color: '#fff',
+    fontWeight: '700',
+    textAlign: 'center',
+    lineHeight: 24,
   },
   museumBadge: {
     position: 'absolute',
@@ -584,19 +561,19 @@ const styles = StyleSheet.create({
     left: 8,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 2,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
   museumBadgeText: {
-    color: '#fff',
-    fontSize: 10,
+    color: '#d4af37',
+    fontSize: 9,
     fontWeight: '700',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
   resultTitle: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: '#2c2c2c',
     lineHeight: 16,
     marginBottom: 4,
   },
@@ -607,49 +584,31 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   resultYear: {
-    fontSize: 10,
+    fontSize: 9,
     color: '#999',
+    letterSpacing: 0.5,
   },
   emptyState: {
-    paddingVertical: 60,
+    paddingVertical: 80,
     paddingHorizontal: 40,
     alignItems: 'center',
   },
   emptyIcon: {
     fontSize: 64,
     marginBottom: 16,
+    opacity: 0.5,
   },
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#1a4d3e',
+    color: '#004d40',
     marginBottom: 12,
-    textAlign: 'center',
+    letterSpacing: 1,
   },
   emptyText: {
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 24,
-  },
-  exampleSearches: {
-    backgroundColor: '#f8f8f8',
-    padding: 16,
-    borderRadius: 12,
-    width: '100%',
-  },
-  exampleTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  exampleText: {
-    fontSize: 13,
-    color: '#999',
     lineHeight: 20,
   },
 });

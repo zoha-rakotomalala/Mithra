@@ -10,8 +10,8 @@ import {
 import type { UserProfile } from '@/types/painting';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = (width - 48) / 3;
-const CARD_HEIGHT = CARD_WIDTH * 1.3; // Match PaintingCard dimensions
+const CARD_WIDTH = (width - 64) / 3;
+const CARD_HEIGHT = CARD_WIDTH * 1.3;
 
 type ProfileCardProps = {
   profile: UserProfile;
@@ -52,39 +52,35 @@ export function ProfileCard({ profile, isFlipped, onPress }: ProfileCardProps) {
   });
 
   return (
-    <TouchableOpacity
-      style={styles.container}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
+    <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.cardContainer}>
-        {/* Front Side */}
+        {/* FRONT */}
         <Animated.View
           style={[
             styles.flipCard,
-            styles.flipCardFront,
             {
               opacity: frontOpacity,
               transform: [{ rotateY: frontInterpolate }],
             },
           ]}
         >
-          <View style={styles.profileFront}>
+          <View style={styles.frontInner}>
             <View
               style={[
-                styles.profileImage,
+                styles.initialCircle,
                 { backgroundColor: profile.profileColor },
               ]}
             >
-              <Text style={styles.profileInitial}>
+              <Text style={styles.initial}>
                 {profile.username.charAt(0).toUpperCase()}
               </Text>
-              <View style={styles.profileRing} />
             </View>
+
+            <Text style={styles.frontLabel}>CURATOR</Text>
           </View>
         </Animated.View>
 
-        {/* Back Side */}
+        {/* BACK */}
         <Animated.View
           style={[
             styles.flipCard,
@@ -95,22 +91,21 @@ export function ProfileCard({ profile, isFlipped, onPress }: ProfileCardProps) {
             },
           ]}
         >
-          <View style={styles.cardBack}>
-            <View style={styles.infoContainer}>
-              <Text style={styles.username} numberOfLines={1}>
-                {profile.username}
-              </Text>
-              <View style={styles.statsDivider} />
-              <View style={styles.statsContainer}>
-                <View style={styles.stat}>
-                  <Text style={styles.statNumber}>{profile.stats.paintings}</Text>
-                  <Text style={styles.statLabel}>Paintings</Text>
-                </View>
-                <View style={styles.stat}>
-                  <Text style={styles.statNumber}>{profile.stats.followers}</Text>
-                  <Text style={styles.statLabel}>Followers</Text>
-                </View>
-              </View>
+          <View style={styles.backInner}>
+            <Text style={styles.username} numberOfLines={1}>
+              {profile.username.toUpperCase()}
+            </Text>
+
+            <View style={styles.divider} />
+
+            <View style={styles.statBlock}>
+              <Text style={styles.statNumber}>{profile.stats.paintings}</Text>
+              <Text style={styles.statLabel}>PAINTINGS</Text>
+            </View>
+
+            <View style={styles.statBlock}>
+              <Text style={styles.statNumber}>{profile.stats.followers}</Text>
+              <Text style={styles.statLabel}>FOLLOWERS</Text>
             </View>
           </View>
         </Animated.View>
@@ -123,116 +118,87 @@ const styles = StyleSheet.create({
   container: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
-    padding: 4,
+    margin: 4,
   },
   cardContainer: {
     flex: 1,
-    position: 'relative',
   },
   flipCard: {
     position: 'absolute',
     width: '100%',
     height: '100%',
-    borderRadius: 12,
     backfaceVisibility: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  flipCardFront: {
-    backgroundColor: '#FAFAFA',
+    borderWidth: 2,
+    borderColor: 'rgba(212,175,55,0.35)',
+    backgroundColor: '#f5f3ed',
   },
   flipCardBack: {
-    backgroundColor: '#2d6a4f',
+    backgroundColor: '#1a1a1a',
   },
-  profileFront: {
+
+  /* FRONT */
+  frontInner: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FAFAFA',
-    borderRadius: 12,
-    overflow: 'hidden',
   },
-  profileImage: {
-    width: CARD_WIDTH * 0.65,
-    height: CARD_WIDTH * 0.65,
-    borderRadius: (CARD_WIDTH * 0.65) / 2,
+  initialCircle: {
+    width: CARD_WIDTH * 0.6,
+    height: CARD_WIDTH * 0.6,
+    borderRadius: CARD_WIDTH * 0.3,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-    elevation: 8,
-    position: 'relative',
-  },
-  profileRing: {
-    position: 'absolute',
-    width: CARD_WIDTH * 0.7,
-    height: CARD_WIDTH * 0.7,
-    borderRadius: (CARD_WIDTH * 0.7) / 2,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
+    borderColor: '#d4af37',
+    marginBottom: 12,
   },
-  profileInitial: {
+  initial: {
     fontSize: 40,
     fontWeight: '300',
     color: '#fff',
-    letterSpacing: 1,
+    letterSpacing: 2,
   },
-  cardBack: {
+  frontLabel: {
+    fontSize: 10,
+    letterSpacing: 2,
+    color: '#004d40',
+    fontWeight: '700',
+  },
+
+  /* BACK */
+  backInner: {
     flex: 1,
-    backgroundColor: '#2d6a4f',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 12,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  infoContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
   },
   username: {
-    fontSize: 15,
+    fontSize: 12,
+    letterSpacing: 2,
+    color: '#d4af37',
+    marginBottom: 12,
     fontWeight: '600',
-    color: '#fff',
-    marginBottom: 10,
-    letterSpacing: 0.5,
+    textAlign: 'center',
   },
-  statsDivider: {
+  divider: {
     width: 40,
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    marginBottom: 12,
+    backgroundColor: 'rgba(212,175,55,0.5)',
+    marginBottom: 16,
   },
-  statsContainer: {
-    width: '100%',
+  statBlock: {
     alignItems: 'center',
-  },
-  stat: {
-    alignItems: 'center',
-    marginVertical: 4,
+    marginBottom: 10,
   },
   statNumber: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '300',
     color: '#fff',
-    marginBottom: 2,
   },
   statLabel: {
-    fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.85)',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontSize: 9,
+    letterSpacing: 2,
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: 2,
   },
 });

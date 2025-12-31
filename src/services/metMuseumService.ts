@@ -1,14 +1,11 @@
 import type { Painting } from '@/types/painting';
 
 const MET_API_BASE = 'https://collectionapi.metmuseum.org/public/collection/v1';
-
-// Cache for object details
 const objectCache = new Map<string, any>();
 
 export interface MetSearchParams {
   query: string;
   hasImages?: boolean;
-  departmentId?: number;
 }
 
 export interface MetSearchResult {
@@ -18,8 +15,6 @@ export interface MetSearchResult {
 
 /**
  * Search Met Museum collection
- * @param params Search parameters
- * @returns Array of paintings with complete metadata and images
  */
 export async function searchMetMuseum(
   params: MetSearchParams
@@ -31,16 +26,12 @@ export async function searchMetMuseum(
       return { paintings: [], totalResults: 0 };
     }
 
-    // Build query string
     const queryParams = new URLSearchParams({
       q: query.trim(),
       hasImages: hasImages.toString(),
     });
 
-    // Add department filter for paintings (European Paintings = 11, American Paintings = 1)
-    // Search across multiple painting departments
     const searchUrl = `${MET_API_BASE}/search?${queryParams.toString()}`;
-
     console.log('🏛️ Searching Met Museum:', searchUrl);
 
     const response = await fetch(searchUrl);
@@ -50,8 +41,6 @@ export async function searchMetMuseum(
     }
 
     const data = await response.json();
-
-    // Extract object IDs
     const objectIDs = data.objectIDs || [];
     const total = data.total || 0;
 
@@ -59,11 +48,11 @@ export async function searchMetMuseum(
       return { paintings: [], totalResults: 0 };
     }
 
-    // Fetch details for first 30 objects (to find ~20 paintings)
+    // Fetch details for first 40 objects
     const objectsToFetch = objectIDs.slice(0, 40);
     const paintings = await fetchObjectDetails(objectsToFetch);
 
-    // Filter to only paintings and remove duplicates
+    // Filter to paintings only, remove nulls
     const paintingsOnly = paintings
       .filter(p => p !== null && isPainting(p))
       .slice(0, 30) as Painting[];
@@ -94,7 +83,6 @@ export async function searchMetByArtist(
  * Fetch details for multiple object IDs
  */
 async function fetchObjectDetails(objectIDs: number[]): Promise<(Painting | null)[]> {
-  // Fetch in parallel but limit concurrency
   const BATCH_SIZE = 10;
   const results: (Painting | null)[] = [];
 
@@ -114,7 +102,6 @@ async function fetchObjectDetails(objectIDs: number[]): Promise<(Painting | null
  */
 async function fetchObjectDetail(objectID: number): Promise<Painting | null> {
   try {
-    // Check cache first
     const cacheKey = objectID.toString();
     if (objectCache.has(cacheKey)) {
       return parseMetObject(objectCache.get(cacheKey), objectID);
@@ -129,8 +116,6 @@ async function fetchObjectDetail(objectID: number): Promise<Painting | null> {
     }
 
     const data = await response.json();
-
-    // Cache the result
     objectCache.set(cacheKey, data);
 
     return parseMetObject(data, objectID);
@@ -161,22 +146,23 @@ function isPainting(data: any): boolean {
 
 /**
  * Parse Met Museum object into Painting format
+ * IMPROVED: Smart image URL handling with fallbacks
  */
 function parseMetObject(data: any, objectID: number): Painting | null {
   try {
     const title = data.title || 'Untitled';
     const artist = extractArtist(data);
     const year = extractYear(data);
-    const imageUrl = extractImage(data);
+
+    // SMART IMAGE EXTRACTION
+    const images = extractImages(data);
+    if (!images) {
+      return null; // Skip if no images at all
+    }
+
     const dimensions = data.dimensions || undefined;
     const medium = data.medium || undefined;
     const description = extractDescription(data);
-    const department = data.department || undefined;
-
-    // Skip if missing essential data
-    if (!title || !imageUrl) {
-      return null;
-    }
 
     return {
       id: objectID,
@@ -188,10 +174,11 @@ function parseMetObject(data: any, objectID: number): Painting | null {
       museum: 'Metropolitan Museum of Art',
       location: 'New York City, USA',
       description,
-      imageUrl,
+      imageUrl: images.full,        // Full resolution for detail view
+      thumbnailUrl: images.thumbnail, // Small for lists/grids
       color: generateColorFromString(title),
       isSeen: false,
-      isInPalette: false,
+      wantToVisit: false,
     };
   } catch (error) {
     console.error('Error parsing Met object:', error);
@@ -200,10 +187,50 @@ function parseMetObject(data: any, objectID: number): Painting | null {
 }
 
 /**
+ * SMART IMAGE EXTRACTION
+ * Returns both full and thumbnail URLs with proper fallbacks
+ */
+function extractImages(data: any): { full: string; thumbnail: string } | null {
+  let full = '';
+  let thumbnail = '';
+
+  // Primary image (best quality)
+  if (data.primaryImage && data.primaryImage !== '') {
+    full = data.primaryImage;
+  }
+
+  // Primary image small (thumbnail)
+  if (data.primaryImageSmall && data.primaryImageSmall !== '') {
+    thumbnail = data.primaryImageSmall;
+  }
+
+  // Fallback to additional images if no primary
+  if (!full && data.additionalImages && data.additionalImages.length > 0) {
+    full = data.additionalImages[0];
+  }
+
+  // If we have full but no thumbnail, use full for both
+  if (full && !thumbnail) {
+    thumbnail = full;
+  }
+
+  // If we have thumbnail but no full, use thumbnail for both
+  if (thumbnail && !full) {
+    full = thumbnail;
+  }
+
+  // Return null if no images at all
+  if (!full && !thumbnail) {
+    return null;
+  }
+
+  return { full, thumbnail };
+}
+
+/**
  * Extract artist name
  */
 function extractArtist(data: any): string {
-  // Try different fields
   if (data.artistDisplayName && data.artistDisplayName !== '') {
     return data.artistDisplayName;
   }
@@ -220,42 +247,17 @@ function extractArtist(data: any): string {
  * Extract creation year
  */
 function extractYear(data: any): number | undefined {
-  // Try objectDate first (most reliable)
   if (data.objectDate) {
     const match = data.objectDate.match(/\d{4}/);
     if (match) return parseInt(match[0]);
   }
 
-  // Try objectBeginDate
   if (data.objectBeginDate && data.objectBeginDate > 0) {
     return data.objectBeginDate;
   }
 
-  // Try objectEndDate
   if (data.objectEndDate && data.objectEndDate > 0) {
     return data.objectEndDate;
-  }
-
-  return undefined;
-}
-
-/**
- * Extract image URL
- */
-function extractImage(data: any): string | undefined {
-  // Primary image is best quality
-  if (data.primaryImage && data.primaryImage !== '') {
-    return data.primaryImage;
-  }
-
-  // Fall back to primaryImageSmall
-  if (data.primaryImageSmall && data.primaryImageSmall !== '') {
-    return data.primaryImageSmall;
-  }
-
-  // Try additionalImages
-  if (data.additionalImages && data.additionalImages.length > 0) {
-    return data.additionalImages[0];
   }
 
   return undefined;
@@ -267,7 +269,6 @@ function extractImage(data: any): string | undefined {
 function extractDescription(data: any): string | undefined {
   const parts: string[] = [];
 
-  // Build description from available metadata
   if (data.objectName && data.objectName !== '') {
     parts.push(data.objectName);
   }
@@ -292,7 +293,7 @@ function extractDescription(data: any): string | undefined {
 }
 
 /**
- * Generate consistent color from string (for placeholders)
+ * Generate consistent color from string
  */
 function generateColorFromString(str: string): string {
   const colors = [
@@ -330,31 +331,4 @@ export function getPopularMetArtists(): string[] {
     'Gustave Courbet',
     'Jean-Baptiste-Camille Corot',
   ];
-}
-
-/**
- * Get departments for filtering (optional future feature)
- */
-export function getMetDepartments() {
-  return {
-    1: 'American Decorative Arts',
-    3: 'Ancient Near Eastern Art',
-    4: 'Arms and Armor',
-    5: 'Arts of Africa, Oceania, and the Americas',
-    6: 'Asian Art',
-    7: 'The Cloisters',
-    8: 'The Costume Institute',
-    9: 'Drawings and Prints',
-    10: 'Egyptian Art',
-    11: 'European Paintings',
-    12: 'European Sculpture and Decorative Arts',
-    13: 'Greek and Roman Art',
-    14: 'Islamic Art',
-    15: 'The Robert Lehman Collection',
-    16: 'The Libraries',
-    17: 'Medieval Art',
-    18: 'Musical Instruments',
-    19: 'Photographs',
-    21: 'Modern Art',
-  };
 }

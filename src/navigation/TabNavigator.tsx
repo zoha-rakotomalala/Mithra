@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, Platform } from 'react-native';
+import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Collection } from '@/screens/Collection/Collection';
@@ -16,19 +16,19 @@ export function TabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: '#1a4d3e',
-        tabBarInactiveTintColor: '#999',
         headerShown: false,
         tabBarStyle: {
+          backgroundColor: '#1a1a1a',
           borderTopWidth: 1,
-          borderTopColor: '#E8E8E8',
-          paddingTop: 8,
-          paddingBottom: Math.max(insets.bottom, 8), // Add safe area padding
-          height: 60 + Math.max(insets.bottom, 0), // Increase height for safe area
-          backgroundColor: '#fff',
+          borderTopColor: 'rgba(212,175,55,0.4)',
+          paddingBottom: Math.max(insets.bottom, 12),
+          height: 64 + insets.bottom,
         },
+        tabBarActiveTintColor: '#d4af37',
+        tabBarInactiveTintColor: 'rgba(255,255,255,0.5)',
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 10,
+          letterSpacing: 2,
           fontWeight: '600',
           marginTop: 4,
         },
@@ -38,9 +38,9 @@ export function TabNavigator() {
         name={Paths.Home}
         component={Collection}
         options={{
-          tabBarLabel: 'Collection',
+          tabBarLabel: 'COLLECTION',
           tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 20, color }}>📚</Text>
+            <Text style={{ color, fontSize: 16 }}>▦</Text>
           ),
         }}
       />
@@ -48,9 +48,9 @@ export function TabNavigator() {
         name={Paths.Search}
         component={Search}
         options={{
-          tabBarLabel: 'Search',
+          tabBarLabel: 'SEARCH',
           tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 20, color }}>🔍</Text>
+            <Text style={{ color, fontSize: 16 }}>⌕</Text>
           ),
         }}
       />
@@ -58,9 +58,9 @@ export function TabNavigator() {
         name={Paths.Profile}
         component={Profile}
         options={{
-          tabBarLabel: 'Palette',
+          tabBarLabel: 'PALETTE',
           tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 20, color }}>🎨</Text>
+            <Text style={{ color, fontSize: 16 }}>◆</Text>
           ),
         }}
       />
@@ -68,9 +68,9 @@ export function TabNavigator() {
         name={Paths.Settings}
         component={Settings}
         options={{
-          tabBarLabel: 'Settings',
+          tabBarLabel: 'SETTINGS',
           tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 20, color }}>⚙️</Text>
+            <Text style={{ color, fontSize: 16 }}>⚙︎</Text>
           ),
         }}
       />
