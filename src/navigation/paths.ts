@@ -4,7 +4,7 @@ export const enum Paths {
   Example = 'example',
   Home = 'home',
   PaintingDetail = 'paintingDetail',
-  Profile = 'profile',
+  Palette = 'palette',
   Search = 'search',
   Settings = 'settings',
   Startup = 'startup'

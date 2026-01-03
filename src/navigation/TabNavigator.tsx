@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Paths } from '@/navigation/paths';
 
 import { Collection } from '@/screens/Collection/Collection';
-import { Profile } from '@/screens/Profile/Profile';
+import { Palette } from '@/screens/Palette/Palette';
 import { Search } from '@/screens/Search/Search';
 import { Settings } from '@/screens/Settings/Settings';
 
@@ -57,8 +57,8 @@ export function TabNavigator() {
         }}
       />
       <Tab.Screen
-        component={Profile}
-        name={Paths.Profile}
+        component={Palette}
+        name={Paths.Palette}
         options={{
           tabBarIcon: ({ color }) => (
             <Text style={{ color, fontSize: 16 }}>◆</Text>

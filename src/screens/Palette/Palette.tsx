@@ -19,7 +19,7 @@ import { usePaintings } from '@/contexts/PaintingsContext';
 const { width } = Dimensions.get('window');
 const CARD_SIZE = (width - 64) / 3;
 
-export function Profile() {
+export function Palette() {
   const isFocused = useIsFocused();
   const { getPalettePaintings, paintings } = usePaintings();
 
