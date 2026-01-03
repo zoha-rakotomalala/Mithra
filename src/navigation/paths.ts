@@ -1,11 +1,11 @@
 export const enum Paths {
-  Example = 'example',
-  Startup = 'startup',
-  Home = 'home',
-  Profile = 'profile',
-  Settings = 'settings',
-  Search = 'search',
-  PaintingDetail = 'paintingDetail',
+  ArtistProfile = 'artistProfile',
   Collection = 'collection',
-  ArtistProfile = 'artistProfile'
+  Example = 'example',
+  Home = 'home',
+  PaintingDetail = 'paintingDetail',
+  Profile = 'profile',
+  Search = 'search',
+  Settings = 'settings',
+  Startup = 'startup'
 }

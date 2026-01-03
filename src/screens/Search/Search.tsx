@@ -1,68 +1,70 @@
-import React, { useState, useCallback } from 'react';
+import type { Painting } from '@/types/painting';
+
+import { useNavigation } from '@react-navigation/native';
+import React, { useCallback, useState } from 'react';
 import {
-  View,
-  Text,
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  FlatList,
+  Modal,
+  ScrollView,
+  StatusBar,
   StyleSheet,
+  Text,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator,
-  StatusBar,
-  Dimensions,
-  Alert,
-  FlatList,
-  ScrollView,
-  Modal,
+  View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import FastImage from 'react-native-fast-image';
-import { searchAllMuseums, getPopularArtistsByMuseums, getMuseumBadgeInfo } from '@/services/unifiedMuseumService';
-import { getAllMuseums, TIER_1_MUSEUMS } from '@/services/museumRegistry';
-import { usePaintings } from '@/contexts/PaintingsContext';
+
 import { Paths } from '@/navigation/paths';
-import type { Painting } from '@/types/painting';
+
 import { MuseumSelector } from '@/components/MuseumSelector';
+
+import { usePaintings } from '@/contexts/PaintingsContext';
+import { getAllMuseums, TIER_1_MUSEUMS } from '@/services/museumRegistry';
+import { getMuseumBadgeInfo, getPopularArtistsByMuseums, searchAllMuseums } from '@/services/unifiedMuseumService';
 
 const { width } = Dimensions.get('window');
 const CARD_SIZE = (width - 48) / 3;
 
 const GridItem = React.memo(({
-  painting,
-  onPress,
+  collectionStatus,
   inCollection,
-  collectionStatus
+  onPress,
+  painting
 }: {
-  painting: Painting;
-  onPress: () => void;
-  inCollection: boolean;
-  collectionStatus?: { isSeen: boolean; wantToVisit: boolean };
+  readonly collectionStatus?: { isSeen: boolean; wantToVisit: boolean };
+  readonly inCollection: boolean;
+  readonly onPress: () => void;
+  readonly painting: Painting;
 }) => {
   const [imageLoading, setImageLoading] = React.useState(true);
   const badgeInfo = getMuseumBadgeInfo(painting);
 
   return (
     <TouchableOpacity
-      style={styles.resultCard}
-      onPress={onPress}
       activeOpacity={0.7}
+      onPress={onPress}
+      style={styles.resultCard}
     >
       <View style={styles.imageContainer}>
         {painting.imageUrl ? (
           <>
-            {imageLoading && (
-              <View style={styles.imageLoadingOverlay}>
-                <ActivityIndicator size="small" color="#d4af37" />
-              </View>
-            )}
+            {imageLoading ? <View style={styles.imageLoadingOverlay}>
+                <ActivityIndicator color="#d4af37" size="small" />
+              </View> : null}
             <FastImage
+              onLoadEnd={() => { setImageLoading(false); }}
+              onLoadStart={() => { setImageLoading(true); }}
+              resizeMode={FastImage.resizeMode.cover}
               source={{
-                uri: painting.thumbnailUrl || painting.imageUrl,
-                priority: FastImage.priority.normal,
                 cache: FastImage.cacheControl.immutable,
+                priority: FastImage.priority.normal,
+                uri: painting.thumbnailUrl || painting.imageUrl,
               }}
               style={styles.resultImage}
-              resizeMode={FastImage.resizeMode.cover}
-              onLoadStart={() => setImageLoading(true)}
-              onLoadEnd={() => setImageLoading(false)}
             />
           </>
         ) : (
@@ -71,31 +73,23 @@ const GridItem = React.memo(({
           </View>
         )}
 
-        {inCollection && collectionStatus && (
-          <View style={styles.statusBadge}>
-            {collectionStatus.isSeen && (
-              <Text style={styles.badgeTextSeen}>S</Text>
-            )}
-            {collectionStatus.wantToVisit && (
-              <Text style={styles.badgeTextWant}>W</Text>
-            )}
-          </View>
-        )}
+        {inCollection && collectionStatus ? <View style={styles.statusBadge}>
+            {collectionStatus.isSeen ? <Text style={styles.badgeTextSeen}>S</Text> : null}
+            {collectionStatus.wantToVisit ? <Text style={styles.badgeTextWant}>W</Text> : null}
+          </View> : null}
 
         <View style={[styles.museumBadge, { backgroundColor: badgeInfo.color }]}>
           <Text style={styles.museumBadgeText}>{badgeInfo.shortName}</Text>
         </View>
       </View>
 
-      <Text style={styles.resultTitle} numberOfLines={2}>
+      <Text numberOfLines={2} style={styles.resultTitle}>
         {painting.title}
       </Text>
-      <Text style={styles.resultArtist} numberOfLines={1}>
+      <Text numberOfLines={1} style={styles.resultArtist}>
         {painting.artist}
       </Text>
-      {painting.year && (
-        <Text style={styles.resultYear}>{painting.year}</Text>
-      )}
+      {painting.year ? <Text style={styles.resultYear}>{painting.year}</Text> : null}
     </TouchableOpacity>
   );
 });
@@ -127,9 +121,9 @@ export function Search() {
 
     try {
       const result = await searchAllMuseums({
-        query: searchQuery,
-        museumIds: selectedMuseums,
         maxResultsPerMuseum: 20,
+        museumIds: selectedMuseums,
+        query: searchQuery,
       });
 
       setSearchResults(result.paintings);
@@ -160,12 +154,12 @@ export function Search() {
 
     try {
       const result = await searchAllMuseums({
-        query: artistName,
-        museumIds: selectedMuseums,
         maxResultsPerMuseum: 20,
+        museumIds: selectedMuseums,
+        query: artistName,
       });
       setSearchResults(result.paintings);
-    } catch (error) {
+    } catch {
       Alert.alert('Search Error', 'Failed to search paintings by artist.');
     } finally {
       setIsLoading(false);
@@ -188,14 +182,14 @@ export function Search() {
     } : { inCollection: false };
   }, [existingPaintings]);
 
-  const renderItem = useCallback(({ item }: { item: Painting }) => {
+  const renderItem = useCallback(({ item }: { readonly item: Painting }) => {
     const collectionInfo = isAlreadyInCollection(item);
     return (
       <GridItem
-        painting={item}
-        onPress={() => handlePaintingPress(item)}
-        inCollection={collectionInfo.inCollection}
         collectionStatus={collectionInfo.status}
+        inCollection={collectionInfo.inCollection}
+        onPress={() => { handlePaintingPress(item); }}
+        painting={item}
       />
     );
   }, [handlePaintingPress, isAlreadyInCollection]);
@@ -206,7 +200,7 @@ export function Search() {
 
   return (
     <>
-      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
+      <StatusBar backgroundColor="#1a1a1a" barStyle="light-content" />
       <View style={styles.container}>
         {/* Art Deco Header */}
         <View style={styles.header}>
@@ -219,15 +213,15 @@ export function Search() {
           <Text style={styles.headerSubtitle}>
             {selectedMuseums.length === allMuseums.length
               ? 'All Museums'
-              : `${selectedMuseums.length} Museum${selectedMuseums.length !== 1 ? 's' : ''} Selected`}
+              : `${selectedMuseums.length} Museum${selectedMuseums.length === 1 ? '' : 's'} Selected`}
           </Text>
         </View>
 
         {/* Museum Selection Button */}
         <View style={styles.filterSection}>
           <TouchableOpacity
+            onPress={() => { setShowMuseumPicker(true); }}
             style={styles.selectMuseumsButton}
-            onPress={() => setShowMuseumPicker(true)}
           >
             <View style={styles.selectMuseumsButtonContent}>
               <View>
@@ -245,15 +239,15 @@ export function Search() {
         <View style={styles.searchSection}>
           <View style={styles.searchBar}>
             <TextInput
-              style={styles.searchInput}
-              placeholder="Artist or painting name..."
-              placeholderTextColor="#999"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              onSubmitEditing={handleSearch}
-              returnKeyType="search"
               autoCapitalize="words"
               autoCorrect={false}
+              onChangeText={setSearchQuery}
+              onSubmitEditing={handleSearch}
+              placeholder="Artist or painting name..."
+              placeholderTextColor="#999"
+              returnKeyType="search"
+              style={styles.searchInput}
+              value={searchQuery}
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity
@@ -270,9 +264,9 @@ export function Search() {
           </View>
 
           <TouchableOpacity
-            style={[styles.searchButton, !searchQuery.trim() && styles.searchButtonDisabled]}
-            onPress={handleSearch}
             disabled={!searchQuery.trim() || isLoading}
+            onPress={handleSearch}
+            style={[styles.searchButton, !searchQuery.trim() && styles.searchButtonDisabled]}
           >
             <Text style={styles.searchButtonText}>
               {isLoading ? 'SEARCHING...' : 'SEARCH'}
@@ -282,40 +276,44 @@ export function Search() {
 
         {/* Museum Picker Modal */}
         <Modal
-          visible={showMuseumPicker}
           animationType="slide"
           presentationStyle="pageSheet"
+          visible={showMuseumPicker}
         >
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Museums</Text>
               <TouchableOpacity
-                onPress={() => setShowMuseumPicker(false)}
+                onPress={() => { setShowMuseumPicker(false); }}
                 style={styles.modalDoneButton}
               >
                 <Text style={styles.modalDoneText}>Done</Text>
               </TouchableOpacity>
             </View>
             <MuseumSelector
-              selectedMuseums={selectedMuseums}
               onMuseumsChange={setSelectedMuseums}
+              selectedMuseums={selectedMuseums}
             />
           </View>
         </Modal>
 
         {/* Results with FlatList */}
         <FlatList
-          data={searchResults}
-          renderItem={renderItem}
-          keyExtractor={keyExtractor}
-          numColumns={3}
-          showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.flatListContent}
-          removeClippedSubviews={true}
-          maxToRenderPerBatch={15}
-          updateCellsBatchingPeriod={50}
+          data={searchResults}
           initialNumToRender={15}
-          windowSize={7}
+          keyExtractor={keyExtractor}
+          ListEmptyComponent={() => (
+            !isLoading && !hasSearched ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyIcon}>🖼️</Text>
+                <Text style={styles.emptyTitle}>Begin Your Search</Text>
+                <Text style={styles.emptyText}>
+                  Explore paintings across {selectedMuseums.length} museum{selectedMuseums.length === 1 ? '' : 's'}
+                </Text>
+              </View>
+            ) : null
+          )}
           ListHeaderComponent={() => (
             <>
               {!hasSearched && popularArtists.length > 0 && (
@@ -326,19 +324,19 @@ export function Search() {
                     <View style={styles.dividerLine} />
                   </View>
                   <FlatList
-                    horizontal
+                    contentContainerStyle={styles.artistChips}
                     data={popularArtists}
+                    horizontal
+                    keyExtractor={(item) => item}
                     renderItem={({ item }) => (
                       <TouchableOpacity
-                        style={styles.artistChip}
                         onPress={() => handleArtistSearch(item)}
+                        style={styles.artistChip}
                       >
                         <Text style={styles.artistChipText}>{item}</Text>
                       </TouchableOpacity>
                     )}
-                    keyExtractor={(item) => item}
                     showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.artistChips}
                   />
                 </View>
               )}
@@ -348,7 +346,7 @@ export function Search() {
                   <Text style={styles.infoBannerTitle}>
                     {selectedMuseums.length === allMuseums.length
                       ? '2.5M+ artworks across all museums'
-                      : `Search ${selectedMuseums.length} museum${selectedMuseums.length !== 1 ? 's' : ''}`}
+                      : `Search ${selectedMuseums.length} museum${selectedMuseums.length === 1 ? '' : 's'}`}
                   </Text>
                   <Text style={styles.infoBannerText}>
                     Explore masterpieces from world-renowned collections
@@ -356,15 +354,12 @@ export function Search() {
                 </View>
               )}
 
-              {isLoading && (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="large" color="#d4af37" />
+              {isLoading ? <View style={styles.loadingContainer}>
+                  <ActivityIndicator color="#d4af37" size="large" />
                   <Text style={styles.loadingText}>Searching collections...</Text>
-                </View>
-              )}
+                </View> : null}
 
-              {!isLoading && hasSearched && searchResults.length > 0 && (
-                <View style={styles.resultsHeader}>
+              {!isLoading && hasSearched && searchResults.length > 0 ? <View style={styles.resultsHeader}>
                   <View style={styles.sectionDivider}>
                     <View style={styles.dividerLine} />
                     <Text style={styles.resultsTitle}>
@@ -372,21 +367,16 @@ export function Search() {
                     </Text>
                     <View style={styles.dividerLine} />
                   </View>
-                </View>
-              )}
+                </View> : null}
             </>
           )}
-          ListEmptyComponent={() => (
-            !isLoading && !hasSearched ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyIcon}>🖼️</Text>
-                <Text style={styles.emptyTitle}>Begin Your Search</Text>
-                <Text style={styles.emptyText}>
-                  Explore paintings across {selectedMuseums.length} museum{selectedMuseums.length !== 1 ? 's' : ''}
-                </Text>
-              </View>
-            ) : null
-          )}
+          maxToRenderPerBatch={15}
+          numColumns={3}
+          removeClippedSubviews
+          renderItem={renderItem}
+          showsVerticalScrollIndicator={false}
+          updateCellsBatchingPeriod={50}
+          windowSize={7}
         />
       </View>
     </>
@@ -394,121 +384,292 @@ export function Search() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f3ed',
-  },
-  header: {
-    paddingTop: 60,
-    paddingBottom: 16,
-    paddingHorizontal: 24,
-    backgroundColor: '#1a1a1a',
-    alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: '#d4af37',
-  },
-  headerTitle: {
-    fontSize: 32,
-    fontWeight: '300',
-    letterSpacing: 4,
-    color: '#d4af37',
-    marginBottom: 12,
-  },
-  headerDivider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '60%',
-    marginBottom: 12,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#d4af37',
-    opacity: 0.5,
-  },
-  dividerOrnament: {
-    fontSize: 12,
-    color: '#d4af37',
-    marginHorizontal: 12,
-  },
-  headerSubtitle: {
-    fontSize: 10,
-    color: 'rgba(212, 175, 55, 0.7)',
-    letterSpacing: 2,
-  },
-  filterSection: {
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0ddd5',
-  },
-  selectMuseumsButton: {
-    backgroundColor: '#f5f3ed',
-    borderRadius: 4,
-    borderWidth: 2,
+  artistChip: {
+    backgroundColor: 'transparent',
     borderColor: '#004d40',
-    overflow: 'hidden',
-  },
-  selectMuseumsButtonContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 14,
-  },
-  selectMuseumsLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#004d40',
-    letterSpacing: 2,
-    marginBottom: 4,
-  },
-  selectMuseumsText: {
-    fontSize: 13,
-    color: '#666',
-    fontWeight: '600',
-  },
-  selectMuseumsIcon: {
-    fontSize: 16,
-    color: '#004d40',
-    fontWeight: '700',
-  },
-  searchSection: {
-    padding: 20,
-    backgroundColor: '#f5f3ed',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0ddd5',
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
     borderRadius: 2,
+    borderWidth: 1,
+    marginRight: 8,
     paddingHorizontal: 16,
-    marginBottom: 12,
-    borderWidth: 2,
-    borderColor: '#004d40',
+    paddingVertical: 8,
   },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    paddingVertical: 14,
-    color: '#2c2c2c',
+  artistChips: {
+    gap: 8,
+    paddingRight: 20,
+  },
+  artistChipText: {
+    color: '#004d40',
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  badgeTextSeen: {
+    backgroundColor: 'rgba(230, 57, 70, 0.95)',
+    borderRadius: 12,
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+    height: 24,
+    lineHeight: 24,
+    textAlign: 'center',
+    width: 24,
+  },
+  badgeTextWant: {
+    backgroundColor: 'rgba(245, 158, 11, 0.95)',
+    borderRadius: 12,
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+    height: 24,
+    lineHeight: 24,
+    textAlign: 'center',
+    width: 24,
   },
   clearButton: {
     padding: 4,
   },
   clearButtonText: {
-    fontSize: 24,
     color: '#999',
+    fontSize: 24,
     fontWeight: '300',
   },
-  searchButton: {
-    backgroundColor: '#004d40',
-    padding: 14,
-    borderRadius: 2,
+  container: {
+    backgroundColor: '#f5f3ed',
+    flex: 1,
+  },
+  dividerLine: {
+    backgroundColor: '#d4af37',
+    flex: 1,
+    height: 1,
+    opacity: 0.5,
+  },
+  dividerOrnament: {
+    color: '#d4af37',
+    fontSize: 12,
+    marginHorizontal: 12,
+  },
+  emptyIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+    opacity: 0.5,
+  },
+  emptyState: {
     alignItems: 'center',
-    borderWidth: 2,
+    paddingHorizontal: 40,
+    paddingVertical: 80,
+  },
+  emptyText: {
+    color: '#666',
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  emptyTitle: {
+    color: '#004d40',
+    fontSize: 20,
+    fontWeight: '600',
+    letterSpacing: 1,
+    marginBottom: 12,
+  },
+  filterSection: {
+    backgroundColor: '#fff',
+    borderBottomColor: '#e0ddd5',
+    borderBottomWidth: 1,
+    padding: 16,
+  },
+  flatListContent: {
+    paddingHorizontal: 16,
+  },
+  header: {
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    borderBottomColor: '#d4af37',
+    borderBottomWidth: 2,
+    paddingBottom: 16,
+    paddingHorizontal: 24,
+    paddingTop: 60,
+  },
+  headerDivider: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: 12,
+    width: '60%',
+  },
+  headerSubtitle: {
+    color: 'rgba(212, 175, 55, 0.7)',
+    fontSize: 10,
+    letterSpacing: 2,
+  },
+  headerTitle: {
+    color: '#d4af37',
+    fontSize: 32,
+    fontWeight: '300',
+    letterSpacing: 4,
+    marginBottom: 12,
+  },
+  imageContainer: {
+    marginBottom: 8,
+    position: 'relative',
+  },
+  imageLoadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 2,
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  infoBanner: {
+    backgroundColor: 'rgba(0, 77, 64, 0.05)',
+    borderLeftColor: '#d4af37',
+    borderLeftWidth: 4,
+    borderRadius: 2,
+    marginBottom: 20,
+    padding: 20,
+  },
+  infoBannerText: {
+    color: '#666',
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  infoBannerTitle: {
+    color: '#004d40',
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  loadingText: {
+    color: '#d4af37',
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 1,
+    marginTop: 16,
+  },
+  modalContainer: {
+    backgroundColor: '#f5f3ed',
+    flex: 1,
+  },
+  modalDoneButton: {
+    backgroundColor: '#004d40',
     borderColor: '#d4af37',
+    borderRadius: 4,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  modalDoneText: {
+    color: '#d4af37',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  modalHeader: {
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    borderBottomColor: '#d4af37',
+    borderBottomWidth: 2,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+    paddingTop: 60,
+  },
+  modalTitle: {
+    color: '#d4af37',
+    fontSize: 20,
+    fontWeight: '600',
+    letterSpacing: 2,
+  },
+  museumBadge: {
+    borderRadius: 2,
+    left: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    position: 'absolute',
+    top: 8,
+  },
+  museumBadgeText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  placeholderIcon: {
+    fontSize: 40,
+  },
+  placeholderImage: {
+    alignItems: 'center',
+    aspectRatio: 1,
+    borderRadius: 2,
+    justifyContent: 'center',
+    width: '100%',
+  },
+  popularSection: {
+    paddingVertical: 20,
+  },
+  resultArtist: {
+    color: '#666',
+    fontSize: 10,
+    fontStyle: 'italic',
+    marginBottom: 2,
+  },
+  resultCard: {
+    marginBottom: 20,
+    padding: 4,
+    width: CARD_SIZE,
+  },
+  resultImage: {
+    aspectRatio: 1,
+    backgroundColor: '#f0f0f0',
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+    borderRadius: 2,
+    borderWidth: 2,
+    width: '100%',
+  },
+  resultsHeader: {
+    marginBottom: 16,
+  },
+  resultsTitle: {
+    color: '#004d40',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 2,
+    marginHorizontal: 12,
+  },
+  resultTitle: {
+    color: '#2c2c2c',
+    fontSize: 12,
+    fontWeight: '600',
+    lineHeight: 16,
+    marginBottom: 4,
+  },
+  resultYear: {
+    color: '#999',
+    fontSize: 9,
+    letterSpacing: 0.5,
+  },
+  searchBar: {
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderColor: '#004d40',
+    borderRadius: 2,
+    borderWidth: 2,
+    flexDirection: 'row',
+    marginBottom: 12,
+    paddingHorizontal: 16,
+  },
+  searchButton: {
+    alignItems: 'center',
+    backgroundColor: '#004d40',
+    borderColor: '#d4af37',
+    borderRadius: 2,
+    borderWidth: 2,
+    padding: 14,
   },
   searchButtonDisabled: {
     backgroundColor: '#ccc',
@@ -520,236 +681,65 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 2,
   },
-  modalContainer: {
+  searchInput: {
+    color: '#2c2c2c',
     flex: 1,
+    fontSize: 16,
+    paddingVertical: 14,
+  },
+  searchSection: {
     backgroundColor: '#f5f3ed',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingBottom: 16,
-    paddingHorizontal: 20,
-    backgroundColor: '#1a1a1a',
-    borderBottomWidth: 2,
-    borderBottomColor: '#d4af37',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#d4af37',
-    letterSpacing: 2,
-  },
-  modalDoneButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: '#004d40',
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#d4af37',
-  },
-  modalDoneText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#d4af37',
-    letterSpacing: 1,
-  },
-  flatListContent: {
-    paddingHorizontal: 16,
-  },
-  popularSection: {
-    paddingVertical: 20,
+    borderBottomColor: '#e0ddd5',
+    borderBottomWidth: 1,
+    padding: 20,
   },
   sectionDivider: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
     marginBottom: 16,
   },
   sectionTitle: {
+    color: '#004d40',
     fontSize: 11,
     fontWeight: '700',
-    color: '#004d40',
     letterSpacing: 2,
     marginHorizontal: 12,
   },
-  artistChips: {
-    gap: 8,
-    paddingRight: 20,
-  },
-  artistChip: {
-    backgroundColor: 'transparent',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 2,
-    borderWidth: 1,
+  selectMuseumsButton: {
+    backgroundColor: '#f5f3ed',
     borderColor: '#004d40',
-    marginRight: 8,
-  },
-  artistChipText: {
-    fontSize: 11,
-    color: '#004d40',
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  infoBanner: {
-    backgroundColor: 'rgba(0, 77, 64, 0.05)',
-    padding: 20,
-    borderRadius: 2,
-    marginBottom: 20,
-    borderLeftWidth: 4,
-    borderLeftColor: '#d4af37',
-  },
-  infoBannerTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#004d40',
-    marginBottom: 8,
-    letterSpacing: 0.5,
-  },
-  infoBannerText: {
-    fontSize: 13,
-    color: '#666',
-    lineHeight: 20,
-  },
-  loadingContainer: {
-    paddingVertical: 60,
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#d4af37',
-    letterSpacing: 1,
-  },
-  resultsHeader: {
-    marginBottom: 16,
-  },
-  resultsTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#004d40',
-    letterSpacing: 2,
-    marginHorizontal: 12,
-  },
-  resultCard: {
-    width: CARD_SIZE,
-    marginBottom: 20,
-    padding: 4,
-  },
-  imageContainer: {
-    position: 'relative',
-    marginBottom: 8,
-  },
-  imageLoadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#f5f5f5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 2,
-    zIndex: 10,
-  },
-  resultImage: {
-    width: '100%',
-    aspectRatio: 1,
-    borderRadius: 2,
-    backgroundColor: '#f0f0f0',
+    borderRadius: 4,
     borderWidth: 2,
-    borderColor: 'rgba(212, 175, 55, 0.3)',
+    overflow: 'hidden',
   },
-  placeholderImage: {
-    width: '100%',
-    aspectRatio: 1,
-    borderRadius: 2,
-    justifyContent: 'center',
+  selectMuseumsButtonContent: {
     alignItems: 'center',
-  },
-  placeholderIcon: {
-    fontSize: 40,
-  },
-  statusBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
     flexDirection: 'row',
-    gap: 4,
+    justifyContent: 'space-between',
+    padding: 14,
   },
-  badgeTextSeen: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(230, 57, 70, 0.95)',
-    fontSize: 12,
-    color: '#fff',
+  selectMuseumsIcon: {
+    color: '#004d40',
+    fontSize: 16,
     fontWeight: '700',
-    textAlign: 'center',
-    lineHeight: 24,
   },
-  badgeTextWant: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(245, 158, 11, 0.95)',
-    fontSize: 12,
-    color: '#fff',
+  selectMuseumsLabel: {
+    color: '#004d40',
+    fontSize: 10,
     fontWeight: '700',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  museumBadge: {
-    position: 'absolute',
-    top: 8,
-    left: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 2,
-  },
-  museumBadgeText: {
-    color: '#fff',
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  resultTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#2c2c2c',
-    lineHeight: 16,
+    letterSpacing: 2,
     marginBottom: 4,
   },
-  resultArtist: {
-    fontSize: 10,
+  selectMuseumsText: {
     color: '#666',
-    fontStyle: 'italic',
-    marginBottom: 2,
-  },
-  resultYear: {
-    fontSize: 9,
-    color: '#999',
-    letterSpacing: 0.5,
-  },
-  emptyState: {
-    paddingVertical: 80,
-    paddingHorizontal: 40,
-    alignItems: 'center',
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-    opacity: 0.5,
-  },
-  emptyTitle: {
-    fontSize: 20,
+    fontSize: 13,
     fontWeight: '600',
-    color: '#004d40',
-    marginBottom: 12,
-    letterSpacing: 1,
   },
-  emptyText: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 20,
+  statusBadge: {
+    flexDirection: 'row',
+    gap: 4,
+    position: 'absolute',
+    right: 8,
+    top: 8,
   },
 });

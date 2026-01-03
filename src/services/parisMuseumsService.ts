@@ -1,16 +1,17 @@
 import type { Painting } from '@/types/painting';
+
 import Config from 'react-native-config';
 
 const PARIS_API_BASE = 'https://apicollections.parismusees.paris.fr/graphql';
 const API_KEY = Config.PARIS_API_KEY;
 
-interface ParisSearchParams {
-  query: string;
+type ParisSearchParameters = {
   limit?: number;
   offset?: number;
+  query: string;
 }
 
-interface ParisSearchResult {
+type ParisSearchResult = {
   paintings: Painting[];
   totalResults: number;
 }
@@ -19,10 +20,10 @@ interface ParisSearchResult {
  * Search Paris Museums collection (14 museums, 250,000+ artworks)
  */
 export async function searchParisMuseums(
-  params: ParisSearchParams
+  parameters: ParisSearchParameters
 ): Promise<ParisSearchResult> {
   try {
-    const { query, limit = 30, offset = 0 } = params;
+    const { limit = 30, offset = 0, query } = parameters;
 
     if (!query || query.trim().length === 0) {
       return { paintings: [], totalResults: 0 };
@@ -85,19 +86,19 @@ export async function searchParisMuseums(
     `;
 
     const response = await fetch(PARIS_API_BASE, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`,
-      },
       body: JSON.stringify({
         query: graphqlQuery,
         variables: {
-          query: query.trim(),
           limit,
           offset,
+          query: query.trim(),
         },
       }),
+      headers: {
+        'Authorization': `Bearer ${API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
     });
 
     if (!response.ok) {
@@ -115,8 +116,8 @@ export async function searchParisMuseums(
     const count = nodeQuery.count || 0;
 
     const paintings = entities
-      .map((obj: any) => parseParisObject(obj))
-      .filter((p: Painting | null) => p !== null) as Painting[];
+      .map((object: any) => parseParisObject(object))
+      .filter((p: null | Painting) => p !== null) as Painting[];
 
     return {
       paintings,
@@ -131,18 +132,18 @@ export async function searchParisMuseums(
 /**
  * Parse Paris Museums object into Painting format
  */
-function parseParisObject(obj: any): Painting | null {
+function parseParisObject(object: any): null | Painting {
   try {
-    const title = obj.title || 'Untitled';
+    const title = object.title || 'Untitled';
 
     // Extract artist
-    const artists = obj.fieldAuteurs || [];
+    const artists = object.fieldAuteurs || [];
     const artist = artists.length > 0 && artists[0].entity
       ? artists[0].entity.name
       : 'Unknown Artist';
 
     // Extract image URLs
-    const visualEntity = obj.fieldVisuel?.entity;
+    const visualEntity = object.fieldVisuel?.entity;
     if (!visualEntity?.fieldMediaImage) return null;
 
     const imageData = visualEntity.fieldMediaImage;
@@ -151,30 +152,30 @@ function parseParisObject(obj: any): Painting | null {
 
     // Extract year
     let year: number | undefined;
-    if (obj.fieldDateProduction?.value) {
-      const match = obj.fieldDateProduction.value.match(/\d{4}/);
-      if (match) year = parseInt(match[0]);
+    if (object.fieldDateProduction?.value) {
+      const match = object.fieldDateProduction.value.match(/\d{4}/);
+      if (match) year = Number.parseInt(match[0]);
     }
 
     // Extract museum name
-    const museumEntity = obj.fieldMusee?.entity;
+    const museumEntity = object.fieldMusee?.entity;
     const museumName = museumEntity?.name || 'Paris Museums';
 
     return {
-      id: `paris-${obj.nid}`,
-      title,
       artist,
-      year,
-      medium: obj.fieldTechnique || undefined,
-      dimensions: obj.fieldDimensions || undefined,
-      museum: museumName,
-      location: 'Paris, France',
-      description: undefined,
-      imageUrl,
-      thumbnailUrl,
       color: generateColorFromString(title),
+      description: undefined,
+      dimensions: object.fieldDimensions || undefined,
+      id: `paris-${object.nid}`,
+      imageUrl,
       isSeen: false,
+      location: 'Paris, France',
+      medium: object.fieldTechnique || undefined,
+      museum: museumName,
+      thumbnailUrl,
+      title,
       wantToVisit: false,
+      year,
     };
   } catch (error) {
     console.error('Error parsing Paris Museums object:', error);
@@ -196,14 +197,14 @@ export function getPopularParisArtists(): string[] {
   ];
 }
 
-function generateColorFromString(str: string): string {
+function generateColorFromString(string_: string): string {
   const colors = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
     '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
   ];
   let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  for (let index = 0; index < string_.length; index++) {
+    hash = string_.charCodeAt(index) + ((hash << 5) - hash);
   }
   return colors[Math.abs(hash) % colors.length];
 }

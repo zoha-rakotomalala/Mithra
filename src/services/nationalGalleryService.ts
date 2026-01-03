@@ -1,15 +1,16 @@
 import type { Painting } from '@/types/painting';
+
 import { cleanArtistName } from './searchHelpers';
 
 const NG_SEARCH_API = 'https://data.ng.ac.uk/search';
 const NG_DATA_BASE = 'https://data.ng.ac.uk';
 
-interface NGSearchParams {
-  query: string;
+type NGSearchParameters = {
   limit?: number;
+  query: string;
 }
 
-interface NGSearchResult {
+type NGSearchResult = {
   paintings: Painting[];
   totalResults: number;
 }
@@ -18,23 +19,23 @@ interface NGSearchResult {
  * Search National Gallery (UK) collection using Linked Art
  */
 export async function searchNationalGallery(
-  params: NGSearchParams
+  parameters: NGSearchParameters
 ): Promise<NGSearchResult> {
   try {
-    const { query, limit = 20 } = params;
+    const { limit = 20, query } = parameters;
 
     if (!query || query.trim().length === 0) {
       return { paintings: [], totalResults: 0 };
     }
 
     // Search via their Elasticsearch API
-    const searchParams = new URLSearchParams({
+    const searchParameters = new URLSearchParams({
+      _source: 'id,title,creator,date,image',
       q: query.trim(),
       size: limit.toString(),
-      _source: 'id,title,creator,date,image',
     });
 
-    const searchUrl = `${NG_SEARCH_API}?${searchParams.toString()}`;
+    const searchUrl = `${NG_SEARCH_API}?${searchParameters.toString()}`;
     console.log('🇬🇧 Searching National Gallery:', searchUrl);
 
     const response = await fetch(searchUrl);
@@ -66,7 +67,7 @@ export async function searchNationalGallery(
 /**
  * Fetch Linked Art JSON for a specific object
  */
-async function fetchLinkedArtObject(pid: string): Promise<Painting | null> {
+async function fetchLinkedArtObject(pid: string): Promise<null | Painting> {
   try {
     // Fetch Linked Art representation
     // Format: https://data.ng.ac.uk/{PID}.json
@@ -94,7 +95,7 @@ async function fetchLinkedArtObject(pid: string): Promise<Painting | null> {
 /**
  * Parse National Gallery Linked Art format into Painting
  */
-function parseNGLinkedArt(data: any): Painting | null {
+function parseNGLinkedArt(data: any): null | Painting {
   try {
     // Extract title
     const title = extractTitle(data);
@@ -119,20 +120,20 @@ function parseNGLinkedArt(data: any): Painting | null {
     const description = extractDescription(data);
 
     return {
-      id: `ng-${extractId(data)}`,
-      title,
       artist,
-      year,
-      medium,
-      dimensions,
-      museum: 'National Gallery',
-      location: 'London, United Kingdom',
-      description,
-      imageUrl,
-      thumbnailUrl: imageUrl, // NG uses IIIF, can add /full/400,/ for thumbnail
       color: generateColorFromString(title),
+      description,
+      dimensions,
+      id: `ng-${extractId(data)}`,
+      imageUrl,
       isSeen: false,
+      location: 'London, United Kingdom',
+      medium,
+      museum: 'National Gallery',
+      thumbnailUrl: imageUrl, // NG uses IIIF, can add /full/400,/ for thumbnail
+      title,
       wantToVisit: false,
+      year,
     };
   } catch (error) {
     console.error('Error parsing NG Linked Art:', error);
@@ -180,14 +181,14 @@ function extractYear(data: any): number | undefined {
   // Try various date fields
   if (timespan.begin_of_the_begin) {
     const match = timespan.begin_of_the_begin.match(/\d{4}/);
-    if (match) return parseInt(match[0]);
+    if (match) return Number.parseInt(match[0]);
   }
 
   if (timespan.identified_by) {
     const dateLabel = timespan.identified_by.find((id: any) => id.type === 'Name');
     if (dateLabel?.content) {
       const match = dateLabel.content.match(/\d{4}/);
-      if (match) return parseInt(match[0]);
+      if (match) return Number.parseInt(match[0]);
     }
   }
 
@@ -260,12 +261,12 @@ function extractMedium(data: any): string | undefined {
  */
 function extractDescription(data: any): string | undefined {
   if (data.referred_to_by) {
-    const refs = Array.isArray(data.referred_to_by)
+    const references = Array.isArray(data.referred_to_by)
       ? data.referred_to_by
       : [data.referred_to_by];
 
-    const desc = refs.find((ref: any) =>
-      ref.type === 'LinguisticObject' && ref.content
+    const desc = references.find((reference: any) =>
+      reference.type === 'LinguisticObject' && reference.content
     );
 
     return desc?.content;
@@ -278,7 +279,7 @@ function extractDescription(data: any): string | undefined {
  */
 function extractId(data: any): string {
   const id = data.id || data['@id'] || '';
-  const match = id.match(/([^\/]+)(?:\.json)?$/);
+  const match = id.match(/([^/]+)(?:\.json)?$/);
   return match ? match[1] : Date.now().toString();
 }
 
@@ -297,14 +298,14 @@ export function getPopularNGArtists(): string[] {
   ];
 }
 
-function generateColorFromString(str: string): string {
+function generateColorFromString(string_: string): string {
   const colors = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
     '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
   ];
   let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  for (let index = 0; index < string_.length; index++) {
+    hash = string_.charCodeAt(index) + ((hash << 5) - hash);
   }
   return colors[Math.abs(hash) % colors.length];
 }

@@ -1,16 +1,17 @@
 import type { Painting } from '@/types/painting';
+
 import { cleanArtistName } from './searchHelpers';
 
 const AIC_API_BASE = 'https://api.artic.edu/api/v1';
 const AIC_IMAGE_BASE = 'https://www.artic.edu/iiif/2';
 
-interface ChicagoSearchParams {
-  query: string;
-  page?: number;
+type ChicagoSearchParameters = {
   limit?: number;
+  page?: number;
+  query: string;
 }
 
-interface ChicagoSearchResult {
+type ChicagoSearchResult = {
   paintings: Painting[];
   totalResults: number;
 }
@@ -19,23 +20,23 @@ interface ChicagoSearchResult {
  * Search Art Institute of Chicago collection
  */
 export async function searchChicago(
-  params: ChicagoSearchParams
+  parameters: ChicagoSearchParameters
 ): Promise<ChicagoSearchResult> {
   try {
-    const { query, page = 1, limit = 20 } = params;
+    const { limit = 20, page = 1, query } = parameters;
 
     if (!query || query.trim().length === 0) {
       return { paintings: [], totalResults: 0 };
     }
 
-    const queryParams = new URLSearchParams({
-      q: query.trim(),
-      page: page.toString(),
-      limit: limit.toString(),
+    const queryParameters = new URLSearchParams({
       fields: 'id,title,artist_display,date_display,medium_display,dimensions,image_id,thumbnail,color',
+      limit: limit.toString(),
+      page: page.toString(),
+      q: query.trim(),
     });
 
-    const url = `${AIC_API_BASE}/artworks/search?${queryParams.toString()}`;
+    const url = `${AIC_API_BASE}/artworks/search?${queryParameters.toString()}`;
     console.log('🏛️ Searching Art Institute of Chicago:', url);
 
     const response = await fetch(url);
@@ -86,8 +87,8 @@ async function fetchArtworksBatch(ids: number[]): Promise<Painting[]> {
     const artworks = data.data || [];
 
     return artworks
-      .map((obj: any) => parseChicagoObject(obj))
-      .filter((p: Painting | null) => p !== null) as Painting[];
+      .map((object: any) => parseChicagoObject(object))
+      .filter((p: null | Painting) => p !== null) as Painting[];
   } catch (error) {
     console.error('Error fetching Chicago artworks batch:', error);
     return [];
@@ -97,16 +98,16 @@ async function fetchArtworksBatch(ids: number[]): Promise<Painting[]> {
 /**
  * Parse Chicago object into Painting format
  */
-function parseChicagoObject(obj: any): Painting | null {
+function parseChicagoObject(object: any): null | Painting {
   try {
-    const title = obj.title || 'Untitled';
+    const title = object.title || 'Untitled';
 
     // Extract and clean artist
-    const artistDisplay = obj.artist_display || 'Unknown Artist';
+    const artistDisplay = object.artist_display || 'Unknown Artist';
     const artist = cleanArtistName(artistDisplay);
 
     // FIXED: Chicago uses IIIF for images - need proper image_id
-    const imageId = obj.image_id;
+    const imageId = object.image_id;
     if (!imageId) {
       console.log(`No image for Chicago artwork: ${title}`);
       return null; // Skip artworks without images
@@ -118,31 +119,31 @@ function parseChicagoObject(obj: any): Painting | null {
 
     // Extract year from date_display
     let year: number | undefined;
-    if (obj.date_display) {
-      const match = obj.date_display.match(/\d{4}/);
-      if (match) year = parseInt(match[0]);
+    if (object.date_display) {
+      const match = object.date_display.match(/\d{4}/);
+      if (match) year = Number.parseInt(match[0]);
     }
 
     // Use color data if available
-    const color = obj.color?.h
-      ? `hsl(${obj.color.h}, ${obj.color.s}%, ${obj.color.l}%)`
+    const color = object.color?.h
+      ? `hsl(${object.color.h}, ${object.color.s}%, ${object.color.l}%)`
       : generateColorFromString(title);
 
     return {
-      id: `chicago-${obj.id}`,
-      title,
       artist,
-      year,
-      medium: obj.medium_display || undefined,
-      dimensions: obj.dimensions || undefined,
-      museum: 'Art Institute of Chicago',
-      location: 'Chicago, Illinois, USA',
-      description: obj.thumbnail?.alt_text || undefined,
-      imageUrl,
-      thumbnailUrl,
       color,
+      description: object.thumbnail?.alt_text || undefined,
+      dimensions: object.dimensions || undefined,
+      id: `chicago-${object.id}`,
+      imageUrl,
       isSeen: false,
+      location: 'Chicago, Illinois, USA',
+      medium: object.medium_display || undefined,
+      museum: 'Art Institute of Chicago',
+      thumbnailUrl,
+      title,
       wantToVisit: false,
+      year,
     };
   } catch (error) {
     console.error('Error parsing Chicago object:', error);
@@ -166,14 +167,14 @@ export function getPopularChicagoArtists(): string[] {
   ];
 }
 
-function generateColorFromString(str: string): string {
+function generateColorFromString(string_: string): string {
   const colors = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
     '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
   ];
   let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  for (let index = 0; index < string_.length; index++) {
+    hash = string_.charCodeAt(index) + ((hash << 5) - hash);
   }
   return colors[Math.abs(hash) % colors.length];
 }

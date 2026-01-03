@@ -2,13 +2,13 @@ import type { Painting } from '@/types/painting';
 
 const VA_API_BASE = 'https://api.vam.ac.uk/v2/objects/search';
 
-interface VASearchParams {
-  query: string;
+type VASearchParameters = {
   page?: number;
   pageSize?: number;
+  query: string;
 }
 
-interface VASearchResult {
+type VASearchResult = {
   paintings: Painting[];
   totalResults: number;
 }
@@ -17,26 +17,26 @@ interface VASearchResult {
  * Search Victoria and Albert Museum collection
  */
 export async function searchVA(
-  params: VASearchParams
+  parameters: VASearchParameters
 ): Promise<VASearchResult> {
   try {
-    const { query, page = 1, pageSize = 30 } = params;
+    const { page = 1, pageSize = 30, query } = parameters;
 
     if (!query || query.trim().length === 0) {
       return { paintings: [], totalResults: 0 };
     }
 
     // V&A uses a different query structure
-    const queryParams = new URLSearchParams({
-      q: query.trim(),
+    const queryParameters = new URLSearchParams({
       page: page.toString(),
       page_size: pageSize.toString(),
+      q: query.trim(),
       // Filter for items with images and paintings
       images_exist: 'true',
       q_object_type: 'painting',
     });
 
-    const url = `${VA_API_BASE}?${queryParams.toString()}`;
+    const url = `${VA_API_BASE}?${queryParameters.toString()}`;
     console.log('🏛️ Searching Victoria & Albert Museum:', url);
 
     const response = await fetch(url);
@@ -50,8 +50,8 @@ export async function searchVA(
     const info = data.info || {};
 
     const paintings = records
-      .map((obj: any) => parseVAObject(obj))
-      .filter((p: Painting | null) => p !== null) as Painting[];
+      .map((object: any) => parseVAObject(object))
+      .filter((p: null | Painting) => p !== null) as Painting[];
 
     return {
       paintings,
@@ -66,19 +66,19 @@ export async function searchVA(
 /**
  * Parse V&A object into Painting format
  */
-function parseVAObject(obj: any): Painting | null {
+function parseVAObject(object: any): null | Painting {
   try {
     // V&A uses _primaryTitle for the main title
-    const title = obj._primaryTitle || obj.objectType || 'Untitled';
+    const title = object._primaryTitle || object.objectType || 'Untitled';
 
     // Extract artist
-    const artist = obj._primaryMaker?.name ||
-                   obj._primaryMaker?.association ||
+    const artist = object._primaryMaker?.name ||
+                   object._primaryMaker?.association ||
                    'Unknown Artist';
 
     // V&A uses IIIF for images
-    const images = obj._images;
-    if (!images || !images._iiif_image_base_url) return null;
+    const images = object._images;
+    if (!images?._iiif_image_base_url) return null;
 
     // Construct image URLs using IIIF
     const baseUrl = images._iiif_image_base_url;
@@ -88,32 +88,32 @@ function parseVAObject(obj: any): Painting | null {
 
     // Extract year
     let year: number | undefined;
-    if (obj._primaryDate) {
-      const match = obj._primaryDate.toString().match(/\d{4}/);
-      if (match) year = parseInt(match[0]);
+    if (object._primaryDate) {
+      const match = object._primaryDate.toString().match(/\d{4}/);
+      if (match) year = Number.parseInt(match[0]);
     }
 
     // Build description
     const descParts: string[] = [];
-    if (obj._primaryPlace) descParts.push(obj._primaryPlace);
-    if (obj.objectType) descParts.push(obj.objectType);
-    if (obj.physicalDescription) descParts.push(obj.physicalDescription);
+    if (object._primaryPlace) descParts.push(object._primaryPlace);
+    if (object.objectType) descParts.push(object.objectType);
+    if (object.physicalDescription) descParts.push(object.physicalDescription);
 
     return {
-      id: `va-${obj.systemNumber}`,
-      title,
       artist,
-      year,
-      medium: obj.materialsAndTechniques || undefined,
-      dimensions: obj.dimensionsNote || undefined,
-      museum: 'Victoria and Albert Museum',
-      location: 'London, United Kingdom',
-      description: descParts.length > 0 ? descParts.join('. ') : undefined,
-      imageUrl,
-      thumbnailUrl,
       color: generateColorFromString(title),
+      description: descParts.length > 0 ? descParts.join('. ') : undefined,
+      dimensions: object.dimensionsNote || undefined,
+      id: `va-${object.systemNumber}`,
+      imageUrl,
       isSeen: false,
+      location: 'London, United Kingdom',
+      medium: object.materialsAndTechniques || undefined,
+      museum: 'Victoria and Albert Museum',
+      thumbnailUrl,
+      title,
       wantToVisit: false,
+      year,
     };
   } catch (error) {
     console.error('Error parsing V&A object:', error);
@@ -135,14 +135,14 @@ export function getPopularVAArtists(): string[] {
   ];
 }
 
-function generateColorFromString(str: string): string {
+function generateColorFromString(string_: string): string {
   const colors = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
     '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
   ];
   let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  for (let index = 0; index < string_.length; index++) {
+    hash = string_.charCodeAt(index) + ((hash << 5) - hash);
   }
   return colors[Math.abs(hash) % colors.length];
 }

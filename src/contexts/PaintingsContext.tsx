@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { MMKV } from 'react-native-mmkv';
 import type { Painting } from '@/types/painting';
+import type { MMKV } from 'react-native-mmkv';
+
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+
 import { mockPaintings } from '@/data/mockPaintings';
 
 type PaintingsContextType = {
@@ -9,8 +11,8 @@ type PaintingsContextType = {
 
   // Collection management
   addToCollection: (painting: Painting) => void;
-  removeFromCollection: (paintingId: number) => void;
   isInCollection: (paintingId: number) => boolean;
+  removeFromCollection: (paintingId: number) => void;
 
   // Metadata actions
   toggleSeen: (paintingId: number) => void;
@@ -18,13 +20,13 @@ type PaintingsContextType = {
 
   // Palette management
   addToPalette: (paintingId: number) => boolean;
-  removeFromPalette: (paintingId: number) => void;
   isPaintingInPalette: (paintingId: number) => boolean;
+  removeFromPalette: (paintingId: number) => void;
 
   // Queries
-  getPalettePaintings: () => Painting[];
   getPaintingsByArtist: () => Map<string, Painting[]>;
   getPaintingsByMuseum: () => Map<string, Painting[]>;
+  getPalettePaintings: () => Painting[];
 };
 
 const PaintingsContext = createContext<PaintingsContextType | undefined>(undefined);
@@ -35,8 +37,8 @@ const STORAGE_KEYS = {
 };
 
 type PaintingsProviderProps = {
-  children: React.ReactNode;
-  storage: MMKV;
+  readonly children: React.ReactNode;
+  readonly storage: MMKV;
 };
 
 export function PaintingsProvider({ children, storage }: PaintingsProviderProps) {
@@ -107,16 +109,16 @@ export function PaintingsProvider({ children, storage }: PaintingsProviderProps)
   // Add painting to collection (explicit action)
   // Can specify initial state
   const addToCollection = useCallback((painting: Painting) => {
-    setPaintings(prev => {
+    setPaintings(previous => {
       // Check if already exists
-      const exists = prev.some(
+      const exists = previous.some(
         p => p.id === painting.id ||
         (p.title.toLowerCase() === painting.title.toLowerCase() &&
          p.artist.toLowerCase() === painting.artist.toLowerCase())
       );
 
       if (exists) {
-        return prev;
+        return previous;
       }
 
       // Add with metadata - preserve any state passed in, or default to Want to Visit
@@ -124,18 +126,18 @@ export function PaintingsProvider({ children, storage }: PaintingsProviderProps)
         ...painting,
         dateAdded: painting.dateAdded || new Date().toISOString(),
         isSeen: painting.isSeen || false,
-        wantToVisit: painting.wantToVisit !== undefined ? painting.wantToVisit : true,
+        wantToVisit: painting.wantToVisit === undefined ? true : painting.wantToVisit,
       };
 
-      return [...prev, newPainting];
+      return [...previous, newPainting];
     });
   }, []);
 
   // Remove painting from collection
   const removeFromCollection = useCallback((paintingId: number) => {
-    setPaintings(prev => prev.filter(p => p.id !== paintingId));
+    setPaintings(previous => previous.filter(p => p.id !== paintingId));
     // Also remove from palette if present
-    setPalettePaintingIds(prev => prev.filter(id => id !== paintingId));
+    setPalettePaintingIds(previous => previous.filter(id => id !== paintingId));
   }, []);
 
   // Check if painting is in collection
@@ -146,14 +148,14 @@ export function PaintingsProvider({ children, storage }: PaintingsProviderProps)
   // Toggle painting as seen/unseen
   // Mutually exclusive with wantToVisit
   const toggleSeen = useCallback((paintingId: number) => {
-    setPaintings(prev =>
-      prev.map(painting =>
+    setPaintings(previous =>
+      previous.map(painting =>
         painting.id === paintingId
           ? {
               ...painting,
               isSeen: !painting.isSeen,
+              seenDate: painting.isSeen ? undefined : new Date().toISOString(),
               wantToVisit: painting.isSeen ? false : false, // If marking as seen, remove want to visit
-              seenDate: !painting.isSeen ? new Date().toISOString() : undefined,
             }
           : painting
       )
@@ -163,13 +165,13 @@ export function PaintingsProvider({ children, storage }: PaintingsProviderProps)
   // Toggle want to visit
   // Mutually exclusive with isSeen
   const toggleWantToVisit = useCallback((paintingId: number) => {
-    setPaintings(prev =>
-      prev.map(painting =>
+    setPaintings(previous =>
+      previous.map(painting =>
         painting.id === paintingId
           ? {
               ...painting,
-              wantToVisit: !painting.wantToVisit,
               isSeen: painting.wantToVisit ? false : false, // If marking as want to visit, remove seen
+              wantToVisit: !painting.wantToVisit,
             }
           : painting
       )
@@ -186,13 +188,13 @@ export function PaintingsProvider({ children, storage }: PaintingsProviderProps)
       return false;
     }
 
-    setPalettePaintingIds(prev => [...prev, paintingId]);
+    setPalettePaintingIds(previous => [...previous, paintingId]);
     return true;
   }, [palettePaintingIds]);
 
   // Remove painting from palette
   const removeFromPalette = useCallback((paintingId: number) => {
-    setPalettePaintingIds(prev => prev.filter(id => id !== paintingId));
+    setPalettePaintingIds(previous => previous.filter(id => id !== paintingId));
   }, []);
 
   // Check if painting is in palette
@@ -211,13 +213,13 @@ export function PaintingsProvider({ children, storage }: PaintingsProviderProps)
   const getPaintingsByArtist = useCallback((): Map<string, Painting[]> => {
     const grouped = new Map<string, Painting[]>();
 
-    paintings.forEach(painting => {
+    for (const painting of paintings) {
       const artist = painting.artist;
       if (!grouped.has(artist)) {
         grouped.set(artist, []);
       }
       grouped.get(artist)!.push(painting);
-    });
+    }
 
     // Sort by artist name
     return new Map([...grouped.entries()].sort((a, b) => a[0].localeCompare(b[0])));
@@ -227,13 +229,13 @@ export function PaintingsProvider({ children, storage }: PaintingsProviderProps)
   const getPaintingsByMuseum = useCallback((): Map<string, Painting[]> => {
     const grouped = new Map<string, Painting[]>();
 
-    paintings.forEach(painting => {
+    for (const painting of paintings) {
       const museum = painting.museum || 'Unknown Museum';
       if (!grouped.has(museum)) {
         grouped.set(museum, []);
       }
       grouped.get(museum)!.push(painting);
-    });
+    }
 
     // Sort by museum name
     return new Map([...grouped.entries()].sort((a, b) => a[0].localeCompare(b[0])));
@@ -242,19 +244,19 @@ export function PaintingsProvider({ children, storage }: PaintingsProviderProps)
   return (
     <PaintingsContext.Provider
       value={{
-        paintings,
-        palettePaintingIds,
         addToCollection,
-        removeFromCollection,
-        isInCollection,
-        toggleSeen,
-        toggleWantToVisit,
         addToPalette,
-        removeFromPalette,
-        isPaintingInPalette,
-        getPalettePaintings,
         getPaintingsByArtist,
         getPaintingsByMuseum,
+        getPalettePaintings,
+        isInCollection,
+        isPaintingInPalette,
+        paintings,
+        palettePaintingIds,
+        removeFromCollection,
+        removeFromPalette,
+        toggleSeen,
+        toggleWantToVisit,
       }}
     >
       {children}

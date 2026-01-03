@@ -6,12 +6,12 @@ const WIKIDATA_ENDPOINT = 'https://query.wikidata.org/sparql';
 let idCounter = 1000; // Start high to avoid collision with mock data
 const generateId = () => idCounter++;
 
-export interface WikidataSearchParams {
-  query: string;
+export type WikidataSearchParams = {
   limit?: number;
+  query: string;
 }
 
-export interface WikidataSearchResult {
+export type WikidataSearchResult = {
   paintings: Painting[];
   totalResults: number;
 }
@@ -22,9 +22,9 @@ export interface WikidataSearchResult {
  * @returns Array of paintings with complete metadata
  */
 export async function searchPaintings(
-  params: WikidataSearchParams
+  parameters: WikidataSearchParams
 ): Promise<WikidataSearchResult> {
-  const { query, limit = 20 } = params;
+  const { limit = 20, query } = parameters;
 
   if (!query || query.trim().length === 0) {
     return { paintings: [], totalResults: 0 };
@@ -34,12 +34,12 @@ export async function searchPaintings(
 
   try {
     const response = await fetch(WIKIDATA_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json',
-      },
       body: `query=${encodeURIComponent(sparqlQuery)}`,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      method: 'POST',
     });
 
     if (!response.ok) {
@@ -100,12 +100,12 @@ export async function searchByArtist(
 
   try {
     const response = await fetch(WIKIDATA_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json',
-      },
       body: `query=${encodeURIComponent(sparqlQuery)}`,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      method: 'POST',
     });
 
     if (!response.ok) {
@@ -169,7 +169,7 @@ function buildSearchQuery(query: string, limit: number): string {
  * Parse Wikidata SPARQL results into Painting objects
  */
 function parsePaintings(data: any): Painting[] {
-  if (!data.results || !data.results.bindings) {
+  if (!data.results?.bindings) {
     return [];
   }
 
@@ -200,19 +200,19 @@ function parsePaintings(data: any): Painting[] {
     const color = generateColorFromString(item.paintingLabel?.value || '');
 
     return {
-      id: generateId(),
-      title: item.paintingLabel?.value || 'Untitled',
       artist: item.artistLabel?.value || 'Unknown Artist',
-      year: item.year?.value ? parseInt(item.year.value) : undefined,
-      medium: item.mediumLabel?.value,
-      dimensions,
-      museum,
-      location,
-      description: item.description?.value,
-      imageUrl: item.image?.value,
       color,
-      isSeen: false,
+      description: item.description?.value,
+      dimensions,
+      id: generateId(),
+      imageUrl: item.image?.value,
       isInPalette: false,
+      isSeen: false,
+      location,
+      medium: item.mediumLabel?.value,
+      museum,
+      title: item.paintingLabel?.value || 'Untitled',
+      year: item.year?.value ? Number.parseInt(item.year.value) : undefined,
     };
   });
 
@@ -230,18 +230,18 @@ function deduplicatePaintings(paintings: Painting[]): Painting[] {
     const key = `${painting.title}-${painting.artist}`.toLowerCase();
 
     // Keep the one with more complete data (has image, dimensions, etc.)
-    if (!seen.has(key)) {
-      seen.set(key, painting);
-    } else {
+    if (seen.has(key)) {
       const existing = seen.get(key)!;
       // Replace if new one has image and existing doesn't
       if (painting.imageUrl && !existing.imageUrl) {
         seen.set(key, painting);
       }
+    } else {
+      seen.set(key, painting);
     }
   }
 
-  return Array.from(seen.values());
+  return [...seen.values()];
 }
 
 /**
@@ -249,26 +249,26 @@ function deduplicatePaintings(paintings: Painting[]): Painting[] {
  */
 function inferLocationFromMuseum(museum: string): string | undefined {
   const museumLocations: Record<string, string> = {
-    'Museum of Modern Art': 'New York City, USA',
-    'MoMA': 'New York City, USA',
-    'Metropolitan Museum of Art': 'New York City, USA',
-    'Louvre': 'Paris, France',
-    'Musée du Louvre': 'Paris, France',
-    'Rijksmuseum': 'Amsterdam, Netherlands',
-    'Van Gogh Museum': 'Amsterdam, Netherlands',
-    'Uffizi Gallery': 'Florence, Italy',
-    'Galleria degli Uffizi': 'Florence, Italy',
-    'Prado Museum': 'Madrid, Spain',
-    'Museo del Prado': 'Madrid, Spain',
-    'National Gallery': 'London, UK',
-    'Tate Modern': 'London, UK',
-    'Hermitage Museum': 'Saint Petersburg, Russia',
-    'Musée d\'Orsay': 'Paris, France',
-    'Art Institute of Chicago': 'Chicago, USA',
-    'National Gallery of Art': 'Washington D.C., USA',
-    'Mauritshuis': 'The Hague, Netherlands',
-    'Kunsthistorisches Museum': 'Vienna, Austria',
     'Alte Pinakothek': 'Munich, Germany',
+    'Art Institute of Chicago': 'Chicago, USA',
+    'Galleria degli Uffizi': 'Florence, Italy',
+    'Hermitage Museum': 'Saint Petersburg, Russia',
+    'Kunsthistorisches Museum': 'Vienna, Austria',
+    'Louvre': 'Paris, France',
+    'Mauritshuis': 'The Hague, Netherlands',
+    'Metropolitan Museum of Art': 'New York City, USA',
+    'MoMA': 'New York City, USA',
+    'Musée d\'Orsay': 'Paris, France',
+    'Musée du Louvre': 'Paris, France',
+    'Museo del Prado': 'Madrid, Spain',
+    'Museum of Modern Art': 'New York City, USA',
+    'National Gallery': 'London, UK',
+    'National Gallery of Art': 'Washington D.C., USA',
+    'Prado Museum': 'Madrid, Spain',
+    'Rijksmuseum': 'Amsterdam, Netherlands',
+    'Tate Modern': 'London, UK',
+    'Uffizi Gallery': 'Florence, Italy',
+    'Van Gogh Museum': 'Amsterdam, Netherlands',
   };
 
   // Try exact match first
@@ -289,7 +289,7 @@ function inferLocationFromMuseum(museum: string): string | undefined {
 /**
  * Generate a consistent color from a string (for placeholders)
  */
-function generateColorFromString(str: string): string {
+function generateColorFromString(string_: string): string {
   const colors = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
     '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
@@ -298,8 +298,8 @@ function generateColorFromString(str: string): string {
 
   // Simple hash function
   let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  for (let index = 0; index < string_.length; index++) {
+    hash = string_.charCodeAt(index) + ((hash << 5) - hash);
   }
 
   return colors[Math.abs(hash) % colors.length];

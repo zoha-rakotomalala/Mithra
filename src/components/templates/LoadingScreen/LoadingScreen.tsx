@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 export function LoadingScreen() {
   return (
@@ -7,8 +7,8 @@ export function LoadingScreen() {
       <Text style={styles.title}>Palette</Text>
       <View style={styles.brushStroke} />
       <ActivityIndicator
-        size="large"
         color="#2d6a4f"
+        size="large"
         style={styles.loader}
       />
       <Text style={styles.subtitle}>Loading your collection...</Text>
@@ -17,34 +17,34 @@ export function LoadingScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FAFAFA',
-  },
-  title: {
-    fontSize: 48,
-    fontWeight: '300',
-    letterSpacing: 2,
-    color: '#1a4d3e',
-    fontStyle: 'italic',
-    marginBottom: 8,
-  },
   brushStroke: {
-    width: 120,
-    height: 3,
     backgroundColor: '#2d6a4f',
     borderRadius: 2,
-    opacity: 0.6,
+    height: 3,
     marginBottom: 40,
+    opacity: 0.6,
+    width: 120,
+  },
+  container: {
+    alignItems: 'center',
+    backgroundColor: '#FAFAFA',
+    flex: 1,
+    justifyContent: 'center',
   },
   loader: {
     marginBottom: 16,
   },
   subtitle: {
-    fontSize: 14,
     color: '#666',
+    fontSize: 14,
     letterSpacing: 1,
+  },
+  title: {
+    color: '#1a4d3e',
+    fontSize: 48,
+    fontStyle: 'italic',
+    fontWeight: '300',
+    letterSpacing: 2,
+    marginBottom: 8,
   },
 });

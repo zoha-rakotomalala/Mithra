@@ -2,13 +2,13 @@ import type { Painting } from '@/types/painting';
 
 const CMA_API_BASE = 'https://openaccess-api.clevelandart.org/api/artworks';
 
-interface ClevelandSearchParams {
-  query: string;
+type ClevelandSearchParameters = {
   limit?: number;
+  query: string;
   skip?: number;
 }
 
-interface ClevelandSearchResult {
+type ClevelandSearchResult = {
   paintings: Painting[];
   totalResults: number;
 }
@@ -17,24 +17,24 @@ interface ClevelandSearchResult {
  * Search Cleveland Museum of Art collection
  */
 export async function searchCleveland(
-  params: ClevelandSearchParams
+  parameters: ClevelandSearchParameters
 ): Promise<ClevelandSearchResult> {
   try {
-    const { query, limit = 30, skip = 0 } = params;
+    const { limit = 30, query, skip = 0 } = parameters;
 
     if (!query || query.trim().length === 0) {
       return { paintings: [], totalResults: 0 };
     }
 
-    const queryParams = new URLSearchParams({
-      q: query.trim(),
+    const queryParameters = new URLSearchParams({
       has_image: '1',
-      type: 'Painting',
       limit: limit.toString(),
+      q: query.trim(),
       skip: skip.toString(),
+      type: 'Painting',
     });
 
-    const url = `${CMA_API_BASE}?${queryParams.toString()}`;
+    const url = `${CMA_API_BASE}?${queryParameters.toString()}`;
     console.log('🎨 Searching Cleveland Museum:', url);
 
     const response = await fetch(url);
@@ -48,8 +48,8 @@ export async function searchCleveland(
     const info = data.info || {};
 
     const paintings = artworks
-      .map((obj: any) => parseClevelandObject(obj))
-      .filter((p: Painting | null) => p !== null) as Painting[];
+      .map((object: any) => parseClevelandObject(object))
+      .filter((p: null | Painting) => p !== null) as Painting[];
 
     return {
       paintings,
@@ -64,69 +64,69 @@ export async function searchCleveland(
 /**
  * Parse Cleveland Museum object into Painting format
  */
-function parseClevelandObject(obj: any): Painting | null {
+function extractArtist(object: any): string {
+  if (object.creators && object.creators.length > 0) {
+    const creator = object.creators[0];
+    return creator.description || creator.name || 'Unknown Artist';
+  }
+  if (object.culture && object.culture.length > 0) {
+    return object.culture[0];
+  }
+  return 'Unknown Artist';
+}
+
+function parseClevelandObject(object: any): null | Painting {
   try {
-    const title = obj.title || 'Untitled';
-    const artist = extractArtist(obj);
+    const title = object.title || 'Untitled';
+    const artist = extractArtist(object);
 
     // Image URLs
-    const images = obj.images?.web || {};
+    const images = object.images?.web || {};
     const imageUrl = images.url || '';
     if (!imageUrl) return null;
 
     // Cleveland provides a thumbnail URL
-    const thumbnailUrl = obj.images?.print?.url || imageUrl;
+    const thumbnailUrl = object.images?.print?.url || imageUrl;
 
     // Extract year
     let year: number | undefined;
-    if (obj.creation_date) {
-      const match = obj.creation_date.match(/\d{4}/);
-      if (match) year = parseInt(match[0]);
+    if (object.creation_date) {
+      const match = object.creation_date.match(/\d{4}/);
+      if (match) year = Number.parseInt(match[0]);
     }
 
     // Build description
     const descParts: string[] = [];
-    if (obj.culture && obj.culture.length > 0) {
-      descParts.push(obj.culture.join(', '));
+    if (object.culture && object.culture.length > 0) {
+      descParts.push(object.culture.join(', '));
     }
-    if (obj.technique) {
-      descParts.push(obj.technique);
+    if (object.technique) {
+      descParts.push(object.technique);
     }
-    if (obj.tombstone) {
-      descParts.push(obj.tombstone);
+    if (object.tombstone) {
+      descParts.push(object.tombstone);
     }
 
     return {
-      id: `cleveland-${obj.id}`,
-      title,
       artist,
-      year,
-      medium: obj.technique || undefined,
-      dimensions: obj.measurements || undefined,
-      museum: 'Cleveland Museum of Art',
-      location: 'Cleveland, Ohio, USA',
-      description: descParts.length > 0 ? descParts.join('. ') : undefined,
-      imageUrl,
-      thumbnailUrl,
       color: generateColorFromString(title),
+      description: descParts.length > 0 ? descParts.join('. ') : undefined,
+      dimensions: object.measurements || undefined,
+      id: `cleveland-${object.id}`,
+      imageUrl,
       isSeen: false,
+      location: 'Cleveland, Ohio, USA',
+      medium: object.technique || undefined,
+      museum: 'Cleveland Museum of Art',
+      thumbnailUrl,
+      title,
       wantToVisit: false,
+      year,
     };
   } catch (error) {
     console.error('Error parsing Cleveland object:', error);
     return null;
   }
-}
-
-function extractArtist(obj: any): string {
-  if (obj.creators && obj.creators.length > 0) {
-    const creator = obj.creators[0];
-    return creator.description || creator.name || 'Unknown Artist';
-  }
-  if (obj.culture && obj.culture.length > 0) {
-    return obj.culture[0];
-  }
-  return 'Unknown Artist';
 }
 
 /**
@@ -144,14 +144,14 @@ export function getPopularClevelandArtists(): string[] {
   ];
 }
 
-function generateColorFromString(str: string): string {
+function generateColorFromString(string_: string): string {
   const colors = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
     '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
   ];
   let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  for (let index = 0; index < string_.length; index++) {
+    hash = string_.charCodeAt(index) + ((hash << 5) - hash);
   }
   return colors[Math.abs(hash) % colors.length];
 }

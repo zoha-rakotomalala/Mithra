@@ -1,19 +1,22 @@
+import type { Painting } from '@/types/painting';
+
+import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
   ActivityIndicator,
-  StatusBar,
   Alert,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
 import FastImage from 'react-native-fast-image';
-import { usePaintings } from '@/contexts/PaintingsContext';
-import type { Painting } from '@/types/painting';
+
 import { Paths } from '@/navigation/paths';
+
+import { usePaintings } from '@/contexts/PaintingsContext';
 
 export function PaintingDetail() {
   const route = useRoute();
@@ -21,15 +24,15 @@ export function PaintingDetail() {
   const { painting: routePainting } = route.params as { painting: Painting };
 
   const {
-    paintings,
-    isInCollection,
     addToCollection,
+    addToPalette,
+    isInCollection,
+    isPaintingInPalette,
+    paintings,
     removeFromCollection,
+    removeFromPalette,
     toggleSeen,
     toggleWantToVisit,
-    addToPalette,
-    removeFromPalette,
-    isPaintingInPalette,
   } = usePaintings();
 
   const inCollection = isInCollection(routePainting.id);
@@ -45,10 +48,10 @@ export function PaintingDetail() {
   const handleQuickAdd = (state: 'seen' | 'wantToVisit') => {
     const paintingToAdd = {
       ...currentPainting,
-      isSeen: state === 'seen',
-      wantToVisit: state === 'wantToVisit',
       dateAdded: new Date().toISOString(),
+      isSeen: state === 'seen',
       seenDate: state === 'seen' ? new Date().toISOString() : undefined,
+      wantToVisit: state === 'wantToVisit',
     };
     addToCollection(paintingToAdd);
   };
@@ -80,14 +83,14 @@ export function PaintingDetail() {
       'Remove from Collection',
       `Remove "${currentPainting.title}"?`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { style: 'cancel', text: 'Cancel' },
         {
-          text: 'Remove',
-          style: 'destructive',
           onPress: () => {
             removeFromCollection(currentPainting.id);
             navigation.goBack();
-          }
+          },
+          style: 'destructive',
+          text: 'Remove'
         },
       ]
     );
@@ -101,16 +104,15 @@ export function PaintingDetail() {
 
   return (
     <>
-      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
+      <StatusBar backgroundColor="#1a1a1a" barStyle="light-content" />
       <View style={styles.container}>
         {/* Art Deco Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <TouchableOpacity onPress={() => { navigation.goBack(); }} style={styles.backButton}>
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
 
-          {inCollection && (
-            <View style={styles.headerActions}>
+          {inCollection ? <View style={styles.headerActions}>
               <TouchableOpacity
                 onPress={handleToggleSeen}
                 style={[styles.actionButton, currentPainting.isSeen && styles.actionButtonActive]}
@@ -137,8 +139,7 @@ export function PaintingDetail() {
               <TouchableOpacity onPress={handleRemoveFromCollection} style={styles.deleteButton}>
                 <Text style={styles.deleteText}>×</Text>
               </TouchableOpacity>
-            </View>
-          )}
+            </View> : null}
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
@@ -154,33 +155,29 @@ export function PaintingDetail() {
 
             {imageUrl ? (
               <>
-                {imageLoading && (
-                  <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#d4af37" />
+                {imageLoading ? <View style={styles.loadingContainer}>
+                    <ActivityIndicator color="#d4af37" size="large" />
                     <Text style={styles.loadingText}>Loading artwork...</Text>
-                  </View>
-                )}
+                  </View> : null}
                 <FastImage
-                  source={{
-                    uri: imageUrl,
-                    priority: FastImage.priority.high,
-                    cache: FastImage.cacheControl.immutable,
-                  }}
-                  style={styles.image}
-                  resizeMode={FastImage.resizeMode.contain}
-                  onLoadStart={() => setImageLoading(true)}
-                  onLoadEnd={() => setImageLoading(false)}
                   onError={() => {
                     setImageLoading(false);
                     setImageError(true);
                   }}
+                  onLoadEnd={() => { setImageLoading(false); }}
+                  onLoadStart={() => { setImageLoading(true); }}
+                  resizeMode={FastImage.resizeMode.contain}
+                  source={{
+                    cache: FastImage.cacheControl.immutable,
+                    priority: FastImage.priority.high,
+                    uri: imageUrl,
+                  }}
+                  style={styles.image}
                 />
-                {imageError && (
-                  <View style={styles.errorContainer}>
+                {imageError ? <View style={styles.errorContainer}>
                     <Text style={styles.errorText}>Unable to load artwork</Text>
                     <Text style={styles.errorSubtext}>Image may be unavailable</Text>
-                  </View>
-                )}
+                  </View> : null}
               </>
             ) : (
               <View style={[styles.placeholderImage, { backgroundColor: currentPainting.color }]}>
@@ -207,15 +204,15 @@ export function PaintingDetail() {
 
               <View style={styles.quickAddRow}>
                 <TouchableOpacity
+                  onPress={() => { handleQuickAdd('seen'); }}
                   style={styles.artDecoButton}
-                  onPress={() => handleQuickAdd('seen')}
                 >
                   <Text style={styles.artDecoButtonText}>SEEN</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
+                  onPress={() => { handleQuickAdd('wantToVisit'); }}
                   style={[styles.artDecoButton, styles.artDecoButtonSecondary]}
-                  onPress={() => handleQuickAdd('wantToVisit')}
                 >
                   <Text style={[styles.artDecoButtonText, styles.artDecoButtonTextSecondary]}>WANT TO VISIT</Text>
                 </TouchableOpacity>
@@ -235,38 +232,26 @@ export function PaintingDetail() {
               </TouchableOpacity>
             </View>
 
-            {currentPainting.year && (
-              <Text style={styles.year}>· {currentPainting.year} ·</Text>
-            )}
+            {currentPainting.year ? <Text style={styles.year}>· {currentPainting.year} ·</Text> : null}
 
             {/* Status Tags */}
-            {inCollection && (
-              <View style={styles.tags}>
-                {currentPainting.isSeen && (
-                  <View style={styles.tag}>
+            {inCollection ? <View style={styles.tags}>
+                {currentPainting.isSeen ? <View style={styles.tag}>
                     <Text style={styles.tagText}>SEEN</Text>
-                  </View>
-                )}
-                {currentPainting.wantToVisit && (
-                  <View style={[styles.tag, styles.tagWant]}>
+                  </View> : null}
+                {currentPainting.wantToVisit ? <View style={[styles.tag, styles.tagWant]}>
                     <Text style={styles.tagText}>WANT TO VISIT</Text>
-                  </View>
-                )}
-                {isInPalette && (
-                  <View style={[styles.tag, styles.tagPalette]}>
+                  </View> : null}
+                {isInPalette ? <View style={[styles.tag, styles.tagPalette]}>
                     <Text style={styles.tagText}>IN PALETTE</Text>
-                  </View>
-                )}
-              </View>
-            )}
+                  </View> : null}
+              </View> : null}
           </View>
 
           {/* Description */}
-          {currentPainting.description && (
-            <View style={styles.section}>
+          {currentPainting.description ? <View style={styles.section}>
               <Text style={styles.description}>{currentPainting.description}</Text>
-            </View>
-          )}
+            </View> : null}
 
           {/* Details Section */}
           <View style={styles.section}>
@@ -276,29 +261,22 @@ export function PaintingDetail() {
               <View style={styles.dividerLine} />
             </View>
 
-            {currentPainting.medium && (
-              <View style={styles.detailRow}>
+            {currentPainting.medium ? <View style={styles.detailRow}>
                 <Text style={styles.label}>Medium</Text>
                 <Text style={styles.value}>{currentPainting.medium}</Text>
-              </View>
-            )}
-            {currentPainting.dimensions && (
-              <View style={styles.detailRow}>
+              </View> : null}
+            {currentPainting.dimensions ? <View style={styles.detailRow}>
                 <Text style={styles.label}>Dimensions</Text>
                 <Text style={styles.value}>{currentPainting.dimensions}</Text>
-              </View>
-            )}
-            {currentPainting.year && (
-              <View style={styles.detailRow}>
+              </View> : null}
+            {currentPainting.year ? <View style={styles.detailRow}>
                 <Text style={styles.label}>Year</Text>
                 <Text style={styles.value}>{currentPainting.year}</Text>
-              </View>
-            )}
+              </View> : null}
           </View>
 
           {/* Location Section */}
-          {currentPainting.museum && (
-            <View style={styles.section}>
+          {currentPainting.museum ? <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <View style={styles.dividerLine} />
                 <Text style={styles.sectionTitle}>LOCATION</Text>
@@ -306,11 +284,8 @@ export function PaintingDetail() {
               </View>
 
               <Text style={styles.museum}>{currentPainting.museum}</Text>
-              {currentPainting.location && (
-                <Text style={styles.location}>{currentPainting.location}</Text>
-              )}
-            </View>
-          )}
+              {currentPainting.location ? <Text style={styles.location}>{currentPainting.location}</Text> : null}
+            </View> : null}
 
           <View style={{ height: 40 }} />
         </ScrollView>
@@ -320,322 +295,322 @@ export function PaintingDetail() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f3ed', // Cream
-  },
-  scrollView: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 50,
-    paddingBottom: 12,
-    paddingHorizontal: 20,
-    backgroundColor: '#1a1a1a',
-    borderBottomWidth: 2,
-    borderBottomColor: '#d4af37', // Gold
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  backText: {
-    fontSize: 28,
-    color: '#d4af37',
-    fontWeight: '300',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
   actionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.3)',
-    justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+    borderRadius: 18,
+    borderWidth: 1,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
   },
   actionButtonActive: {
     backgroundColor: '#d4af37',
     borderColor: '#d4af37',
   },
   actionText: {
+    color: 'rgba(255, 255, 255, 0.5)',
     fontSize: 14,
     fontWeight: '700',
-    color: 'rgba(255, 255, 255, 0.5)',
-    textAlign: 'center',
     lineHeight: 14,
+    textAlign: 'center',
   },
   actionTextActive: {
     color: '#1a1a1a',
   },
-  dividerVertical: {
-    width: 1,
-    height: 24,
-    backgroundColor: 'rgba(212, 175, 55, 0.3)',
-    marginHorizontal: 4,
-  },
-  deleteButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  deleteText: {
-    fontSize: 28,
-    fontWeight: '300',
-    color: 'rgba(255, 255, 255, 0.5)',
-    lineHeight: 28,
-    textAlign: 'center',
-    marginTop: -4,
-  },
-  gallerySection: {
-    backgroundColor: '#1a1a1a',
-    paddingVertical: 40,
-    paddingHorizontal: 20,
-    position: 'relative',
-  },
-  cornerTopLeft: {
-    position: 'absolute',
-    top: 20,
-    left: 20,
-    zIndex: 10,
-  },
-  cornerTopRight: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    zIndex: 10,
-  },
-  cornerBottomLeft: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    zIndex: 10,
-  },
-  cornerBottomRight: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    zIndex: 10,
-  },
-  cornerOrnament: {
-    fontSize: 16,
-    color: '#d4af37',
-    opacity: 0.6,
-  },
-  image: {
-    width: '100%',
-    aspectRatio: 1,
-  },
-  loadingContainer: {
-    width: '100%',
-    aspectRatio: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 14,
-    color: '#d4af37',
-    letterSpacing: 1,
-  },
-  errorContainer: {
-    width: '100%',
-    aspectRatio: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.7)',
-    marginBottom: 8,
-  },
-  errorSubtext: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.5)',
-  },
-  placeholderImage: {
-    width: '100%',
-    aspectRatio: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  placeholderText: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.5)',
-    letterSpacing: 1,
-  },
-  quickAddSection: {
-    padding: 24,
-    backgroundColor: '#f5f3ed',
-  },
-  quickAddDivider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#d4af37',
-  },
-  dividerText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#004d40',
-    letterSpacing: 2,
-    marginHorizontal: 16,
-  },
-  quickAddRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
   artDecoButton: {
+    alignItems: 'center',
+    backgroundColor: '#004d40',
+    borderColor: '#d4af37',
+    borderRadius: 2,
+    borderWidth: 2,
     flex: 1,
     paddingVertical: 16,
-    backgroundColor: '#004d40',
-    borderWidth: 2,
-    borderColor: '#d4af37',
-    alignItems: 'center',
-    borderRadius: 2,
   },
   artDecoButtonSecondary: {
     backgroundColor: 'transparent',
   },
   artDecoButtonText: {
+    color: '#d4af37',
     fontSize: 12,
     fontWeight: '700',
-    color: '#d4af37',
     letterSpacing: 2,
   },
   artDecoButtonTextSecondary: {
     color: '#004d40',
   },
-  infoSection: {
-    padding: 24,
-    backgroundColor: '#f5f3ed',
-    borderBottomWidth: 1,
-    borderBottomColor: '#d4af37',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '600',
-    color: '#2c2c2c',
-    marginBottom: 12,
-    lineHeight: 36,
-    textAlign: 'center',
-  },
-  artistRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  artistLabel: {
-    fontSize: 14,
-    color: '#666',
-    fontStyle: 'italic',
-  },
   artist: {
-    fontSize: 16,
     color: '#004d40',
+    fontSize: 16,
     fontStyle: 'italic',
     textDecorationLine: 'underline',
   },
-  year: {
+  artistLabel: {
+    color: '#666',
     fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
-    letterSpacing: 2,
-    marginBottom: 16,
+    fontStyle: 'italic',
   },
-  tags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 12,
-  },
-  tag: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#e8f5e9',
-    borderWidth: 1,
-    borderColor: '#004d40',
-    borderRadius: 2,
-  },
-  tagWant: {
-    backgroundColor: '#fff3e0',
-    borderColor: '#cd7f32',
-  },
-  tagPalette: {
-    backgroundColor: '#fffbeb',
-    borderColor: '#d4af37',
-  },
-  tagText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#2c2c2c',
-    letterSpacing: 1.5,
-  },
-  section: {
-    padding: 24,
-    backgroundColor: '#f5f3ed',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  sectionHeader: {
-    flexDirection: 'row',
+  artistRow: {
     alignItems: 'center',
-    marginBottom: 20,
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+    marginBottom: 8,
   },
-  sectionTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#004d40',
-    letterSpacing: 2,
-    marginHorizontal: 16,
+  backButton: {
+    alignItems: 'center',
+    height: 44,
+    justifyContent: 'center',
+    width: 44,
+  },
+  backText: {
+    color: '#d4af37',
+    fontSize: 28,
+    fontWeight: '300',
+  },
+  container: {
+    backgroundColor: '#f5f3ed', // Cream
+    flex: 1,
+  },
+  cornerBottomLeft: {
+    bottom: 20,
+    left: 20,
+    position: 'absolute',
+    zIndex: 10,
+  },
+  cornerBottomRight: {
+    bottom: 20,
+    position: 'absolute',
+    right: 20,
+    zIndex: 10,
+  },
+  cornerOrnament: {
+    color: '#d4af37',
+    fontSize: 16,
+    opacity: 0.6,
+  },
+  cornerTopLeft: {
+    left: 20,
+    position: 'absolute',
+    top: 20,
+    zIndex: 10,
+  },
+  cornerTopRight: {
+    position: 'absolute',
+    right: 20,
+    top: 20,
+    zIndex: 10,
+  },
+  deleteButton: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 18,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  deleteText: {
+    color: 'rgba(255, 255, 255, 0.5)',
+    fontSize: 28,
+    fontWeight: '300',
+    lineHeight: 28,
+    marginTop: -4,
+    textAlign: 'center',
   },
   description: {
-    fontSize: 15,
     color: '#4a4a4a',
+    fontSize: 15,
     lineHeight: 24,
   },
   detailRow: {
     marginBottom: 12,
   },
-  label: {
+  dividerLine: {
+    backgroundColor: '#d4af37',
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    color: '#004d40',
     fontSize: 11,
-    color: '#999',
-    marginBottom: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    fontWeight: '700',
+    letterSpacing: 2,
+    marginHorizontal: 16,
   },
-  value: {
-    fontSize: 15,
-    color: '#2c2c2c',
+  dividerVertical: {
+    backgroundColor: 'rgba(212, 175, 55, 0.3)',
+    height: 24,
+    marginHorizontal: 4,
+    width: 1,
   },
-  museum: {
+  errorContainer: {
+    alignItems: 'center',
+    aspectRatio: 1,
+    justifyContent: 'center',
+    width: '100%',
+  },
+  errorSubtext: {
+    color: 'rgba(255, 255, 255, 0.5)',
+    fontSize: 12,
+  },
+  errorText: {
+    color: 'rgba(255, 255, 255, 0.7)',
     fontSize: 16,
-    fontWeight: '600',
-    color: '#2c2c2c',
     marginBottom: 8,
   },
-  location: {
+  gallerySection: {
+    backgroundColor: '#1a1a1a',
+    paddingHorizontal: 20,
+    paddingVertical: 40,
+    position: 'relative',
+  },
+  header: {
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    borderBottomColor: '#d4af37', // Gold
+    borderBottomWidth: 2,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: 12,
+    paddingHorizontal: 20,
+    paddingTop: 50,
+  },
+  headerActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  image: {
+    aspectRatio: 1,
+    width: '100%',
+  },
+  infoSection: {
+    backgroundColor: '#f5f3ed',
+    borderBottomColor: '#d4af37',
+    borderBottomWidth: 1,
+    padding: 24,
+  },
+  label: {
+    color: '#999',
+    fontSize: 11,
+    letterSpacing: 1,
+    marginBottom: 4,
+    textTransform: 'uppercase',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    aspectRatio: 1,
+    justifyContent: 'center',
+    width: '100%',
+  },
+  loadingText: {
+    color: '#d4af37',
     fontSize: 14,
+    letterSpacing: 1,
+    marginTop: 16,
+  },
+  location: {
     color: '#666',
+    fontSize: 14,
+  },
+  museum: {
+    color: '#2c2c2c',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  placeholderImage: {
+    alignItems: 'center',
+    aspectRatio: 1,
+    justifyContent: 'center',
+    width: '100%',
+  },
+  placeholderText: {
+    color: 'rgba(255, 255, 255, 0.5)',
+    fontSize: 14,
+    letterSpacing: 1,
+  },
+  quickAddDivider: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  quickAddRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  quickAddSection: {
+    backgroundColor: '#f5f3ed',
+    padding: 24,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  section: {
+    backgroundColor: '#f5f3ed',
+    borderBottomColor: '#e0e0e0',
+    borderBottomWidth: 1,
+    padding: 24,
+  },
+  sectionHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    color: '#004d40',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 2,
+    marginHorizontal: 16,
+  },
+  tag: {
+    backgroundColor: '#e8f5e9',
+    borderColor: '#004d40',
+    borderRadius: 2,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  tagPalette: {
+    backgroundColor: '#fffbeb',
+    borderColor: '#d4af37',
+  },
+  tags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
+    marginTop: 12,
+  },
+  tagText: {
+    color: '#2c2c2c',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+  },
+  tagWant: {
+    backgroundColor: '#fff3e0',
+    borderColor: '#cd7f32',
+  },
+  title: {
+    color: '#2c2c2c',
+    fontSize: 28,
+    fontWeight: '600',
+    lineHeight: 36,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  value: {
+    color: '#2c2c2c',
+    fontSize: 15,
+  },
+  year: {
+    color: '#999',
+    fontSize: 14,
+    letterSpacing: 2,
+    marginBottom: 16,
+    textAlign: 'center',
   },
 });

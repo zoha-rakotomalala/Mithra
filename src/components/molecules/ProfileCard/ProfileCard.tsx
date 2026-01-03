@@ -1,32 +1,33 @@
+import type { UserProfile } from '@/types/painting';
+
 import React, { useEffect, useRef } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Dimensions,
   Animated,
+  Dimensions,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import type { UserProfile } from '@/types/painting';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 64) / 3;
 const CARD_HEIGHT = CARD_WIDTH * 1.3;
 
 type ProfileCardProps = {
-  profile: UserProfile;
-  isFlipped: boolean;
-  onPress: () => void;
+  readonly isFlipped: boolean;
+  readonly onPress: () => void;
+  readonly profile: UserProfile;
 };
 
-export function ProfileCard({ profile, isFlipped, onPress }: ProfileCardProps) {
+export function ProfileCard({ isFlipped, onPress, profile }: ProfileCardProps) {
   const flipAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.spring(flipAnimation, {
-      toValue: isFlipped ? 180 : 0,
       friction: 8,
       tension: 10,
+      toValue: isFlipped ? 180 : 0,
       useNativeDriver: true,
     }).start();
   }, [isFlipped]);
@@ -52,7 +53,7 @@ export function ProfileCard({ profile, isFlipped, onPress }: ProfileCardProps) {
   });
 
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={styles.container}>
       <View style={styles.cardContainer}>
         {/* FRONT */}
         <Animated.View
@@ -92,7 +93,7 @@ export function ProfileCard({ profile, isFlipped, onPress }: ProfileCardProps) {
           ]}
         >
           <View style={styles.backInner}>
-            <Text style={styles.username} numberOfLines={1}>
+            <Text numberOfLines={1} style={styles.username}>
               {profile.username.toUpperCase()}
             </Text>
 
@@ -115,22 +116,22 @@ export function ProfileCard({ profile, isFlipped, onPress }: ProfileCardProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    margin: 4,
-  },
   cardContainer: {
     flex: 1,
   },
+  container: {
+    height: CARD_HEIGHT,
+    margin: 4,
+    width: CARD_WIDTH,
+  },
   flipCard: {
+    backfaceVisibility: 'hidden',
+    backgroundColor: '#f5f3ed',
+    borderColor: 'rgba(212,175,55,0.35)',
+    borderWidth: 2,
+    height: '100%',
     position: 'absolute',
     width: '100%',
-    height: '100%',
-    backfaceVisibility: 'hidden',
-    borderWidth: 2,
-    borderColor: 'rgba(212,175,55,0.35)',
-    backgroundColor: '#f5f3ed',
   },
   flipCardBack: {
     backgroundColor: '#1a1a1a',
@@ -138,67 +139,67 @@ const styles = StyleSheet.create({
 
   /* FRONT */
   frontInner: {
+    alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-  },
-  initialCircle: {
-    width: CARD_WIDTH * 0.6,
-    height: CARD_WIDTH * 0.6,
-    borderRadius: CARD_WIDTH * 0.3,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#d4af37',
-    marginBottom: 12,
-  },
-  initial: {
-    fontSize: 40,
-    fontWeight: '300',
-    color: '#fff',
-    letterSpacing: 2,
   },
   frontLabel: {
-    fontSize: 10,
-    letterSpacing: 2,
     color: '#004d40',
+    fontSize: 10,
     fontWeight: '700',
+    letterSpacing: 2,
+  },
+  initial: {
+    color: '#fff',
+    fontSize: 40,
+    fontWeight: '300',
+    letterSpacing: 2,
+  },
+  initialCircle: {
+    alignItems: 'center',
+    borderColor: '#d4af37',
+    borderRadius: CARD_WIDTH * 0.3,
+    borderWidth: 2,
+    height: CARD_WIDTH * 0.6,
+    justifyContent: 'center',
+    marginBottom: 12,
+    width: CARD_WIDTH * 0.6,
   },
 
   /* BACK */
   backInner: {
+    alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
     padding: 12,
   },
-  username: {
-    fontSize: 12,
-    letterSpacing: 2,
-    color: '#d4af37',
-    marginBottom: 12,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
   divider: {
-    width: 40,
-    height: 1,
     backgroundColor: 'rgba(212,175,55,0.5)',
+    height: 1,
     marginBottom: 16,
+    width: 40,
   },
   statBlock: {
     alignItems: 'center',
     marginBottom: 10,
   },
-  statNumber: {
-    fontSize: 18,
-    fontWeight: '300',
-    color: '#fff',
-  },
   statLabel: {
+    color: 'rgba(255,255,255,0.7)',
     fontSize: 9,
     letterSpacing: 2,
-    color: 'rgba(255,255,255,0.7)',
     marginTop: 2,
+  },
+  statNumber: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '300',
+  },
+  username: {
+    color: '#d4af37',
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 2,
+    marginBottom: 12,
+    textAlign: 'center',
   },
 });

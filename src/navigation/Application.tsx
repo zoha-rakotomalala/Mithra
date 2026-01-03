@@ -4,12 +4,11 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { TabNavigator } from '@/navigation/TabNavigator';
-
 import { Paths } from '@/navigation/paths';
+import { TabNavigator } from '@/navigation/TabNavigator';
 import { useTheme } from '@/theme';
 
-import { Example, Startup, Home, Profile, Settings, PaintingDetail, ArtistProfile } from '@/screens';
+import { ArtistProfile, Example, Home, PaintingDetail, Profile, Settings, Startup } from '@/screens';
 
 const Stack = createStackNavigator<RootStackParamList>();
 

@@ -10,13 +10,13 @@ export function cleanArtistName(artistDisplay: string): string {
 
   return artistDisplay
     .split('\n')[0]  // Take first line only
-    .replace(/\([^)]*\)/g, '')  // Remove (parentheses)
-    .replace(/\[[^\]]*\]/g, '')  // Remove [brackets]
-    .replace(/\d{4}\s*[-–]\s*\d{4}/g, '')  // Remove date ranges
-    .replace(/,\s*\d{4}\s*[-–]\s*\d{4}/g, '')  // Remove ", 1853-1890"
-    .replace(/,\s*\d{4}/g, '')  // Remove ", 1853"
-    .replace(/\b(?:Dutch|French|American|Italian|Spanish|German|British|Belgian|Swiss|Austrian|Russian|Japanese|Chinese|Korean)\b/gi, '')  // Remove nationalities
-    .replace(/\s+/g, ' ')  // Normalize spaces
+    .replaceAll(/\([^)]*\)/g, '')  // Remove (parentheses)
+    .replaceAll(/\[[^\]]*]/g, '')  // Remove [brackets]
+    .replaceAll(/\d{4}\s*[–-]\s*\d{4}/g, '')  // Remove date ranges
+    .replaceAll(/,\s*\d{4}\s*[–-]\s*\d{4}/g, '')  // Remove ", 1853-1890"
+    .replaceAll(/,\s*\d{4}/g, '')  // Remove ", 1853"
+    .replaceAll(/\b(?:dutch|french|american|italian|spanish|german|british|belgian|swiss|austrian|russian|japanese|chinese|korean)\b/gi, '')  // Remove nationalities
+    .replaceAll(/\s+/g, ' ')  // Normalize spaces
     .trim();
 }
 
@@ -41,10 +41,10 @@ export function calculateRelevance(painting: Painting, query: string): number {
 
   // Split query into words for multi-word matches
   const queryWords = q.split(' ').filter(w => w.length > 2);
-  queryWords.forEach(word => {
+  for (const word of queryWords) {
     if (title.includes(word)) score += 10;
     if (artist.includes(word)) score += 15;
-  });
+  }
 
   // Has valid image = bonus
   if (painting.imageUrl && painting.imageUrl !== '') score += 20;
@@ -82,7 +82,7 @@ export function isDuplicate(painting: Painting, existingPaintings: Painting[]): 
 
     // Also check for very similar titles (allows for minor variations)
     const similarTitle =
-      cleanTitle.replace(/[^\w\s]/g, '') === existingTitle.replace(/[^\w\s]/g, '');
+      cleanTitle.replaceAll(/[^\s\w]/g, '') === existingTitle.replaceAll(/[^\s\w]/g, '');
 
     return (titleMatch && artistMatch) || (similarTitle && artistMatch);
   });
@@ -179,12 +179,12 @@ export function removeDuplicates(paintings: Painting[]): Painting[] {
 /**
  * Filter paintings based on quality criteria
  */
-export interface QualityFilter {
-  requireImage?: boolean;
-  requireArtist?: boolean;
-  requireYear?: boolean;
-  paintingsOnly?: boolean;
+export type QualityFilter = {
   minRelevanceScore?: number;
+  paintingsOnly?: boolean;
+  requireArtist?: boolean;
+  requireImage?: boolean;
+  requireYear?: boolean;
 }
 
 export function filterByQuality(
@@ -193,11 +193,11 @@ export function filterByQuality(
   filters: QualityFilter = {}
 ): Painting[] {
   const {
-    requireImage = true,
-    requireArtist = true,
-    requireYear = false,
-    paintingsOnly = true,
     minRelevanceScore = 20,
+    paintingsOnly = true,
+    requireArtist = true,
+    requireImage = true,
+    requireYear = false,
   } = filters;
 
   return paintings.filter(painting => {

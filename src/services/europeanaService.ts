@@ -1,16 +1,17 @@
 import type { Painting } from '@/types/painting';
+
 import Config from 'react-native-config';
 
 const EUROPEANA_API_BASE = 'https://api.europeana.eu/record/v2';
 const API_KEY = Config.EUROPEANA_API_KEY;
 
-interface EuropeanaSearchParams {
-  query: string;
+type EuropeanaSearchParameters = {
   page?: number;
+  query: string;
   rows?: number;
 }
 
-interface EuropeanaSearchResult {
+type EuropeanaSearchResult = {
   paintings: Painting[];
   totalResults: number;
 }
@@ -19,28 +20,28 @@ interface EuropeanaSearchResult {
  * Search Europeana collection (50M+ objects from European cultural institutions)
  */
 export async function searchEuropeana(
-  params: EuropeanaSearchParams
+  parameters: EuropeanaSearchParameters
 ): Promise<EuropeanaSearchResult> {
   try {
-    const { query, page = 1, rows = 30 } = params;
+    const { page = 1, query, rows = 30 } = parameters;
 
     if (!query || query.trim().length === 0) {
       return { paintings: [], totalResults: 0 };
     }
 
-    const queryParams = new URLSearchParams({
-      wskey: API_KEY,
-      query: query.trim(),
-      qf: 'TYPE:IMAGE', // Filter for images
-      theme: 'art', // Focus on art theme
-      reusability: 'open', // Only openly licensed content
+    const queryParameters = new URLSearchParams({
       media: 'true', // Must have media
-      start: ((page - 1) * rows + 1).toString(),
-      rows: rows.toString(),
       profile: 'rich', // Get full metadata
+      qf: 'TYPE:IMAGE', // Filter for images
+      query: query.trim(),
+      reusability: 'open', // Only openly licensed content
+      rows: rows.toString(),
+      start: ((page - 1) * rows + 1).toString(),
+      theme: 'art', // Focus on art theme
+      wskey: API_KEY,
     });
 
-    const url = `${EUROPEANA_API_BASE}/search.json?${queryParams.toString()}`;
+    const url = `${EUROPEANA_API_BASE}/search.json?${queryParameters.toString()}`;
     console.log('🇪🇺 Searching Europeana:', url);
 
     const response = await fetch(url);
@@ -63,7 +64,7 @@ export async function searchEuropeana(
 
     const paintings = items
       .map((item: any) => parseEuropeanaObject(item))
-      .filter((p: Painting | null) => p !== null) as Painting[];
+      .filter((p: null | Painting) => p !== null) as Painting[];
 
     return {
       paintings,
@@ -78,7 +79,7 @@ export async function searchEuropeana(
 /**
  * Parse Europeana object into Painting format
  */
-function parseEuropeanaObject(item: any): Painting | null {
+function parseEuropeanaObject(item: any): null | Painting {
   try {
     // Extract title (can be array or string)
     const titleRaw = item.title || item.dcTitle;
@@ -109,9 +110,9 @@ function parseEuropeanaObject(item: any): Painting | null {
     let year: number | undefined;
     const yearRaw = item.year || item.edmTimespanLabel;
     if (yearRaw) {
-      const yearStr = Array.isArray(yearRaw) ? yearRaw[0] : yearRaw;
-      const match = yearStr.toString().match(/\d{4}/);
-      if (match) year = parseInt(match[0]);
+      const yearString = Array.isArray(yearRaw) ? yearRaw[0] : yearRaw;
+      const match = yearString.toString().match(/\d{4}/);
+      if (match) year = Number.parseInt(match[0]);
     }
 
     // Extract contributing institution
@@ -138,20 +139,20 @@ function parseEuropeanaObject(item: any): Painting | null {
       : item.country || 'Europe';
 
     return {
-      id: `europeana-${item.id}`,
-      title: cleanText(title),
       artist: cleanText(artist),
-      year,
-      medium: item.dcFormat ? extractMedium(item.dcFormat) : undefined,
-      dimensions: undefined,
-      museum: dataProvider,
-      location: country,
-      description: descParts.length > 0 ? cleanText(descParts.join('. ')) : undefined,
-      imageUrl,
-      thumbnailUrl,
       color: generateColorFromString(title),
+      description: descParts.length > 0 ? cleanText(descParts.join('. ')) : undefined,
+      dimensions: undefined,
+      id: `europeana-${item.id}`,
+      imageUrl,
       isSeen: false,
+      location: country,
+      medium: item.dcFormat ? extractMedium(item.dcFormat) : undefined,
+      museum: dataProvider,
+      thumbnailUrl,
+      title: cleanText(title),
       wantToVisit: false,
+      year,
     };
   } catch (error) {
     console.error('Error parsing Europeana object:', error);
@@ -163,8 +164,8 @@ function parseEuropeanaObject(item: any): Painting | null {
  * Extract medium from format field (can be array)
  */
 function extractMedium(format: any): string | undefined {
-  const mediumStr = Array.isArray(format) ? format[0] : format;
-  return mediumStr ? cleanText(mediumStr) : undefined;
+  const mediumString = Array.isArray(format) ? format[0] : format;
+  return mediumString ? cleanText(mediumString) : undefined;
 }
 
 /**
@@ -172,8 +173,8 @@ function extractMedium(format: any): string | undefined {
  */
 function cleanText(text: string): string {
   return text
-    .replace(/<[^>]*>/g, '') // Remove HTML tags
-    .replace(/\s+/g, ' ') // Normalize whitespace
+    .replaceAll(/<[^>]*>/g, '') // Remove HTML tags
+    .replaceAll(/\s+/g, ' ') // Normalize whitespace
     .trim();
 }
 
@@ -193,14 +194,14 @@ export function getPopularEuropeanaSearches(): string[] {
   ];
 }
 
-function generateColorFromString(str: string): string {
+function generateColorFromString(string_: string): string {
   const colors = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
     '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
   ];
   let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  for (let index = 0; index < string_.length; index++) {
+    hash = string_.charCodeAt(index) + ((hash << 5) - hash);
   }
   return colors[Math.abs(hash) % colors.length];
 }

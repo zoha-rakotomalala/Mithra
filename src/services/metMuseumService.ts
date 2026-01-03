@@ -3,12 +3,12 @@ import type { Painting } from '@/types/painting';
 const MET_API_BASE = 'https://collectionapi.metmuseum.org/public/collection/v1';
 const objectCache = new Map<string, any>();
 
-export interface MetSearchParams {
-  query: string;
+export type MetSearchParams = {
   hasImages?: boolean;
+  query: string;
 }
 
-export interface MetSearchResult {
+export type MetSearchResult = {
   paintings: Painting[];
   totalResults: number;
 }
@@ -17,21 +17,21 @@ export interface MetSearchResult {
  * Search Met Museum collection
  */
 export async function searchMetMuseum(
-  params: MetSearchParams
+  parameters: MetSearchParams
 ): Promise<MetSearchResult> {
   try {
-    const { query, hasImages = true } = params;
+    const { hasImages = true, query } = parameters;
 
     if (!query || query.trim().length === 0) {
       return { paintings: [], totalResults: 0 };
     }
 
-    const queryParams = new URLSearchParams({
-      q: query.trim(),
+    const queryParameters = new URLSearchParams({
       hasImages: hasImages.toString(),
+      q: query.trim(),
     });
 
-    const searchUrl = `${MET_API_BASE}/search?${queryParams.toString()}`;
+    const searchUrl = `${MET_API_BASE}/search?${queryParameters.toString()}`;
     console.log('🏛️ Searching Met Museum:', searchUrl);
 
     const response = await fetch(searchUrl);
@@ -74,20 +74,20 @@ export async function searchMetByArtist(
   artistName: string
 ): Promise<MetSearchResult> {
   return searchMetMuseum({
-    query: artistName,
     hasImages: true,
+    query: artistName,
   });
 }
 
 /**
  * Fetch details for multiple object IDs
  */
-async function fetchObjectDetails(objectIDs: number[]): Promise<(Painting | null)[]> {
+async function fetchObjectDetails(objectIDs: number[]): Promise<(null | Painting)[]> {
   const BATCH_SIZE = 10;
-  const results: (Painting | null)[] = [];
+  const results: (null | Painting)[] = [];
 
-  for (let i = 0; i < objectIDs.length; i += BATCH_SIZE) {
-    const batch = objectIDs.slice(i, i + BATCH_SIZE);
+  for (let index = 0; index < objectIDs.length; index += BATCH_SIZE) {
+    const batch = objectIDs.slice(index, index + BATCH_SIZE);
     const batchResults = await Promise.all(
       batch.map(id => fetchObjectDetail(id))
     );
@@ -100,7 +100,7 @@ async function fetchObjectDetails(objectIDs: number[]): Promise<(Painting | null
 /**
  * Fetch details for a single object
  */
-async function fetchObjectDetail(objectID: number): Promise<Painting | null> {
+async function fetchObjectDetail(objectID: number): Promise<null | Painting> {
   try {
     const cacheKey = objectID.toString();
     if (objectCache.has(cacheKey)) {
@@ -148,7 +148,7 @@ function isPainting(data: any): boolean {
  * Parse Met Museum object into Painting format
  * IMPROVED: Smart image URL handling with fallbacks
  */
-function parseMetObject(data: any, objectID: number): Painting | null {
+function parseMetObject(data: any, objectID: number): null | Painting {
   try {
     const title = data.title || 'Untitled';
     const artist = extractArtist(data);
@@ -165,20 +165,20 @@ function parseMetObject(data: any, objectID: number): Painting | null {
     const description = extractDescription(data);
 
     return {
-      id: objectID,
-      title,
       artist,
-      year,
-      medium,
-      dimensions,
-      museum: 'Metropolitan Museum of Art',
-      location: 'New York City, USA',
-      description,
-      imageUrl: images.full,        // Full resolution for detail view
-      thumbnailUrl: images.thumbnail, // Small for lists/grids
       color: generateColorFromString(title),
+      description,
+      dimensions,
+      id: objectID,
+      imageUrl: images.full,        // Full resolution for detail view
       isSeen: false,
+      location: 'New York City, USA',
+      medium,
+      museum: 'Metropolitan Museum of Art',
+      thumbnailUrl: images.thumbnail, // Small for lists/grids
+      title,
       wantToVisit: false,
+      year,
     };
   } catch (error) {
     console.error('Error parsing Met object:', error);
@@ -249,7 +249,7 @@ function extractArtist(data: any): string {
 function extractYear(data: any): number | undefined {
   if (data.objectDate) {
     const match = data.objectDate.match(/\d{4}/);
-    if (match) return parseInt(match[0]);
+    if (match) return Number.parseInt(match[0]);
   }
 
   if (data.objectBeginDate && data.objectBeginDate > 0) {
@@ -295,7 +295,7 @@ function extractDescription(data: any): string | undefined {
 /**
  * Generate consistent color from string
  */
-function generateColorFromString(str: string): string {
+function generateColorFromString(string_: string): string {
   const colors = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
     '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
@@ -303,8 +303,8 @@ function generateColorFromString(str: string): string {
   ];
 
   let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  for (let index = 0; index < string_.length; index++) {
+    hash = string_.charCodeAt(index) + ((hash << 5) - hash);
   }
 
   return colors[Math.abs(hash) % colors.length];

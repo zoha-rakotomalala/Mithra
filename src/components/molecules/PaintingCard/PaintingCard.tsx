@@ -1,16 +1,18 @@
+import type { Painting } from '@/types/painting';
+
+import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Dimensions,
-  Animated,
-  Image,
   ActivityIndicator,
+  Animated,
+  Dimensions,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import type { Painting } from '@/types/painting';
+
 import { Paths } from '@/navigation/paths';
 
 const { width } = Dimensions.get('window');
@@ -18,12 +20,12 @@ const CARD_WIDTH = (width - 48) / 3;
 const CARD_HEIGHT = CARD_WIDTH * 1.3;
 
 type PaintingCardProps = {
-  painting: Painting;
-  isFlipped: boolean;
-  onPress: () => void;
+  readonly isFlipped: boolean;
+  readonly onPress: () => void;
+  readonly painting: Painting;
 };
 
-export function PaintingCard({ painting, isFlipped, onPress }: PaintingCardProps) {
+export function PaintingCard({ isFlipped, onPress, painting }: PaintingCardProps) {
   const navigation = useNavigation();
   const flipAnimation = useRef(new Animated.Value(0)).current;
   const [imageLoading, setImageLoading] = useState(true);
@@ -31,9 +33,9 @@ export function PaintingCard({ painting, isFlipped, onPress }: PaintingCardProps
 
   useEffect(() => {
     Animated.spring(flipAnimation, {
-      toValue: isFlipped ? 180 : 0,
       friction: 8,
       tension: 10,
+      toValue: isFlipped ? 180 : 0,
       useNativeDriver: true,
     }).start();
   }, [isFlipped]);
@@ -60,10 +62,10 @@ export function PaintingCard({ painting, isFlipped, onPress }: PaintingCardProps
 
   return (
     <TouchableOpacity
-      style={styles.container}
-      onPress={onPress}
-      onLongPress={() => navigation.navigate(Paths.PaintingDetail, { painting })}
       activeOpacity={0.7}
+      onLongPress={() => { navigation.navigate(Paths.PaintingDetail, { painting }); }}
+      onPress={onPress}
+      style={styles.container}
     >
       <View style={styles.cardContainer}>
         {/* Front Side */}
@@ -80,21 +82,19 @@ export function PaintingCard({ painting, isFlipped, onPress }: PaintingCardProps
           <View style={styles.paintingFront}>
             {painting.imageUrl && !imageError ? (
               <>
-                {imageLoading && (
-                  <View style={styles.imageLoadingContainer}>
-                    <ActivityIndicator size="small" color="#2d6a4f" />
-                  </View>
-                )}
+                {imageLoading ? <View style={styles.imageLoadingContainer}>
+                    <ActivityIndicator color="#2d6a4f" size="small" />
+                  </View> : null}
                 <Image
-                  source={{ uri: painting.imageUrl }}
-                  style={styles.paintingImage}
-                  resizeMode="cover"
-                  onLoadStart={() => setImageLoading(true)}
-                  onLoadEnd={() => setImageLoading(false)}
                   onError={() => {
                     setImageLoading(false);
                     setImageError(true);
                   }}
+                  onLoadEnd={() => { setImageLoading(false); }}
+                  onLoadStart={() => { setImageLoading(true); }}
+                  resizeMode="cover"
+                  source={{ uri: painting.imageUrl }}
+                  style={styles.paintingImage}
                 />
                 <View style={styles.imageOverlay} />
               </>
@@ -121,11 +121,11 @@ export function PaintingCard({ painting, isFlipped, onPress }: PaintingCardProps
         >
           <View style={styles.cardBack}>
             <View style={styles.infoContainer}>
-              <Text style={styles.paintingTitle} numberOfLines={3}>
+              <Text numberOfLines={3} style={styles.paintingTitle}>
                 {painting.title}
               </Text>
               <View style={styles.divider} />
-              <Text style={styles.paintingArtist} numberOfLines={2}>
+              <Text numberOfLines={2} style={styles.paintingArtist}>
                 {painting.artist}
               </Text>
             </View>
@@ -137,106 +137,106 @@ export function PaintingCard({ painting, isFlipped, onPress }: PaintingCardProps
 }
 
 const styles = StyleSheet.create({
-  container: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    padding: 4,
+  artFrame: {
+    alignItems: 'center',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 4,
+    borderWidth: 2,
+    height: '85%',
+    justifyContent: 'center',
+    width: '85%',
+  },
+  cardBack: {
+    alignItems: 'center',
+    backgroundColor: '#1a4d3e',
+    borderRadius: 12,
+    flex: 1,
+    justifyContent: 'center',
+    overflow: 'hidden',
+    padding: 12,
   },
   cardContainer: {
     flex: 1,
     position: 'relative',
   },
+  container: {
+    height: CARD_HEIGHT,
+    padding: 4,
+    width: CARD_WIDTH,
+  },
+  divider: {
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    height: 1,
+    marginVertical: 6,
+    width: 30,
+  },
   flipCard: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    borderRadius: 12,
     backfaceVisibility: 'hidden',
+    borderRadius: 12,
+    elevation: 4,
+    height: '100%',
+    position: 'absolute',
     shadowColor: '#000',
     shadowOffset: {
-      width: 0,
       height: 2,
+      width: 0,
     },
     shadowOpacity: 0.15,
     shadowRadius: 4,
-    elevation: 4,
-  },
-  flipCardFront: {
-    backgroundColor: '#fff',
+    width: '100%',
   },
   flipCardBack: {
     backgroundColor: '#1a4d3e',
   },
-  paintingFront: {
-    flex: 1,
-    borderRadius: 12,
-    overflow: 'hidden',
-    position: 'relative',
+  flipCardFront: {
+    backgroundColor: '#fff',
   },
   imageLoadingContainer: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
     zIndex: 10,
-  },
-  paintingImage: {
-    width: '100%',
-    height: '100%',
   },
   imageOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.1)',
   },
-  paintingPlaceholder: {
-    flex: 1,
-    justifyContent: 'center',
+  infoContainer: {
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  artFrame: {
-    width: '85%',
-    height: '85%',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
+  paintingArtist: {
+    color: 'rgba(255, 255, 255, 0.85)',
+    fontSize: 11,
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  paintingFront: {
+    borderRadius: 12,
+    flex: 1,
+    overflow: 'hidden',
+    position: 'relative',
   },
   paintingIcon: {
     fontSize: 44,
     opacity: 0.9,
   },
-  cardBack: {
-    flex: 1,
-    backgroundColor: '#1a4d3e',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
-    overflow: 'hidden',
+  paintingImage: {
+    height: '100%',
+    width: '100%',
   },
-  infoContainer: {
+  paintingPlaceholder: {
     alignItems: 'center',
+    flex: 1,
     justifyContent: 'center',
   },
   paintingTitle: {
+    color: '#fff',
     fontSize: 13,
     fontWeight: '600',
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 8,
     lineHeight: 16,
-  },
-  divider: {
-    width: 30,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    marginVertical: 6,
-  },
-  paintingArtist: {
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.85)',
+    marginBottom: 8,
     textAlign: 'center',
-    fontStyle: 'italic',
   },
 });

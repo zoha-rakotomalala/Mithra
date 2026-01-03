@@ -1,17 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import type { UserProfile } from '@/types/painting';
+
+import { useIsFocused } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
   Dimensions,
   ScrollView,
   StatusBar,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
-import { useIsFocused } from '@react-navigation/native';
+
 import { PaintingCard } from '@/components/molecules/PaintingCard/PaintingCard';
 import { ProfileCard } from '@/components/molecules/ProfileCard/ProfileCard';
+
 import { usePaintings } from '@/contexts/PaintingsContext';
-import type { UserProfile } from '@/types/painting';
 
 const { width } = Dimensions.get('window');
 const CARD_SIZE = (width - 64) / 3;
@@ -20,33 +23,33 @@ export function Profile() {
   const isFocused = useIsFocused();
   const { getPalettePaintings, paintings } = usePaintings();
 
-  const [flippedCardId, setFlippedCardId] = useState<number | 'profile' | null>(null);
+  const [flippedCardId, setFlippedCardId] = useState<'profile' | null | number>(null);
 
   const palettePaintings = getPalettePaintings();
 
   const userProfile: UserProfile = {
-    username: 'artlover',
     profileColor: '#004d40',
     stats: {
-      paintings: paintings.length,
       followers: '1.2k',
       following: 342,
+      paintings: paintings.length,
     },
+    username: 'artlover',
   };
 
   useEffect(() => {
     if (!isFocused) setFlippedCardId(null);
   }, [isFocused]);
 
-  const handleCardPress = (cardId: number | 'profile') => {
-    setFlippedCardId(prev => (prev === cardId ? null : cardId));
+  const handleCardPress = (cardId: 'profile' | number) => {
+    setFlippedCardId(previous => (previous === cardId ? null : cardId));
   };
 
   const gridPositions = [0, 1, 2, 3, 'profile', 4, 5, 6, 7];
 
   return (
     <>
-      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
+      <StatusBar backgroundColor="#1a1a1a" barStyle="light-content" />
       <View style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Art Deco Header */}
@@ -91,10 +94,10 @@ export function Profile() {
               if (position === 'profile') {
                 return (
                   <ProfileCard
-                    key="profile"
-                    profile={userProfile}
                     isFlipped={flippedCardId === 'profile'}
-                    onPress={() => handleCardPress('profile')}
+                    key="profile"
+                    onPress={() => { handleCardPress('profile'); }}
+                    profile={userProfile}
                   />
                 );
               }
@@ -114,10 +117,10 @@ export function Profile() {
 
               return (
                 <PaintingCard
-                  key={painting.id}
-                  painting={painting}
                   isFlipped={flippedCardId === painting.id}
-                  onPress={() => handleCardPress(painting.id)}
+                  key={painting.id}
+                  onPress={() => { handleCardPress(painting.id); }}
+                  painting={painting}
                 />
               );
             })}
@@ -151,137 +154,137 @@ export function Profile() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: '#f5f3ed',
+    flex: 1,
   },
 
   /* Header */
-  header: {
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: '#1a1a1a',
-    alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: '#d4af37',
-  },
-  headerTitle: {
-    fontSize: 32,
-    fontWeight: '300',
-    letterSpacing: 4,
-    color: '#d4af37',
-    marginBottom: 12,
-  },
-  headerDivider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '60%',
-  },
   dividerLine: {
+    backgroundColor: '#d4af37',
     flex: 1,
     height: 1,
-    backgroundColor: '#d4af37',
     opacity: 0.5,
   },
   dividerOrnament: {
-    fontSize: 12,
     color: '#d4af37',
+    fontSize: 12,
     marginHorizontal: 12,
+  },
+  header: {
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    borderBottomColor: '#d4af37',
+    borderBottomWidth: 2,
+    paddingBottom: 20,
+    paddingTop: 60,
+  },
+  headerDivider: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    width: '60%',
+  },
+  headerTitle: {
+    color: '#d4af37',
+    fontSize: 32,
+    fontWeight: '300',
+    letterSpacing: 4,
+    marginBottom: 12,
   },
 
   /* Stats */
-  statsBar: {
-    flexDirection: 'row',
-    backgroundColor: '#1a1a1a',
-    paddingVertical: 16,
-    justifyContent: 'space-around',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(212,175,55,0.3)',
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 28,
-    fontWeight: '300',
-    color: '#d4af37',
-  },
-  statLabel: {
-    fontSize: 10,
-    color: 'rgba(212,175,55,0.7)',
-    letterSpacing: 2,
-    marginTop: 4,
-  },
   statDivider: {
     justifyContent: 'center',
   },
   statDividerText: {
-    fontSize: 24,
     color: 'rgba(212,175,55,0.3)',
+    fontSize: 24,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statLabel: {
+    color: 'rgba(212,175,55,0.7)',
+    fontSize: 10,
+    letterSpacing: 2,
+    marginTop: 4,
+  },
+  statNumber: {
+    color: '#d4af37',
+    fontSize: 28,
+    fontWeight: '300',
+  },
+  statsBar: {
+    backgroundColor: '#1a1a1a',
+    borderBottomColor: 'rgba(212,175,55,0.3)',
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 16,
   },
 
   /* Info */
   infoSection: {
-    padding: 20,
-    borderBottomWidth: 1,
     borderBottomColor: '#e0ddd5',
+    borderBottomWidth: 1,
+    padding: 20,
   },
   infoText: {
-    textAlign: 'center',
     color: '#004d40',
     fontSize: 14,
     letterSpacing: 1,
+    textAlign: 'center',
   },
 
   /* Grid */
+  emptyFrame: {
+    alignItems: 'center',
+    aspectRatio: 0.75,
+    borderColor: 'rgba(212,175,55,0.3)',
+    borderWidth: 2,
+    justifyContent: 'center',
+  },
+  emptyIcon: {
+    color: '#999',
+    fontSize: 32,
+  },
+  emptySlot: {
+    margin: 4,
+    width: CARD_SIZE,
+  },
+  emptyText: {
+    color: '#999',
+    fontSize: 10,
+    letterSpacing: 1,
+    marginTop: 4,
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     paddingHorizontal: 16,
     paddingTop: 20,
   },
-  emptySlot: {
-    width: CARD_SIZE,
-    margin: 4,
-  },
-  emptyFrame: {
-    aspectRatio: 0.75,
-    borderWidth: 2,
-    borderColor: 'rgba(212,175,55,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyIcon: {
-    fontSize: 32,
-    color: '#999',
-  },
-  emptyText: {
-    fontSize: 10,
-    color: '#999',
-    letterSpacing: 1,
-    marginTop: 4,
-  },
 
   /* Instructions */
   instructions: {
     padding: 24,
   },
+  instructionText: {
+    color: '#4a4a4a',
+    fontSize: 14,
+    lineHeight: 22,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
   sectionHeader: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
     marginBottom: 16,
   },
   sectionTitle: {
+    color: '#004d40',
     fontSize: 11,
     fontWeight: '700',
-    color: '#004d40',
     letterSpacing: 2,
     marginHorizontal: 16,
-  },
-  instructionText: {
-    fontSize: 14,
-    color: '#4a4a4a',
-    textAlign: 'center',
-    marginBottom: 8,
-    lineHeight: 22,
   },
 });

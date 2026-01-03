@@ -1,14 +1,15 @@
 import type { Painting } from '@/types/painting';
+
 import { cleanArtistName } from './searchHelpers';
 
 const RIJKS_SEARCH_API = 'https://data.rijksmuseum.nl/search/collection';
 
-interface RijksSearchParams {
-  query: string;
+type RijksSearchParameters = {
   limit?: number;
+  query: string;
 }
 
-interface RijksSearchResult {
+type RijksSearchResult = {
   paintings: Painting[];
   totalResults: number;
 }
@@ -17,22 +18,22 @@ interface RijksSearchResult {
  * Search Rijksmuseum collection using Linked Art API
  */
 export async function searchRijksmuseum(
-  params: RijksSearchParams
+  parameters: RijksSearchParameters
 ): Promise<RijksSearchResult> {
   try {
-    const { query, limit = 30 } = params;
+    const { limit = 30, query } = parameters;
 
     if (!query || query.trim().length === 0) {
       return { paintings: [], totalResults: 0 };
     }
 
     // Build search URL - use description for broad search
-    const searchParams = new URLSearchParams({
+    const searchParameters = new URLSearchParams({
       description: query.trim(),
       imageAvailable: 'true',
     });
 
-    const searchUrl = `${RIJKS_SEARCH_API}?${searchParams.toString()}`;
+    const searchUrl = `${RIJKS_SEARCH_API}?${searchParameters.toString()}`;
     console.log('🇳🇱 Searching Rijksmuseum:', searchUrl);
 
     const response = await fetch(searchUrl);
@@ -78,7 +79,7 @@ async function resolveObjects(objectIds: string[]): Promise<Painting[]> {
 /**
  * Resolve a single object ID to painting data
  */
-async function resolveObject(objectId: string): Promise<Painting | null> {
+async function resolveObject(objectId: string): Promise<null | Painting> {
   try {
     const response = await fetch(objectId, {
       headers: {
@@ -102,7 +103,7 @@ async function resolveObject(objectId: string): Promise<Painting | null> {
 /**
  * Parse Linked Art object into Painting format
  */
-function parseLinkedArtObject(data: any): Painting | null {
+function parseLinkedArtObject(data: any): null | Painting {
   try {
     // Must be a HumanMadeObject
     if (data.type !== 'HumanMadeObject') return null;
@@ -132,20 +133,20 @@ function parseLinkedArtObject(data: any): Painting | null {
     const medium = extractMedium(data);
 
     return {
-      id: `rijks-${generateIdFromUrl(data.id)}`,
-      title,
       artist,
-      year,
-      medium,
-      dimensions,
-      museum: 'Rijksmuseum',
-      location: 'Amsterdam, Netherlands',
-      description: undefined,
-      imageUrl,
-      thumbnailUrl: imageUrl,
       color: generateColorFromString(title),
+      description: undefined,
+      dimensions,
+      id: `rijks-${generateIdFromUrl(data.id)}`,
+      imageUrl,
       isSeen: false,
+      location: 'Amsterdam, Netherlands',
+      medium,
+      museum: 'Rijksmuseum',
+      thumbnailUrl: imageUrl,
+      title,
       wantToVisit: false,
+      year,
     };
   } catch (error) {
     console.error('Error parsing Rijks Linked Art object:', error);
@@ -188,7 +189,7 @@ function extractArtist(data: any): string {
 /**
  * Extract image URL - FIXED to handle both patterns
  */
-function extractImage(data: any): string | null {
+function extractImage(data: any): null | string {
   // Pattern 1: representation (standard Linked Art)
   if (data.representation) {
     const reps = Array.isArray(data.representation)
@@ -244,7 +245,7 @@ function extractYear(data: any): number | undefined {
   // Try begin_of_the_begin first
   if (timespan.begin_of_the_begin) {
     const match = timespan.begin_of_the_begin.match(/\d{4}/);
-    if (match) return parseInt(match[0]);
+    if (match) return Number.parseInt(match[0]);
   }
 
   // Try identified_by
@@ -252,7 +253,7 @@ function extractYear(data: any): number | undefined {
     const dateLabel = timespan.identified_by.find((id: any) => id.type === 'Name');
     if (dateLabel?.content) {
       const match = dateLabel.content.match(/\d{4}/);
-      if (match) return parseInt(match[0]);
+      if (match) return Number.parseInt(match[0]);
     }
   }
 
@@ -306,7 +307,7 @@ function extractMedium(data: any): string | undefined {
  * Generate numeric ID from URL
  */
 function generateIdFromUrl(url: string): string {
-  const match = url.match(/([^\/]+)$/);
+  const match = /([^/]+)$/.exec(url);
   return match ? match[1] : Date.now().toString();
 }
 
@@ -323,14 +324,14 @@ export function getPopularRijksmuseumArtists(): string[] {
   ];
 }
 
-function generateColorFromString(str: string): string {
+function generateColorFromString(string_: string): string {
   const colors = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
     '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
   ];
   let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  for (let index = 0; index < string_.length; index++) {
+    hash = string_.charCodeAt(index) + ((hash << 5) - hash);
   }
   return colors[Math.abs(hash) % colors.length];
 }
