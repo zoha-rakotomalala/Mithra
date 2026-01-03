@@ -3,10 +3,8 @@ import type { UserProfile } from '@/types/painting';
 import { useIsFocused } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
-  Dimensions,
   ScrollView,
   StatusBar,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -15,9 +13,7 @@ import { PaintingCard } from '@/components/molecules/PaintingCard/PaintingCard';
 import { ProfileCard } from '@/components/molecules/ProfileCard/ProfileCard';
 
 import { usePaintings } from '@/contexts/PaintingsContext';
-
-const { width } = Dimensions.get('window');
-const CARD_SIZE = (width - 64) / 3;
+import { paletteStyles as styles } from './Palette.styles';
 
 export function Palette() {
   const isFocused = useIsFocused();
@@ -151,140 +147,3 @@ export function Palette() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#f5f3ed',
-    flex: 1,
-  },
-
-  /* Header */
-  dividerLine: {
-    backgroundColor: '#d4af37',
-    flex: 1,
-    height: 1,
-    opacity: 0.5,
-  },
-  dividerOrnament: {
-    color: '#d4af37',
-    fontSize: 12,
-    marginHorizontal: 12,
-  },
-  header: {
-    alignItems: 'center',
-    backgroundColor: '#1a1a1a',
-    borderBottomColor: '#d4af37',
-    borderBottomWidth: 2,
-    paddingBottom: 20,
-    paddingTop: 60,
-  },
-  headerDivider: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    width: '60%',
-  },
-  headerTitle: {
-    color: '#d4af37',
-    fontSize: 32,
-    fontWeight: '300',
-    letterSpacing: 4,
-    marginBottom: 12,
-  },
-
-  /* Stats */
-  statDivider: {
-    justifyContent: 'center',
-  },
-  statDividerText: {
-    color: 'rgba(212,175,55,0.3)',
-    fontSize: 24,
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statLabel: {
-    color: 'rgba(212,175,55,0.7)',
-    fontSize: 10,
-    letterSpacing: 2,
-    marginTop: 4,
-  },
-  statNumber: {
-    color: '#d4af37',
-    fontSize: 28,
-    fontWeight: '300',
-  },
-  statsBar: {
-    backgroundColor: '#1a1a1a',
-    borderBottomColor: 'rgba(212,175,55,0.3)',
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 16,
-  },
-
-  /* Info */
-  infoSection: {
-    borderBottomColor: '#e0ddd5',
-    borderBottomWidth: 1,
-    padding: 20,
-  },
-  infoText: {
-    color: '#004d40',
-    fontSize: 14,
-    letterSpacing: 1,
-    textAlign: 'center',
-  },
-
-  /* Grid */
-  emptyFrame: {
-    alignItems: 'center',
-    aspectRatio: 0.75,
-    borderColor: 'rgba(212,175,55,0.3)',
-    borderWidth: 2,
-    justifyContent: 'center',
-  },
-  emptyIcon: {
-    color: '#999',
-    fontSize: 32,
-  },
-  emptySlot: {
-    margin: 4,
-    width: CARD_SIZE,
-  },
-  emptyText: {
-    color: '#999',
-    fontSize: 10,
-    letterSpacing: 1,
-    marginTop: 4,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 16,
-    paddingTop: 20,
-  },
-
-  /* Instructions */
-  instructions: {
-    padding: 24,
-  },
-  instructionText: {
-    color: '#4a4a4a',
-    fontSize: 14,
-    lineHeight: 22,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  sectionHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    color: '#004d40',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 2,
-    marginHorizontal: 16,
-  },
-});
