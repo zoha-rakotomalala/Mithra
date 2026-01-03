@@ -1,115 +1,85 @@
 import type { Painting } from '@/types/painting';
+import { cleanArtistName } from './searchHelpers';
 
 const RIJKS_SEARCH_API = 'https://data.rijksmuseum.nl/search/collection';
-const RIJKS_OBJECT_API = 'https://id.rijksmuseum.nl';
 
-// Cache for resolved object details
-const objectCache = new Map<string, any>();
-
-export interface RijksSearchParams {
-  query?: string;
-  creator?: string;
-  title?: string;
-  type?: string;
+interface RijksSearchParams {
+  query: string;
   limit?: number;
 }
 
-export interface RijksSearchResult {
+interface RijksSearchResult {
   paintings: Painting[];
   totalResults: number;
-  hasMore: boolean;
-  nextPageToken?: string;
 }
 
 /**
- * Search Rijksmuseum collection
+ * Search Rijksmuseum collection using Linked Art API
  */
 export async function searchRijksmuseum(
   params: RijksSearchParams
 ): Promise<RijksSearchResult> {
   try {
-    // Build query parameters
-    const queryParams = new URLSearchParams();
+    const { query, limit = 30 } = params;
 
-    // Default to paintings with images
-    queryParams.append('type', 'painting');
-    queryParams.append('imageAvailable', 'true');
-
-    // Add search parameters
-    if (params.creator) {
-      queryParams.append('creator', params.creator);
-    }
-    if (params.title) {
-      queryParams.append('title', params.title);
-    }
-    if (params.query) {
-      // Use description search for general queries
-      queryParams.append('description', params.query);
+    if (!query || query.trim().length === 0) {
+      return { paintings: [], totalResults: 0 };
     }
 
-    const searchUrl = `${RIJKS_SEARCH_API}?${queryParams.toString()}`;
+    // Build search URL - use description for broad search
+    const searchParams = new URLSearchParams({
+      description: query.trim(),
+      imageAvailable: 'true',
+    });
 
-    console.log('🎨 Searching Rijksmuseum:', searchUrl);
+    const searchUrl = `${RIJKS_SEARCH_API}?${searchParams.toString()}`;
+    console.log('🇳🇱 Searching Rijksmuseum:', searchUrl);
 
     const response = await fetch(searchUrl);
 
     if (!response.ok) {
-      throw new Error(`Rijksmuseum API error: ${response.status}`);
+      console.warn(`Rijksmuseum search error: ${response.status}`);
+      return { paintings: [], totalResults: 0 };
     }
 
     const data = await response.json();
+    const orderedItems = data.orderedItems || [];
+    const totalItems = data.partOf?.totalItems || 0;
 
-    // Extract object IDs from search results
-    const objectIds = data.orderedItems?.map((item: any) => item.id) || [];
+    if (orderedItems.length === 0) {
+      return { paintings: [], totalResults: 0 };
+    }
 
-    // Resolve object details (fetch full info for each)
-    const paintings = await resolveObjects(objectIds.slice(0, params.limit || 20));
+    // Fetch full objects (first N results)
+    const objectIds = orderedItems.slice(0, limit).map((item: any) => item.id);
+    const paintings = await resolveObjects(objectIds);
+
+    console.log(`🇳🇱 Rijksmuseum: ${paintings.length} paintings resolved`);
 
     return {
-      paintings: paintings.filter(p => p !== null) as Painting[],
-      totalResults: data.partOf?.totalItems || 0,
-      hasMore: !!data.next,
-      nextPageToken: extractPageToken(data.next?.id),
+      paintings,
+      totalResults: totalItems,
     };
   } catch (error) {
     console.error('Error searching Rijksmuseum:', error);
-    throw new Error('Failed to search Rijksmuseum collection.');
+    return { paintings: [], totalResults: 0 };
   }
 }
 
 /**
- * Search by artist name
+ * Resolve multiple object IDs to full painting data
  */
-export async function searchRijksmuseumByArtist(
-  artistName: string,
-  limit = 30
-): Promise<RijksSearchResult> {
-  return searchRijksmuseum({
-    creator: artistName,
-    limit,
-  });
-}
-
-/**
- * Resolve object IDs to full painting data
- */
-async function resolveObjects(objectIds: string[]): Promise<(Painting | null)[]> {
+async function resolveObjects(objectIds: string[]): Promise<Painting[]> {
   const promises = objectIds.map(id => resolveObject(id));
-  return Promise.all(promises);
+  const results = await Promise.all(promises);
+  return results.filter((p): p is Painting => p !== null);
 }
 
 /**
  * Resolve a single object ID to painting data
- * Uses cache to avoid duplicate requests
  */
 async function resolveObject(objectId: string): Promise<Painting | null> {
   try {
-    // Check cache first
-    if (objectCache.has(objectId)) {
-      return parsePaintingFromObject(objectCache.get(objectId));
-    }
-
-    // Fetch object data (accepts JSON via content negotiation)
     const response = await fetch(objectId, {
       headers: {
         'Accept': 'application/ld+json',
@@ -117,42 +87,52 @@ async function resolveObject(objectId: string): Promise<Painting | null> {
     });
 
     if (!response.ok) {
-      console.warn(`Failed to fetch object ${objectId}`);
+      console.warn(`Failed to resolve Rijks object: ${objectId}`);
       return null;
     }
 
     const data = await response.json();
-
-    // Cache the result
-    objectCache.set(objectId, data);
-
-    return parsePaintingFromObject(data);
+    return parseLinkedArtObject(data);
   } catch (error) {
-    console.error(`Error resolving object ${objectId}:`, error);
+    console.error(`Error resolving Rijks object ${objectId}:`, error);
     return null;
   }
 }
 
 /**
- * Parse Rijksmuseum object data into Painting format
+ * Parse Linked Art object into Painting format
  */
-function parsePaintingFromObject(data: any): Painting | null {
+function parseLinkedArtObject(data: any): Painting | null {
   try {
-    // Extract basic info
-    const title = extractTitle(data);
-    const artist = extractArtist(data);
-    const year = extractYear(data);
-    const imageUrl = extractImage(data);
-    const dimensions = extractDimensions(data);
-    const medium = extractMedium(data);
-    const description = extractDescription(data);
+    // Must be a HumanMadeObject
+    if (data.type !== 'HumanMadeObject') return null;
 
-    if (!title || !artist) {
-      return null; // Skip if missing essential data
+    // Extract title
+    const title = extractTitle(data);
+    if (!title || title === 'Untitled') return null;
+
+    // Extract artist
+    const artistDisplay = extractArtist(data);
+    const artist = cleanArtistName(artistDisplay);
+
+    // Extract image - THIS IS THE KEY FIX
+    const imageUrl = extractImage(data);
+    if (!imageUrl) {
+      console.log(`❌ No image for: ${title}`);
+      return null;
     }
 
+    // Extract year
+    const year = extractYear(data);
+
+    // Extract dimensions
+    const dimensions = extractDimensions(data);
+
+    // Extract medium
+    const medium = extractMedium(data);
+
     return {
-      id: generateIdFromUrl(data.id || data['@id']),
+      id: `rijks-${generateIdFromUrl(data.id)}`,
       title,
       artist,
       year,
@@ -160,85 +140,122 @@ function parsePaintingFromObject(data: any): Painting | null {
       dimensions,
       museum: 'Rijksmuseum',
       location: 'Amsterdam, Netherlands',
-      description,
+      description: undefined,
       imageUrl,
+      thumbnailUrl: imageUrl,
       color: generateColorFromString(title),
       isSeen: false,
-      isInPalette: false,
+      wantToVisit: false,
     };
   } catch (error) {
-    console.error('Error parsing object:', error);
+    console.error('Error parsing Rijks Linked Art object:', error);
     return null;
   }
 }
 
 /**
- * Extract title from object data
+ * Extract title from Linked Art object
  */
-function extractTitle(data: any): string | undefined {
-  // Linked Art format
+function extractTitle(data: any): string {
   if (data._label) return data._label;
-  if (data.identified_by) {
-    const title = data.identified_by.find((id: any) =>
-      id.type === 'Name' || id.classified_as?.some((c: any) => c._label === 'Primary Name')
-    );
-    if (title?.content) return title.content;
-  }
-  return 'Untitled';
+
+  const names = data.identified_by || [];
+  const title = names.find((item: any) =>
+    item.type === 'Name' &&
+    (item.classified_as?.[0]?._label === 'Primary Name' || !item.classified_as)
+  );
+
+  return title?.content || 'Untitled';
 }
 
 /**
- * Extract artist name from object data
+ * Extract artist from Linked Art object
  */
-function extractArtist(data: any): string | undefined {
+function extractArtist(data: any): string {
   if (data.produced_by?.carried_out_by) {
     const creators = Array.isArray(data.produced_by.carried_out_by)
       ? data.produced_by.carried_out_by
       : [data.produced_by.carried_out_by];
 
     const artist = creators[0];
-    return artist?._label || artist?.identified_by?.[0]?.content || 'Unknown Artist';
+    return artist?._label ||
+           artist?.identified_by?.[0]?.content ||
+           'Unknown Artist';
   }
   return 'Unknown Artist';
+}
+
+/**
+ * Extract image URL - FIXED to handle both patterns
+ */
+function extractImage(data: any): string | null {
+  // Pattern 1: representation (standard Linked Art)
+  if (data.representation) {
+    const reps = Array.isArray(data.representation)
+      ? data.representation
+      : [data.representation];
+
+    for (const rep of reps) {
+      // Try access_point first
+      if (rep.access_point?.[0]?.id) {
+        return rep.access_point[0].id;
+      }
+      // Try digitally_shown_by
+      if (rep.digitally_shown_by?.[0]?.access_point?.[0]?.id) {
+        return rep.digitally_shown_by[0].access_point[0].id;
+      }
+    }
+  }
+
+  // Pattern 2: shows (Rijksmuseum specific)
+  if (data.shows) {
+    const shows = Array.isArray(data.shows) ? data.shows : [data.shows];
+
+    for (const show of shows) {
+      if (show.digitally_shown_by?.[0]?.access_point?.[0]?.id) {
+        return show.digitally_shown_by[0].access_point[0].id;
+      }
+    }
+  }
+
+  // Pattern 3: subject_of with digital representations
+  if (data.subject_of) {
+    const subjects = Array.isArray(data.subject_of)
+      ? data.subject_of
+      : [data.subject_of];
+
+    for (const subj of subjects) {
+      if (subj.digitally_carried_by?.[0]?.access_point?.[0]?.id) {
+        return subj.digitally_carried_by[0].access_point[0].id;
+      }
+    }
+  }
+
+  return null;
 }
 
 /**
  * Extract creation year
  */
 function extractYear(data: any): number | undefined {
-  if (data.produced_by?.timespan) {
-    const timespan = data.produced_by.timespan;
-    // Try begin_of_the_begin first (most specific)
-    if (timespan.begin_of_the_begin) {
-      return parseInt(timespan.begin_of_the_begin.split('-')[0]);
-    }
-    // Fallback to identified_by
-    if (timespan.identified_by) {
-      const dateStr = timespan.identified_by.find((id: any) => id.type === 'Name')?.content;
-      if (dateStr) {
-        const match = dateStr.match(/\d{4}/);
-        if (match) return parseInt(match[0]);
-      }
+  const timespan = data.produced_by?.timespan;
+  if (!timespan) return undefined;
+
+  // Try begin_of_the_begin first
+  if (timespan.begin_of_the_begin) {
+    const match = timespan.begin_of_the_begin.match(/\d{4}/);
+    if (match) return parseInt(match[0]);
+  }
+
+  // Try identified_by
+  if (timespan.identified_by) {
+    const dateLabel = timespan.identified_by.find((id: any) => id.type === 'Name');
+    if (dateLabel?.content) {
+      const match = dateLabel.content.match(/\d{4}/);
+      if (match) return parseInt(match[0]);
     }
   }
-  return undefined;
-}
 
-/**
- * Extract image URL
- */
-function extractImage(data: any): string | undefined {
-  // Look for digital representation
-  if (data.representation) {
-    const reps = Array.isArray(data.representation) ? data.representation : [data.representation];
-    // Find highest quality image
-    const image = reps.find((rep: any) =>
-      rep.access_point?.[0]?.id || rep.digitally_shown_by?.[0]?.access_point?.[0]?.id
-    );
-
-    return image?.access_point?.[0]?.id ||
-           image?.digitally_shown_by?.[0]?.access_point?.[0]?.id;
-  }
   return undefined;
 }
 
@@ -246,91 +263,55 @@ function extractImage(data: any): string | undefined {
  * Extract dimensions
  */
 function extractDimensions(data: any): string | undefined {
-  if (data.dimension) {
-    const dims = Array.isArray(data.dimension) ? data.dimension : [data.dimension];
-    const height = dims.find((d: any) => d.classified_as?.[0]?._label === 'height');
-    const width = dims.find((d: any) => d.classified_as?.[0]?._label === 'width');
+  if (!data.dimension) return undefined;
 
-    if (height?.value && width?.value) {
-      return `${height.value} cm × ${width.value} cm`;
-    }
+  const dims = Array.isArray(data.dimension) ? data.dimension : [data.dimension];
+  const height = dims.find((d: any) =>
+    d.classified_as?.[0]?._label?.toLowerCase().includes('height')
+  );
+  const width = dims.find((d: any) =>
+    d.classified_as?.[0]?._label?.toLowerCase().includes('width')
+  );
+
+  if (height?.value && width?.value) {
+    const unit = height.unit?._label || 'cm';
+    return `${height.value} × ${width.value} ${unit}`;
   }
+
   return undefined;
 }
 
 /**
- * Extract medium/technique
+ * Extract medium/materials
  */
 function extractMedium(data: any): string | undefined {
+  const materials: string[] = [];
+
   if (data.made_of) {
-    const materials = Array.isArray(data.made_of) ? data.made_of : [data.made_of];
-    return materials.map((m: any) => m._label).filter(Boolean).join(', ');
+    const mats = Array.isArray(data.made_of) ? data.made_of : [data.made_of];
+    materials.push(...mats.map((m: any) => m._label).filter(Boolean));
   }
+
   if (data.produced_by?.technique) {
-    const techniques = Array.isArray(data.produced_by.technique)
+    const techs = Array.isArray(data.produced_by.technique)
       ? data.produced_by.technique
       : [data.produced_by.technique];
-    return techniques.map((t: any) => t._label).filter(Boolean).join(', ');
-  }
-  return undefined;
-}
-
-/**
- * Extract description
- */
-function extractDescription(data: any): string | undefined {
-  if (data.referred_to_by) {
-    const descriptions = Array.isArray(data.referred_to_by)
-      ? data.referred_to_by
-      : [data.referred_to_by];
-
-    const desc = descriptions.find((ref: any) =>
-      ref.type === 'LinguisticObject' && ref.content
-    );
-
-    return desc?.content;
-  }
-  return undefined;
-}
-
-/**
- * Extract page token from next page URL
- */
-function extractPageToken(url?: string): string | undefined {
-  if (!url) return undefined;
-  const match = url.match(/pageToken=([^&]+)/);
-  return match ? match[1] : undefined;
-}
-
-/**
- * Generate numeric ID from Rijksmuseum URL
- */
-function generateIdFromUrl(url: string): number {
-  // Extract number from URL like https://id.rijksmuseum.nl/200100988
-  const match = url.match(/\/(\d+)$/);
-  return match ? parseInt(match[1]) : Date.now();
-}
-
-/**
- * Generate consistent color from string
- */
-function generateColorFromString(str: string): string {
-  const colors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
-    '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
-    '#F4976C', '#4A5F7A', '#2C3639', '#D4AF37', '#7FB3D5',
-  ];
-
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    materials.push(...techs.map((t: any) => t._label).filter(Boolean));
   }
 
-  return colors[Math.abs(hash) % colors.length];
+  return materials.length > 0 ? materials.join(', ') : undefined;
 }
 
 /**
- * Get popular Rijksmuseum artists for quick search
+ * Generate numeric ID from URL
+ */
+function generateIdFromUrl(url: string): string {
+  const match = url.match(/([^\/]+)$/);
+  return match ? match[1] : Date.now().toString();
+}
+
+/**
+ * Get popular Rijksmuseum artists
  */
 export function getPopularRijksmuseumArtists(): string[] {
   return [
@@ -339,10 +320,17 @@ export function getPopularRijksmuseumArtists(): string[] {
     'Frans Hals',
     'Jan Steen',
     'Vincent van Gogh',
-    'Pieter de Hooch',
-    'Jacob van Ruisdael',
-    'Gerard ter Borch',
-    'Hendrick Avercamp',
-    'Willem Claeszoon Heda',
   ];
+}
+
+function generateColorFromString(str: string): string {
+  const colors = [
+    '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
+    '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
+  ];
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
 }

@@ -10,13 +10,17 @@ import {
   Dimensions,
   Alert,
   FlatList,
+  ScrollView,
+  Modal,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import FastImage from 'react-native-fast-image';
-import { searchMetMuseum, searchMetByArtist, getPopularMetArtists } from '@/services/metMuseumService';
+import { searchAllMuseums, getPopularArtistsByMuseums, getMuseumBadgeInfo } from '@/services/unifiedMuseumService';
+import { getAllMuseums, TIER_1_MUSEUMS } from '@/services/museumRegistry';
 import { usePaintings } from '@/contexts/PaintingsContext';
 import { Paths } from '@/navigation/paths';
 import type { Painting } from '@/types/painting';
+import { MuseumSelector } from '@/components/MuseumSelector';
 
 const { width } = Dimensions.get('window');
 const CARD_SIZE = (width - 48) / 3;
@@ -33,6 +37,7 @@ const GridItem = React.memo(({
   collectionStatus?: { isSeen: boolean; wantToVisit: boolean };
 }) => {
   const [imageLoading, setImageLoading] = React.useState(true);
+  const badgeInfo = getMuseumBadgeInfo(painting);
 
   return (
     <TouchableOpacity
@@ -77,8 +82,8 @@ const GridItem = React.memo(({
           </View>
         )}
 
-        <View style={styles.museumBadge}>
-          <Text style={styles.museumBadgeText}>MET</Text>
+        <View style={[styles.museumBadge, { backgroundColor: badgeInfo.color }]}>
+          <Text style={styles.museumBadgeText}>{badgeInfo.shortName}</Text>
         </View>
       </View>
 
@@ -99,21 +104,32 @@ export function Search() {
   const navigation = useNavigation();
   const { paintings: existingPaintings } = usePaintings();
 
+  const allMuseums = getAllMuseums();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Painting[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [selectedMuseums, setSelectedMuseums] = useState<string[]>(
+    TIER_1_MUSEUMS // Default to best 4 museums
+  );
+  const [showMuseumPicker, setShowMuseumPicker] = useState(false);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
+    if (selectedMuseums.length === 0) {
+      Alert.alert('Notice', 'Please select at least one museum to search');
+      return;
+    }
 
     setIsLoading(true);
     setHasSearched(true);
 
     try {
-      const result = await searchMetMuseum({
+      const result = await searchAllMuseums({
         query: searchQuery,
-        hasImages: true,
+        museumIds: selectedMuseums,
+        maxResultsPerMuseum: 20,
       });
 
       setSearchResults(result.paintings);
@@ -121,7 +137,7 @@ export function Search() {
       if (result.paintings.length === 0) {
         Alert.alert(
           'No Results',
-          `No paintings found for "${searchQuery}".\n\nTry searching for:\n• An artist name (Van Gogh, Monet, Rembrandt)\n• A painting title (Starry Night, Water Lilies)\n• An art movement (Impressionism, Renaissance)`,
+          `No paintings found for "${searchQuery}" in the selected museums.\n\nTry:\n• Different keywords\n• An artist name\n• A broader search term`,
           [{ text: 'OK' }]
         );
       }
@@ -143,7 +159,11 @@ export function Search() {
     setHasSearched(true);
 
     try {
-      const result = await searchMetByArtist(artistName);
+      const result = await searchAllMuseums({
+        query: artistName,
+        museumIds: selectedMuseums,
+        maxResultsPerMuseum: 20,
+      });
       setSearchResults(result.paintings);
     } catch (error) {
       Alert.alert('Search Error', 'Failed to search paintings by artist.');
@@ -182,6 +202,8 @@ export function Search() {
 
   const keyExtractor = useCallback((item: Painting) => `painting-${item.id}`, []);
 
+  const popularArtists = getPopularArtistsByMuseums(selectedMuseums);
+
   return (
     <>
       <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
@@ -194,7 +216,29 @@ export function Search() {
             <Text style={styles.dividerOrnament}>◆</Text>
             <View style={styles.dividerLine} />
           </View>
-          <Text style={styles.headerSubtitle}>The Metropolitan Museum</Text>
+          <Text style={styles.headerSubtitle}>
+            {selectedMuseums.length === allMuseums.length
+              ? 'All Museums'
+              : `${selectedMuseums.length} Museum${selectedMuseums.length !== 1 ? 's' : ''} Selected`}
+          </Text>
+        </View>
+
+        {/* Museum Selection Button */}
+        <View style={styles.filterSection}>
+          <TouchableOpacity
+            style={styles.selectMuseumsButton}
+            onPress={() => setShowMuseumPicker(true)}
+          >
+            <View style={styles.selectMuseumsButtonContent}>
+              <View>
+                <Text style={styles.selectMuseumsLabel}>MUSEUMS</Text>
+                <Text style={styles.selectMuseumsText}>
+                  {selectedMuseums.length} of {allMuseums.length} selected
+                </Text>
+              </View>
+              <Text style={styles.selectMuseumsIcon}>▼</Text>
+            </View>
+          </TouchableOpacity>
         </View>
 
         {/* Search Bar */}
@@ -236,6 +280,29 @@ export function Search() {
           </TouchableOpacity>
         </View>
 
+        {/* Museum Picker Modal */}
+        <Modal
+          visible={showMuseumPicker}
+          animationType="slide"
+          presentationStyle="pageSheet"
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Museums</Text>
+              <TouchableOpacity
+                onPress={() => setShowMuseumPicker(false)}
+                style={styles.modalDoneButton}
+              >
+                <Text style={styles.modalDoneText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+            <MuseumSelector
+              selectedMuseums={selectedMuseums}
+              onMuseumsChange={setSelectedMuseums}
+            />
+          </View>
+        </Modal>
+
         {/* Results with FlatList */}
         <FlatList
           data={searchResults}
@@ -251,7 +318,7 @@ export function Search() {
           windowSize={7}
           ListHeaderComponent={() => (
             <>
-              {!hasSearched && (
+              {!hasSearched && popularArtists.length > 0 && (
                 <View style={styles.popularSection}>
                   <View style={styles.sectionDivider}>
                     <View style={styles.dividerLine} />
@@ -260,7 +327,7 @@ export function Search() {
                   </View>
                   <FlatList
                     horizontal
-                    data={getPopularMetArtists()}
+                    data={popularArtists}
                     renderItem={({ item }) => (
                       <TouchableOpacity
                         style={styles.artistChip}
@@ -278,9 +345,13 @@ export function Search() {
 
               {!hasSearched && (
                 <View style={styles.infoBanner}>
-                  <Text style={styles.infoBannerTitle}>470,000+ artworks await</Text>
+                  <Text style={styles.infoBannerTitle}>
+                    {selectedMuseums.length === allMuseums.length
+                      ? '2.5M+ artworks across all museums'
+                      : `Search ${selectedMuseums.length} museum${selectedMuseums.length !== 1 ? 's' : ''}`}
+                  </Text>
                   <Text style={styles.infoBannerText}>
-                    Search The Met's collection of European and American masterpieces
+                    Explore masterpieces from world-renowned collections
                   </Text>
                 </View>
               )}
@@ -288,7 +359,7 @@ export function Search() {
               {isLoading && (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator size="large" color="#d4af37" />
-                  <Text style={styles.loadingText}>Searching collection...</Text>
+                  <Text style={styles.loadingText}>Searching collections...</Text>
                 </View>
               )}
 
@@ -311,7 +382,7 @@ export function Search() {
                 <Text style={styles.emptyIcon}>🖼️</Text>
                 <Text style={styles.emptyTitle}>Begin Your Search</Text>
                 <Text style={styles.emptyText}>
-                  Explore paintings by artist, title, or movement
+                  Explore paintings across {selectedMuseums.length} museum{selectedMuseums.length !== 1 ? 's' : ''}
                 </Text>
               </View>
             ) : null
@@ -365,6 +436,42 @@ const styles = StyleSheet.create({
     color: 'rgba(212, 175, 55, 0.7)',
     letterSpacing: 2,
   },
+  filterSection: {
+    padding: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0ddd5',
+  },
+  selectMuseumsButton: {
+    backgroundColor: '#f5f3ed',
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#004d40',
+    overflow: 'hidden',
+  },
+  selectMuseumsButtonContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 14,
+  },
+  selectMuseumsLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#004d40',
+    letterSpacing: 2,
+    marginBottom: 4,
+  },
+  selectMuseumsText: {
+    fontSize: 13,
+    color: '#666',
+    fontWeight: '600',
+  },
+  selectMuseumsIcon: {
+    fontSize: 16,
+    color: '#004d40',
+    fontWeight: '700',
+  },
   searchSection: {
     padding: 20,
     backgroundColor: '#f5f3ed',
@@ -412,6 +519,41 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 2,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#f5f3ed',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+    backgroundColor: '#1a1a1a',
+    borderBottomWidth: 2,
+    borderBottomColor: '#d4af37',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#d4af37',
+    letterSpacing: 2,
+  },
+  modalDoneButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: '#004d40',
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#d4af37',
+  },
+  modalDoneText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#d4af37',
+    letterSpacing: 1,
   },
   flatListContent: {
     paddingHorizontal: 16,
@@ -562,10 +704,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
   museumBadgeText: {
-    color: '#d4af37',
+    color: '#fff',
     fontSize: 9,
     fontWeight: '700',
     letterSpacing: 1,

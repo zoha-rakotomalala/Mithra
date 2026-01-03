@@ -28,6 +28,7 @@
     "react-error-boundary": "^5.0.0",
     "react-i18next": "^15.6.1",
     "react-native": "0.80.2",
+    "react-native-config": "^1.6.1",
     "react-native-fast-image": "^8.6.3",
     "react-native-gesture-handler": "^2.27.2",
     "react-native-mmkv": "^3.3.0",
