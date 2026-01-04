@@ -1,59 +1,58 @@
 import type { Painting } from '@/types/painting';
-
-import { searchChicago } from './chicagoService';
-import { searchCleveland } from './clevelandService';
-import { searchEuropeana } from './europeanaService';
-import { searchHarvard } from './harvardService';
 import { searchMetMuseum } from './metMuseumService';
-import { getMuseumsByIds, type MuseumConfig } from './museumRegistry';
-import { searchParisMuseums } from './parisMuseumsService';
 import { searchRijksmuseum } from './rijksmuseumService';
+import { searchCleveland } from './clevelandService';
+import { searchChicago } from './chicagoService';
+import { searchHarvard } from './harvardService';
+import { searchVA } from './vaService';
+import { searchEuropeana } from './europeanaService';
+import { searchParisMuseums } from './parisMuseumsService';
+import { getMuseumsByIds, type MuseumConfig } from './museumRegistry';
 import {
   cleanArtistName,
+  sortByRelevance,
+  removeDuplicates,
   filterByQuality,
   getDisplayMuseumName,
   type QualityFilter,
-  removeDuplicates,
-  sortByRelevance,
-} from './searchHelpers';
-import { searchVA } from './vaService';
+} from './utils/searchHelpers';
 
-export type UnifiedSearchParams = {
-  maxResultsPerMuseum?: number;
-  museumIds: string[];
-  qualityFilters?: QualityFilter;
+export interface UnifiedSearchParams {
   query: string;
+  museumIds: string[];
+  maxResultsPerMuseum?: number;
+  qualityFilters?: QualityFilter;
 }
 
-export type UnifiedSearchResult = {
+export interface UnifiedSearchResult {
   paintings: Painting[];
-  resultsByMuseum: Record<string, number>;
   totalResults: number;
+  resultsByMuseum: Record<string, number>;
 }
 
 /**
  * Search across multiple museums with smart filtering and relevance sorting
  */
 export async function searchAllMuseums(
-  parameters: UnifiedSearchParams
+  params: UnifiedSearchParams
 ): Promise<UnifiedSearchResult> {
   const {
-    maxResultsPerMuseum = 20,
+    query,
     museumIds,
+    maxResultsPerMuseum = 20,
     qualityFilters = {
-      minRelevanceScore: 15,
-      paintingsOnly: true,
-      requireArtist: true,
       requireImage: true,
-    },
-    query
-  } = parameters;
+      requireArtist: true,
+      paintingsOnly: true,
+      minRelevanceScore: 15,
+    }
+  } = params;
 
   if (!query || query.trim().length === 0) {
     return {
       paintings: [],
-      resultsByMuseum: {},
-      totalResults: 0
+      totalResults: 0,
+      resultsByMuseum: {}
     };
   }
 
@@ -71,7 +70,7 @@ export async function searchAllMuseums(
   let allPaintings: Painting[] = [];
   const resultsByMuseum: Record<string, number> = {};
 
-  for (const [index, result] of results.entries()) {
+  results.forEach((result, index) => {
     const museumId = museumIds[index];
 
     if (result.status === 'fulfilled') {
@@ -83,7 +82,7 @@ export async function searchAllMuseums(
       console.error(`❌ ${museumId}: ${result.reason}`);
       resultsByMuseum[museumId] = 0;
     }
-  }
+  });
 
   console.log(`📊 Total before filtering: ${allPaintings.length} paintings`);
 
@@ -107,8 +106,8 @@ export async function searchAllMuseums(
 
   return {
     paintings: allPaintings,
-    resultsByMuseum,
     totalResults: allPaintings.length,
+    resultsByMuseum,
   };
 }
 
@@ -122,73 +121,64 @@ async function searchSingleMuseum(
 ): Promise<{ paintings: Painting[] }> {
   try {
     switch (museumId) {
-      case 'CHICAGO': {
-        const chicagoResult = await searchChicago({
-          limit: maxResults,
-          query
-        });
-        return { paintings: chicagoResult.paintings };
-      }
+      case 'MET':
+        const metResult = await searchMetMuseum({ query, hasImages: true });
+        return {
+          paintings: metResult.paintings.slice(0, maxResults)
+        };
 
-      case 'CLEVELAND': {
+      case 'RIJKS':
+        const rijksResult = await searchRijksmuseum({
+          query,
+          limit: maxResults
+        });
+        return { paintings: rijksResult.paintings };
+
+      case 'CLEVELAND':
         const clevelandResult = await searchCleveland({
-          limit: maxResults,
-          query
+          query,
+          limit: maxResults
         });
         return { paintings: clevelandResult.paintings };
-      }
 
-      case 'EUROPEANA': {
-        const europeanaResult = await searchEuropeana({
+      case 'CHICAGO':
+        const chicagoResult = await searchChicago({
           query,
-          rows: maxResults
+          limit: maxResults
         });
-        return { paintings: europeanaResult.paintings };
-      }
+        return { paintings: chicagoResult.paintings };
 
-      case 'HARVARD': {
+      case 'HARVARD':
         const harvardResult = await searchHarvard({
           query,
           size: maxResults
         });
         return { paintings: harvardResult.paintings };
-      }
 
-      case 'MET': {
-        const metResult = await searchMetMuseum({ hasImages: true, query });
-        return {
-          paintings: metResult.paintings.slice(0, maxResults)
-        };
-      }
-
-      case 'PARIS': {
-        const parisResult = await searchParisMuseums({
-          limit: maxResults,
-          query
-        });
-        return { paintings: parisResult.paintings };
-      }
-
-      case 'RIJKS': {
-        const rijksResult = await searchRijksmuseum({
-          limit: maxResults,
-          query
-        });
-        return { paintings: rijksResult.paintings };
-      }
-
-      case 'VA': {
+      case 'VA':
         const vaResult = await searchVA({
-          pageSize: maxResults,
-          query
+          query,
+          pageSize: maxResults
         });
         return { paintings: vaResult.paintings };
-      }
 
-      default: {
+      case 'EUROPEANA':
+        const europeanaResult = await searchEuropeana({
+          query,
+          rows: maxResults
+        });
+        return { paintings: europeanaResult.paintings };
+
+      case 'PARIS':
+        const parisResult = await searchParisMuseums({
+          query,
+          limit: maxResults
+        });
+        return { paintings: parisResult.paintings };
+
+      default:
         console.warn(`Unknown or disabled museum ID: ${museumId}`);
         return { paintings: [] };
-      }
     }
   } catch (error) {
     console.error(`Error searching ${museumId}:`, error);
@@ -204,25 +194,25 @@ export function getPopularArtistsByMuseums(museumIds: string[]): string[] {
   const allArtists: string[] = [];
 
   const artistsByMuseum: Record<string, string[]> = {
-    CHICAGO: ['Georges Seurat', 'Vincent van Gogh', 'Henri de Toulouse-Lautrec'],
-    CLEVELAND: ['Pablo Picasso', 'Claude Monet', 'El Greco'],
-    EUROPEANA: ['Vermeer', 'Monet', 'Van Gogh'],
-    HARVARD: ['Rembrandt', 'Pablo Picasso', 'Albrecht Dürer'],
     MET: ['Vincent van Gogh', 'Claude Monet', 'Rembrandt'],
-    PARIS: ['Auguste Rodin', 'Eugène Delacroix', 'Gustave Courbet'],
     RIJKS: ['Rembrandt', 'Johannes Vermeer', 'Frans Hals'],
+    CLEVELAND: ['Pablo Picasso', 'Claude Monet', 'El Greco'],
+    CHICAGO: ['Georges Seurat', 'Vincent van Gogh', 'Henri de Toulouse-Lautrec'],
+    HARVARD: ['Rembrandt', 'Pablo Picasso', 'Albrecht Dürer'],
     VA: ['John Constable', 'J.M.W. Turner', 'Raphael'],
+    EUROPEANA: ['Vermeer', 'Monet', 'Van Gogh'],
+    PARIS: ['Auguste Rodin', 'Eugène Delacroix', 'Gustave Courbet'],
   };
 
-  for (const museumId of museumIds) {
+  museumIds.forEach(museumId => {
     const artists = artistsByMuseum[museumId];
     if (artists) {
       allArtists.push(...artists.slice(0, 3));
     }
-  }
+  });
 
   // Remove duplicates and return top 12
-  return [...new Set(allArtists)].slice(0, 12);
+  return Array.from(new Set(allArtists)).slice(0, 12);
 }
 
 /**
@@ -230,8 +220,8 @@ export function getPopularArtistsByMuseums(museumIds: string[]): string[] {
  * For Europeana, shows actual museum instead of "Europeana"
  */
 export function getMuseumBadgeInfo(painting: Painting): {
-  color: string;
   shortName: string;
+  color: string;
 } {
   // Extract museum ID from painting.id prefix
   let museumId = 'MET'; // default
@@ -247,8 +237,8 @@ export function getMuseumBadgeInfo(painting: Painting): {
       // For Europeana, use actual museum name
       const displayName = getDisplayMuseumName(painting);
       return {
-        color: '#1E3A8A',
         shortName: getShortMuseumName(displayName),
+        color: '#1E3A8A',
       };
     }
   }
@@ -257,8 +247,8 @@ export function getMuseumBadgeInfo(painting: Painting): {
   const museum = museums[0];
 
   return {
-    color: museum?.color || '#d4af37',
     shortName: museum?.shortName || 'MET',
+    color: museum?.color || '#d4af37',
   };
 }
 
@@ -272,7 +262,7 @@ function getShortMuseumName(fullName: string): string {
   if (fullName.includes('Orsay')) return 'Orsay';
   if (fullName.includes('Museum')) {
     // Extract first word before "Museum"
-    const match = /(\w+)\s+Museum/.exec(fullName);
+    const match = fullName.match(/(\w+)\s+Museum/);
     return match ? match[1] : fullName.slice(0, 8);
   }
   // Default: first 8 chars

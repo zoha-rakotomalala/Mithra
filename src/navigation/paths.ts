@@ -1,11 +1,20 @@
 export const enum Paths {
-  ArtistProfile = 'artistProfile',
-  Collection = 'collection',
   Example = 'example',
+  Startup = 'startup',
   Home = 'home',
-  PaintingDetail = 'paintingDetail',
   Palette = 'palette',
-  Search = 'search',
   Settings = 'settings',
-  Startup = 'startup'
+  Search = 'search',
+  PaintingDetail = 'paintingDetail',
+  Collection = 'collection',
+  ArtistProfile = 'artistProfile',
+  Visits = 'visits',
+  VisitDetail = 'visitDetail',
+  MuseumBrowser = 'museumBrowser',
+  MuseumCollection = 'museumCollection',
+  VisitPalette = 'visitPalette',
+  ViewPalette = 'viewPalette',
+  CanonPalette = 'canonPalette',
+  ViewCanon = 'viewCanon',
+  Auth = 'auth'
 }

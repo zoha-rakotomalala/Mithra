@@ -1,9 +1,18 @@
-export { ArtistProfile } from './ArtistProfile/ArtistProfile'
-export { Collection } from './Collection/Collection';
 export { default as Example } from './Example/Example';
-export { Home } from './Home/Home';
-export { PaintingDetail } from './PaintingDetail/PaintingDetail';
-export { Palette } from './Palette/Palette';
-export { Search } from './Search/Search';
-export { Settings } from './Settings/Settings';
 export { default as Startup } from './Startup/Startup';
+export { Palette } from './Palette/Palette';
+export { Home } from './Home/Home';
+export { Settings } from './Settings/Settings';
+export { Search } from './Search/Search';
+export { PaintingDetail } from './PaintingDetail/PaintingDetail';
+export { Collection } from './Collection/Collection';
+export { ArtistProfile } from './ArtistProfile/ArtistProfile';
+export { Visits } from './Visits/Visits';
+export { VisitDetail } from './VisitDetail/VisitDetail';
+export { MuseumBrowser } from './MuseumBrowser/MuseumBrowser';
+export { MuseumCollection } from './MuseumCollection/MuseumCollection';
+export { VisitPalette } from './VisitPalette/VisitPalette';
+export { ViewPalette } from './ViewPalette/ViewPalette';
+export { CanonPalette } from './CanonPalette/CanonPalette';
+export { ViewCanon } from './ViewCanon/ViewCanon';
+export { Auth } from './Auth/Auth';

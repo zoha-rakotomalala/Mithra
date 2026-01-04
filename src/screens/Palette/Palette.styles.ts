@@ -1,124 +1,95 @@
 import { StyleSheet } from 'react-native';
 import { COLORS, SPACING, CARD } from '@/constants';
 
-/**
- * Palette Screen Styles
- * Art Deco styling for the palette grid layout
- */
+const PALETTE_CARD_SIZE = (CARD.gridWidth * 3 + SPACING.md * 2) / 3;
 
 export const paletteStyles = StyleSheet.create({
-  container: {
-    backgroundColor: COLORS.cream,
-    flex: 1,
-  },
-
   /* Header */
   header: {
-    alignItems: 'center',
-    backgroundColor: COLORS.black,
-    borderBottomColor: COLORS.gold,
-    borderBottomWidth: 2,
-    paddingBottom: SPACING.md + 4,
     paddingTop: 60,
-  },
-  headerTitle: {
-    color: COLORS.gold,
-    fontSize: 32,
-    fontWeight: '300',
-    letterSpacing: 4,
-    marginBottom: SPACING.sm + 4,
+    paddingBottom: SPACING.lg,
+    backgroundColor: COLORS.black,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.gold,
   },
   headerDivider: {
-    alignItems: 'center',
     flexDirection: 'row',
+    alignItems: 'center',
     width: '60%',
   },
-  dividerLine: {
-    backgroundColor: COLORS.gold,
-    flex: 1,
-    height: 1,
-    opacity: 0.5,
-  },
   dividerOrnament: {
-    color: COLORS.gold,
     fontSize: 12,
-    marginHorizontal: SPACING.sm + 4,
+    color: COLORS.gold,
+    marginHorizontal: SPACING.md,
   },
 
   /* Stats */
   statsBar: {
-    backgroundColor: COLORS.black,
-    borderBottomColor: COLORS.gold,
-    borderBottomWidth: 1,
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    backgroundColor: COLORS.black,
     paddingVertical: SPACING.md,
+    justifyContent: 'space-around',
+    borderBottomWidth: 1,
+    borderBottomColor: `${COLORS.gold}4D`,
   },
   statItem: {
     alignItems: 'center',
   },
   statNumber: {
-    color: COLORS.gold,
     fontSize: 28,
     fontWeight: '300',
+    color: COLORS.gold,
   },
   statLabel: {
-    color: COLORS.gold,
-    fontSize: 10,
-    letterSpacing: 2,
-    marginTop: 4,
-    opacity: 0.7,
+    color: `${COLORS.gold}B3`,
+    marginTop: SPACING.xs,
   },
   statDivider: {
     justifyContent: 'center',
   },
   statDividerText: {
-    color: COLORS.gold,
     fontSize: 24,
-    opacity: 0.3,
+    color: `${COLORS.gold}4D`,
   },
 
   /* Info */
   infoSection: {
-    borderBottomColor: COLORS.gray200,
+    padding: SPACING.lg,
     borderBottomWidth: 1,
-    padding: SPACING.md + 4,
+    borderBottomColor: COLORS.border,
   },
   infoText: {
-    color: COLORS.text,
-    fontSize: 14,
-    letterSpacing: 1,
     textAlign: 'center',
+    color: COLORS.text,
+    letterSpacing: 1,
   },
 
-  /* Grid */
+  /* Grid - 3x3 layout */
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.md + 4,
+    paddingTop: SPACING.lg,
   },
   emptySlot: {
-    margin: 4,
-    width: CARD.gridWidth,
+    width: PALETTE_CARD_SIZE,
+    margin: SPACING.xs,
   },
   emptyFrame: {
-    alignItems: 'center',
     aspectRatio: 0.75,
-    borderColor: COLORS.gold,
     borderWidth: 2,
+    borderColor: `${COLORS.gold}4D`,
     justifyContent: 'center',
-    opacity: 0.3,
+    alignItems: 'center',
   },
   emptyIcon: {
-    color: COLORS.gray500,
     fontSize: 32,
+    color: COLORS.gray400,
   },
   emptyText: {
-    color: COLORS.gray500,
-    fontSize: 10,
-    letterSpacing: 1,
-    marginTop: 4,
+    color: COLORS.gray400,
+    marginTop: SPACING.xs,
   },
 
   /* Instructions */
@@ -126,22 +97,15 @@ export const paletteStyles = StyleSheet.create({
     padding: SPACING.lg,
   },
   sectionHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
     marginBottom: SPACING.md,
   },
   sectionTitle: {
     color: COLORS.text,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 2,
     marginHorizontal: SPACING.md,
   },
   instructionText: {
-    color: COLORS.textLight,
-    fontSize: 14,
-    lineHeight: 22,
-    marginBottom: SPACING.sm,
     textAlign: 'center',
+    marginBottom: SPACING.sm,
+    lineHeight: 22,
   },
 });

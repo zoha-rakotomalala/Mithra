@@ -1,24 +1,14 @@
 import type { RootScreenProps } from '@/navigation/types';
-
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text, View } from 'react-native';
-
 import { Paths } from '@/navigation/paths';
-import { useTheme } from '@/theme';
-
-import { AssetByVariant } from '@/components/atoms';
-import { SafeScreen } from '@/components/templates';
+import { shared, typography } from '@/styles';
+import { COLORS } from '@/constants';
 
 function Startup({ navigation }: RootScreenProps<Paths.Startup>) {
-  const { fonts, gutters, layout } = useTheme();
-  const { t } = useTranslation();
-
   const { isError, isFetching, isSuccess } = useQuery({
-    queryFn: () => {
-      return Promise.resolve(true);
-    },
+    queryFn: () => Promise.resolve(true),
     queryKey: ['startup'],
   });
 
@@ -27,34 +17,31 @@ function Startup({ navigation }: RootScreenProps<Paths.Startup>) {
       navigation.reset({
         index: 0,
         routes: [{ name: 'Main' }],
-        //routes: [{ name: Paths.Example }],
       });
     }
   }, [isSuccess, navigation]);
 
   return (
-    <SafeScreen>
-      <View
-        style={[
-          layout.flex_1,
-          layout.col,
-          layout.itemsCenter,
-          layout.justifyCenter,
-        ]}
-      >
-        <AssetByVariant
-          path="tom"
-          resizeMode="contain"
-          style={{ height: 300, width: 300 }}
+    <View style={[shared.container, shared.centered, { backgroundColor: COLORS.black }]}>
+      <Text style={[typography.h1, { color: COLORS.gold, marginBottom: 32 }]}>
+        PALETTE
+      </Text>
+      <View style={shared.artDecoDivider} />
+
+      {isFetching && (
+        <ActivityIndicator
+          size="large"
+          color={COLORS.gold}
+          style={{ marginTop: 32 }}
         />
-        {isFetching ? (
-          <ActivityIndicator size="large" style={[gutters.marginVertical_24]} />
-        ) : undefined}
-        {isError ? (
-          <Text style={[fonts.size_16, fonts.red500]}>{t('common_error')}</Text>
-        ) : undefined}
-      </View>
-    </SafeScreen>
+      )}
+
+      {isError && (
+        <Text style={[typography.body, { color: '#e63946', marginTop: 32 }]}>
+          Loading error occurred
+        </Text>
+      )}
+    </View>
   );
 }
 

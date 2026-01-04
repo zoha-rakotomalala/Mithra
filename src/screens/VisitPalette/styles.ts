@@ -1,0 +1,80 @@
+import { StyleSheet } from 'react-native';
+import { COLORS, SPACING } from '@/constants';
+
+export const visitPaletteStyles = StyleSheet.create({
+  header: {
+    paddingTop: 60,
+    paddingBottom: SPACING.lg,
+    paddingHorizontal: SPACING.lg,
+    backgroundColor: COLORS.background,
+  },
+
+  backButton: {
+    marginBottom: SPACING.md,
+  },
+
+  backText: {
+    fontSize: 32,
+    color: COLORS.text,
+    fontWeight: '300',
+  },
+
+  subtitle: {
+    fontSize: 16,
+    color: COLORS.gold,
+    fontWeight: '600',
+    marginTop: SPACING.xs,
+    letterSpacing: 1,
+  },
+
+  empty: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+
+  emptyIcon: {
+    fontSize: 64,
+  },
+
+  cardWrapper: {
+    position: 'relative',
+    borderWidth: 3,
+    borderColor: 'transparent',
+    borderRadius: 8,
+  },
+
+  cardSelected: {
+    borderColor: COLORS.gold,
+  },
+
+  checkmark: {
+    position: 'absolute',
+    top: SPACING.xs,
+    right: SPACING.xs,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.gold,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  checkmarkText: {
+    fontSize: 18,
+    color: COLORS.black,
+    fontWeight: '700',
+  },
+
+  footer: {
+    padding: SPACING.lg,
+    backgroundColor: COLORS.background,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+});

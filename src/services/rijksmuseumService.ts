@@ -1,15 +1,14 @@
 import type { Painting } from '@/types/painting';
-
-import { cleanArtistName } from './searchHelpers';
+import { cleanArtistName } from './utils/searchHelpers';
 
 const RIJKS_SEARCH_API = 'https://data.rijksmuseum.nl/search/collection';
 
-type RijksSearchParameters = {
-  limit?: number;
+interface RijksSearchParams {
   query: string;
+  limit?: number;
 }
 
-type RijksSearchResult = {
+interface RijksSearchResult {
   paintings: Painting[];
   totalResults: number;
 }
@@ -18,22 +17,22 @@ type RijksSearchResult = {
  * Search Rijksmuseum collection using Linked Art API
  */
 export async function searchRijksmuseum(
-  parameters: RijksSearchParameters
+  params: RijksSearchParams
 ): Promise<RijksSearchResult> {
   try {
-    const { limit = 30, query } = parameters;
+    const { query, limit = 30 } = params;
 
     if (!query || query.trim().length === 0) {
       return { paintings: [], totalResults: 0 };
     }
 
     // Build search URL - use description for broad search
-    const searchParameters = new URLSearchParams({
+    const searchParams = new URLSearchParams({
       description: query.trim(),
       imageAvailable: 'true',
     });
 
-    const searchUrl = `${RIJKS_SEARCH_API}?${searchParameters.toString()}`;
+    const searchUrl = `${RIJKS_SEARCH_API}?${searchParams.toString()}`;
     console.log('🇳🇱 Searching Rijksmuseum:', searchUrl);
 
     const response = await fetch(searchUrl);
@@ -79,7 +78,7 @@ async function resolveObjects(objectIds: string[]): Promise<Painting[]> {
 /**
  * Resolve a single object ID to painting data
  */
-async function resolveObject(objectId: string): Promise<null | Painting> {
+async function resolveObject(objectId: string): Promise<Painting | null> {
   try {
     const response = await fetch(objectId, {
       headers: {
@@ -103,7 +102,7 @@ async function resolveObject(objectId: string): Promise<null | Painting> {
 /**
  * Parse Linked Art object into Painting format
  */
-function parseLinkedArtObject(data: any): null | Painting {
+function parseLinkedArtObject(data: any): Painting | null {
   try {
     // Must be a HumanMadeObject
     if (data.type !== 'HumanMadeObject') return null;
@@ -133,20 +132,20 @@ function parseLinkedArtObject(data: any): null | Painting {
     const medium = extractMedium(data);
 
     return {
-      artist,
-      color: generateColorFromString(title),
-      description: undefined,
-      dimensions,
       id: `rijks-${generateIdFromUrl(data.id)}`,
-      imageUrl,
-      isSeen: false,
-      location: 'Amsterdam, Netherlands',
-      medium,
-      museum: 'Rijksmuseum',
-      thumbnailUrl: imageUrl,
       title,
-      wantToVisit: false,
+      artist,
       year,
+      medium,
+      dimensions,
+      museum: 'Rijksmuseum',
+      location: 'Amsterdam, Netherlands',
+      description: undefined,
+      imageUrl,
+      thumbnailUrl: imageUrl,
+      color: generateColorFromString(title),
+      isSeen: false,
+      wantToVisit: false,
     };
   } catch (error) {
     console.error('Error parsing Rijks Linked Art object:', error);
@@ -189,7 +188,7 @@ function extractArtist(data: any): string {
 /**
  * Extract image URL - FIXED to handle both patterns
  */
-function extractImage(data: any): null | string {
+function extractImage(data: any): string | null {
   // Pattern 1: representation (standard Linked Art)
   if (data.representation) {
     const reps = Array.isArray(data.representation)
@@ -245,7 +244,7 @@ function extractYear(data: any): number | undefined {
   // Try begin_of_the_begin first
   if (timespan.begin_of_the_begin) {
     const match = timespan.begin_of_the_begin.match(/\d{4}/);
-    if (match) return Number.parseInt(match[0]);
+    if (match) return parseInt(match[0]);
   }
 
   // Try identified_by
@@ -253,7 +252,7 @@ function extractYear(data: any): number | undefined {
     const dateLabel = timespan.identified_by.find((id: any) => id.type === 'Name');
     if (dateLabel?.content) {
       const match = dateLabel.content.match(/\d{4}/);
-      if (match) return Number.parseInt(match[0]);
+      if (match) return parseInt(match[0]);
     }
   }
 
@@ -307,7 +306,7 @@ function extractMedium(data: any): string | undefined {
  * Generate numeric ID from URL
  */
 function generateIdFromUrl(url: string): string {
-  const match = /([^/]+)$/.exec(url);
+  const match = url.match(/([^\/]+)$/);
   return match ? match[1] : Date.now().toString();
 }
 
@@ -324,14 +323,14 @@ export function getPopularRijksmuseumArtists(): string[] {
   ];
 }
 
-function generateColorFromString(string_: string): string {
+function generateColorFromString(str: string): string {
   const colors = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
     '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
   ];
   let hash = 0;
-  for (let index = 0; index < string_.length; index++) {
-    hash = string_.charCodeAt(index) + ((hash << 5) - hash);
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
   }
   return colors[Math.abs(hash) % colors.length];
 }
