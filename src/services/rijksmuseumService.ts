@@ -5,6 +5,7 @@ const RIJKS_SEARCH_API = 'https://data.rijksmuseum.nl/search/collection';
 
 interface RijksSearchParams {
   query: string;
+  searchType: 'artist' | 'title';
   limit?: number;
 }
 
@@ -28,14 +29,29 @@ export async function searchRijksmuseum(
 
     // Build search URL - use description for broad search
     const searchParams = new URLSearchParams({
-      description: query.trim(),
       imageAvailable: 'true',
     });
+
+    if (params.searchType === 'artist') {
+      // Partial matching already handled by Rijks
+      searchParams.set('creator', query.trim());
+    } else {
+      // Title search + smart fallback
+      searchParams.set('title', query.trim());
+      searchParams.set('description', query.trim());
+    }
 
     const searchUrl = `${RIJKS_SEARCH_API}?${searchParams.toString()}`;
     console.log('🇳🇱 Searching Rijksmuseum:', searchUrl);
 
     const response = await fetch(searchUrl);
+
+    console.log('🧪 Rijks raw object:', {
+      id: data.id,
+      type: data.type,
+      label: data._label,
+      hasRepresentation: !!data.representation,
+    });
 
     if (!response.ok) {
       console.warn(`Rijksmuseum search error: ${response.status}`);
@@ -51,9 +67,21 @@ export async function searchRijksmuseum(
     }
 
     // Fetch full objects (first N results)
-    const objectIds = orderedItems.slice(0, limit).map((item: any) => item.id);
-    const paintings = await resolveObjects(objectIds);
+    const rawItems = Array.isArray(data.orderedItems)
+      ? data.orderedItems
+      : [];
 
+    const validItems = rawItems.filter(
+      (item: any) => item && typeof item.id === 'string'
+    );
+
+    const objectIds = validItems
+      .slice(0, limit)
+      .map((item: any) => item.id);
+
+    console.log(
+      `🇳🇱 Rijks search: ${rawItems.length} raw items → ${validItems.length} valid IDs`
+    );
     console.log(`🇳🇱 Rijksmuseum: ${paintings.length} paintings resolved`);
 
     return {
@@ -80,14 +108,17 @@ async function resolveObjects(objectIds: string[]): Promise<Painting[]> {
  */
 async function resolveObject(objectId: string): Promise<Painting | null> {
   try {
+    console.log('🧩 Resolving Rijks object:', objectId);
+
     const response = await fetch(objectId, {
       headers: {
-        'Accept': 'application/ld+json',
+        // Request Linked Art JSON-LD explicitly
+        Accept: 'application/ld+json'
       },
     });
 
     if (!response.ok) {
-      console.warn(`Failed to resolve Rijks object: ${objectId}`);
+      console.warn(`Failed to resolve Rijks object: ${objectId} (${response.status})`);
       return null;
     }
 
@@ -105,7 +136,15 @@ async function resolveObject(objectId: string): Promise<Painting | null> {
 function parseLinkedArtObject(data: any): Painting | null {
   try {
     // Must be a HumanMadeObject
-    if (data.type !== 'HumanMadeObject') return null;
+    const isHumanMadeObject =
+      data.type === 'HumanMadeObject' ||
+      Array.isArray(data.type) && data.type.includes('HumanMadeObject') ||
+      data.classified_as?.some((c: any) =>
+        c._label?.toLowerCase().includes('object')
+      );
+
+    const types = Array.isArray(data.type) ? data.type : [data.type];
+    if (!types.includes('HumanMadeObject')) return null;
 
     // Extract title
     const title = extractTitle(data);
@@ -115,12 +154,7 @@ function parseLinkedArtObject(data: any): Painting | null {
     const artistDisplay = extractArtist(data);
     const artist = cleanArtistName(artistDisplay);
 
-    // Extract image - THIS IS THE KEY FIX
-    const imageUrl = extractImage(data);
-    if (!imageUrl) {
-      console.log(`❌ No image for: ${title}`);
-      return null;
-    }
+    const imageUrl = extractImage(data) ?? undefined;
 
     // Extract year
     const year = extractYear(data);

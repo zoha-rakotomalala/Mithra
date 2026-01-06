@@ -1,398 +1,431 @@
-import { Dimensions, StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions, Platform } from 'react-native';
 import { COLORS, SPACING, CARD } from '@/constants';
 
 const { width } = Dimensions.get('window');
-const CARD_SIZE = (width - 48) / 3;
-
-/**
- * Search Screen Styles
- * Art Deco styling for museum search interface
- */
+const CARD_SIZE = (width - 48) / 3; // 3 columns with proper padding
 
 export const searchStyles = StyleSheet.create({
-  container: {
-    backgroundColor: COLORS.cream,
+  safeArea: {
     flex: 1,
+    backgroundColor: COLORS.black, // Black at top for header
+    paddingTop: Platform.OS === 'android' ? 25 : 0, // Fix Android notch overlap
   },
 
-  /* Header */
-  header: {
-    alignItems: 'center',
-    backgroundColor: COLORS.black,
-    borderBottomColor: COLORS.gold,
-    borderBottomWidth: 2,
-    paddingBottom: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    paddingTop: 60,
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.cream, // Cream for content area
   },
+
+  // Header - Art Deco Black & Gold
+  header: {
+    backgroundColor: COLORS.black,
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.md,
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.gold,
+  },
+
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.md,
+  },
+
   headerTitle: {
-    color: COLORS.gold,
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '300',
     letterSpacing: 4,
-    marginBottom: SPACING.sm + 4,
-  },
-  headerDivider: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginBottom: SPACING.sm + 4,
-    width: '60%',
-  },
-  headerSubtitle: {
     color: COLORS.gold,
-    fontSize: 10,
-    letterSpacing: 2,
-    opacity: 0.7,
-  },
-  dividerLine: {
-    backgroundColor: COLORS.gold,
-    flex: 1,
-    height: 1,
-    opacity: 0.5,
-  },
-  dividerOrnament: {
-    color: COLORS.gold,
-    fontSize: 12,
-    marginHorizontal: SPACING.sm + 4,
+    textTransform: 'uppercase',
   },
 
-  /* Filter Section */
-  filterSection: {
-    backgroundColor: COLORS.background,
-    borderBottomColor: COLORS.gray200,
-    borderBottomWidth: 1,
-    padding: SPACING.md,
-  },
-  selectMuseumsButton: {
-    backgroundColor: COLORS.cream,
-    borderColor: COLORS.text,
-    borderRadius: 4,
-    borderWidth: 2,
-    overflow: 'hidden',
-  },
-  selectMuseumsButtonContent: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 14,
-  },
-  selectMuseumsLabel: {
-    color: COLORS.text,
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 2,
-    marginBottom: 4,
-  },
-  selectMuseumsText: {
-    color: COLORS.textLight,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  selectMuseumsIcon: {
-    color: COLORS.text,
-    fontSize: 16,
-    fontWeight: '700',
+  headerSpinner: {
+    marginLeft: 'auto',
   },
 
-  /* Search Section */
-  searchSection: {
-    backgroundColor: COLORS.cream,
-    borderBottomColor: COLORS.gray200,
-    borderBottomWidth: 1,
-    padding: SPACING.md + 4,
+  newBadge: {
+    backgroundColor: COLORS.seen,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 3,
+    borderRadius: 10,
+    marginLeft: SPACING.sm,
   },
-  searchBar: {
-    alignItems: 'center',
-    backgroundColor: COLORS.background,
-    borderColor: COLORS.text,
-    borderRadius: 2,
-    borderWidth: 2,
+
+  newBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.black,
+  },
+
+  // Search Type Row
+  searchTypeRow: {
     flexDirection: 'row',
-    marginBottom: SPACING.sm + 4,
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+  },
+
+  searchTypeLabel: {
+    fontSize: 11,
+    color: 'rgba(212, 175, 55, 0.7)',
+    marginRight: SPACING.sm,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+
+  searchTypeButtons: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+
+  searchTypeButton: {
     paddingHorizontal: SPACING.md,
+    paddingVertical: 6,
+    backgroundColor: 'transparent',
+    borderRadius: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.5)',
   },
-  searchInput: {
-    color: COLORS.text,
+
+  searchTypeButtonActive: {
+    backgroundColor: COLORS.gold,
+    borderColor: COLORS.gold,
+  },
+
+  searchTypeButtonText: {
+    fontSize: 11,
+    color: 'rgba(212, 175, 55, 0.7)',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+
+  searchTypeButtonTextActive: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.black,
+    letterSpacing: 1,
+  },
+
+  // Search Bar
+  searchRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
+
+  searchBar: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 2,
+    paddingHorizontal: SPACING.sm,
+    height: 44,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+  },
+
+  searchIcon: {
     fontSize: 16,
-    paddingVertical: 14,
+    marginRight: SPACING.sm,
   },
+
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: COLORS.cream,
+    padding: 0,
+  },
+
   clearButton: {
-    padding: 4,
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+
   clearButtonText: {
-    color: COLORS.gray500,
+    fontSize: 24,
+    color: 'rgba(212, 175, 55, 0.5)',
+    lineHeight: 28,
+  },
+
+  searchButton: {
+    width: 44,
+    height: 44,
+    backgroundColor: COLORS.gold,
+    borderRadius: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  searchButtonText: {
+    fontSize: 24,
+    color: COLORS.black,
+    fontWeight: 'bold',
+  },
+
+  searchButtonDisabled: {
+    backgroundColor: 'rgba(212, 175, 55, 0.3)',
+  },
+
+  // Museum Selector Button
+  museumSelectButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 2,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+  },
+
+  museumSelectContent: {
+    flex: 1,
+  },
+
+  museumSelectLabel: {
+    fontSize: 10,
+    color: 'rgba(212, 175, 55, 0.7)',
+    marginBottom: 2,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+
+  museumSelectValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.gold,
+    letterSpacing: 0.5,
+  },
+
+  museumSelectIcon: {
+    fontSize: 12,
+    color: 'rgba(212, 175, 55, 0.7)',
+    marginLeft: SPACING.sm,
+  },
+
+  // Modal
+  modalSafeArea: {
+    flex: 1,
+    backgroundColor: COLORS.cream,
+  },
+
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    backgroundColor: COLORS.black,
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.gold,
+  },
+
+  modalTitle: {
     fontSize: 24,
     fontWeight: '300',
-  },
-  searchButton: {
-    alignItems: 'center',
-    backgroundColor: COLORS.text,
-    borderColor: COLORS.gold,
-    borderRadius: 2,
-    borderWidth: 2,
-    padding: 14,
-  },
-  searchButtonDisabled: {
-    backgroundColor: COLORS.gray300,
-    borderColor: COLORS.gray500,
-  },
-  searchButtonText: {
+    letterSpacing: 3,
     color: COLORS.gold,
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
 
-  /* Modal */
-  modalContainer: {
-    backgroundColor: COLORS.cream,
-    flex: 1,
-  },
-  modalHeader: {
-    alignItems: 'center',
-    backgroundColor: COLORS.black,
-    borderBottomColor: COLORS.gold,
-    borderBottomWidth: 2,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingBottom: SPACING.md,
-    paddingHorizontal: SPACING.md + 4,
-    paddingTop: 60,
-  },
-  modalTitle: {
-    color: COLORS.gold,
-    fontSize: 20,
-    fontWeight: '600',
-    letterSpacing: 2,
-  },
   modalDoneButton: {
-    backgroundColor: COLORS.text,
-    borderColor: COLORS.gold,
-    borderRadius: 4,
-    borderWidth: 1,
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
+    paddingVertical: 6,
+    backgroundColor: COLORS.gold,
+    borderRadius: 2,
   },
+
   modalDoneText: {
-    color: COLORS.gold,
     fontSize: 12,
     fontWeight: '700',
+    color: COLORS.black,
     letterSpacing: 1,
+    textTransform: 'uppercase',
   },
 
-  /* Content */
-  flatListContent: {
+  // Centered Grid Container
+  gridContainer: {
     paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.md,
+    paddingBottom: 20,
   },
 
-  /* Empty State */
-  emptyState: {
-    alignItems: 'center',
-    paddingHorizontal: 40,
-    paddingVertical: 80,
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: SPACING.md,
-    opacity: 0.5,
-  },
-  emptyTitle: {
-    color: COLORS.text,
-    fontSize: 20,
-    fontWeight: '600',
-    letterSpacing: 1,
-    marginBottom: SPACING.sm + 4,
-  },
-  emptyText: {
-    color: COLORS.textLight,
-    fontSize: 14,
-    lineHeight: 20,
-    textAlign: 'center',
-  },
-
-  /* Popular Section */
-  popularSection: {
-    paddingVertical: SPACING.md + 4,
-  },
-  sectionDivider: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginBottom: SPACING.md,
-  },
-  sectionTitle: {
-    color: COLORS.text,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 2,
-    marginHorizontal: SPACING.sm + 4,
-  },
-  artistChips: {
-    gap: SPACING.sm,
-    paddingRight: SPACING.md + 4,
-  },
-  artistChip: {
-    backgroundColor: 'transparent',
-    borderColor: COLORS.text,
-    borderRadius: 2,
-    borderWidth: 1,
-    marginRight: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-  },
-  artistChipText: {
-    color: COLORS.text,
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-
-  /* Info Banner */
-  infoBanner: {
-    backgroundColor: 'rgba(0, 77, 64, 0.05)',
-    borderLeftColor: COLORS.gold,
-    borderLeftWidth: 4,
-    borderRadius: 2,
-    marginBottom: SPACING.md + 4,
-    padding: SPACING.md + 4,
-  },
-  infoBannerTitle: {
-    color: COLORS.text,
-    fontSize: 14,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+  gridRow: {
+    justifyContent: 'space-between',
     marginBottom: SPACING.sm,
   },
-  infoBannerText: {
-    color: COLORS.textLight,
-    fontSize: 13,
-    lineHeight: 20,
-  },
 
-  /* Loading */
-  loadingContainer: {
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  loadingText: {
-    color: COLORS.gold,
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 1,
-    marginTop: SPACING.md,
-  },
-
-  /* Results */
-  resultsHeader: {
-    marginBottom: SPACING.md,
-  },
-  resultsTitle: {
-    color: COLORS.text,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 2,
-    marginHorizontal: SPACING.sm + 4,
-  },
-
-  /* Grid Items */
+  // Result Cards
   resultCard: {
-    marginBottom: SPACING.md + 4,
-    padding: 4,
     width: CARD_SIZE,
-  },
-  imageContainer: {
-    marginBottom: SPACING.sm,
-    position: 'relative',
-  },
-  resultImage: {
-    aspectRatio: 1,
-    backgroundColor: COLORS.surface,
-    borderColor: 'rgba(212, 175, 55, 0.3)',
-    borderRadius: 2,
-    borderWidth: 2,
-    width: '100%',
-  },
-  imageLoadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: 2,
-    justifyContent: 'center',
-    zIndex: 10,
-  },
-  placeholderImage: {
-    alignItems: 'center',
-    aspectRatio: 1,
-    borderRadius: 2,
-    justifyContent: 'center',
-    width: '100%',
-  },
-  placeholderIcon: {
-    fontSize: 40,
+    marginBottom: SPACING.md,
   },
 
-  /* Badges */
+  imageContainer: {
+    width: CARD_SIZE,
+    height: CARD_SIZE,
+    borderRadius: 2,
+    overflow: 'hidden',
+    backgroundColor: COLORS.surface,
+    marginBottom: 6,
+    position: 'relative',
+    borderWidth: 2,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+  },
+
+  resultImage: {
+    width: '100%',
+    height: '100%',
+  },
+
+  imageLoadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: COLORS.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+
+  placeholderImage: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  placeholderIcon: {
+    fontSize: 32,
+  },
+
   statusBadge: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
     flexDirection: 'row',
     gap: 4,
-    position: 'absolute',
-    right: SPACING.sm,
-    top: SPACING.sm,
   },
+
   badgeTextSeen: {
     backgroundColor: 'rgba(230, 57, 70, 0.95)',
-    borderRadius: 12,
     color: COLORS.textInverse,
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '700',
-    height: 24,
-    lineHeight: 24,
-    textAlign: 'center',
-    width: 24,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
+
   badgeTextWant: {
     backgroundColor: 'rgba(245, 158, 11, 0.95)',
-    borderRadius: 12,
     color: COLORS.textInverse,
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '700',
-    height: 24,
-    lineHeight: 24,
-    textAlign: 'center',
-    width: 24,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
+
   museumBadge: {
-    borderRadius: 2,
-    left: SPACING.sm,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
     position: 'absolute',
-    top: SPACING.sm,
+    bottom: 6,
+    right: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 4,
   },
+
   museumBadgeText: {
-    color: COLORS.textInverse,
     fontSize: 9,
     fontWeight: '700',
+    color: COLORS.textInverse,
+    letterSpacing: 0.5,
+  },
+
+  resultTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: 2,
+    lineHeight: 16,
+  },
+
+  resultArtist: {
+    fontSize: 10,
+    fontStyle: 'italic',
+    color: COLORS.textLight,
+    marginBottom: 2,
+  },
+
+  resultYear: {
+    fontSize: 9,
+    color: COLORS.textLight,
+    letterSpacing: 0.5,
+  },
+
+  // Empty State
+  emptyState: {
+    paddingTop: 40,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+
+  popularTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: SPACING.md,
     letterSpacing: 1,
   },
 
-  /* Card Text */
-  resultTitle: {
-    color: COLORS.text,
+  artistChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    justifyContent: 'center',
+    marginBottom: SPACING.lg,
+  },
+
+  artistChip: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    backgroundColor: COLORS.cream,
+    borderRadius: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+  },
+
+  artistChipText: {
     fontSize: 12,
+    color: COLORS.text,
     fontWeight: '600',
-    lineHeight: 16,
-    marginBottom: 4,
+    letterSpacing: 0.5,
   },
-  resultArtist: {
+
+  emptyHint: {
+    fontSize: 12,
     color: COLORS.textLight,
-    fontSize: 10,
-    fontStyle: 'italic',
-    marginBottom: 2,
+    textAlign: 'center',
+    letterSpacing: 0.5,
   },
-  resultYear: {
-    color: COLORS.gray500,
-    fontSize: 9,
+
+  loadingContainer: {
+    paddingTop: 60,
+    alignItems: 'center',
+  },
+
+  loadingText: {
+    fontSize: 13,
+    color: COLORS.textLight,
+    marginTop: SPACING.sm,
     letterSpacing: 0.5,
   },
 });

@@ -202,3 +202,24 @@ CREATE POLICY "Users can update own canon palette"
   ON canon_palettes
   FOR UPDATE
   USING (auth.uid() = user_id);
+
+ALTER TABLE search_cache ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can view search_cache" ON search_cache;
+DROP POLICY IF EXISTS "Service role can insert search_cache" ON search_cache;
+DROP POLICY IF EXISTS "Service role can update search_cache" ON search_cache;
+
+CREATE POLICY "Anyone can view search_cache"
+  ON search_cache
+  FOR SELECT
+  USING (true);
+
+CREATE POLICY "Service role can insert search_cache"
+  ON search_cache
+  FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Service role can update search_cache"
+  ON search_cache
+  FOR UPDATE
+  USING (true);

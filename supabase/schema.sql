@@ -178,3 +178,26 @@ CREATE TABLE IF NOT EXISTS profiles (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+CREATE TABLE search_cache (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+
+  query TEXT NOT NULL,
+  search_type TEXT NOT NULL CHECK (search_type IN ('artist', 'title')),
+  museum_id TEXT NOT NULL,
+
+  painting_ids TEXT[] NOT NULL,
+
+  last_verified_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  verification_status TEXT DEFAULT 'fresh',
+
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+  UNIQUE (query, search_type, museum_id)
+);
+
+ALTER TABLE paintings
+ADD COLUMN IF NOT EXISTS last_verified_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS verification_source TEXT,
+ADD COLUMN IF NOT EXISTS verification_status TEXT DEFAULT 'unverified';
