@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StatusBar, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StatusBar, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { PaintingCard } from '@/components/molecules/PaintingCard/PaintingCard';
 import { ProfileCard } from '@/components/molecules/ProfileCard/ProfileCard';
 import { usePaintings } from '@/contexts/PaintingsContext';
-import { shared, typography, buttons } from '@/styles';
+import { shared, buttons } from '@/styles';
 import { COLORS, SPACING } from '@/constants';
 import { paletteStyles as styles } from './Palette.styles';
 import type { UserProfile } from '@/types/painting';
@@ -39,38 +39,31 @@ export function Palette() {
   const gridPositions = [0, 1, 2, 3, 'profile', 4, 5, 6, 7];
 
   return (
-    <>
+    <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
-      <View style={shared.container}>
+      <View style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Art Deco Header */}
+          {/* Compact Header - Like Search */}
           <View style={styles.header}>
-            <Text style={typography.artDecoTitle}>PALETTE</Text>
-            <View style={styles.headerDivider}>
-              <View style={shared.artDecoDivider} />
-              <Text style={styles.dividerOrnament}>◆</Text>
-              <View style={shared.artDecoDivider} />
-            </View>
+            <Text style={styles.headerTitle}>PALETTE</Text>
           </View>
 
-          {/* Stats Bar */}
-          <View style={styles.statsBar}>
-            <View style={styles.statItem}>
+          {/* Compact Inline Stats */}
+          <View style={styles.statsRow}>
+            <View style={styles.statCompact}>
               <Text style={styles.statNumber}>{palettePaintings.length}</Text>
-              <Text style={[typography.caption, styles.statLabel]}>IN PALETTE</Text>
+              <Text style={styles.statLabel}>in palette</Text>
             </View>
-            <View style={styles.statDivider}>
-              <Text style={styles.statDividerText}>·</Text>
-            </View>
-            <View style={styles.statItem}>
+            <Text style={styles.statDivider}>·</Text>
+            <View style={styles.statCompact}>
               <Text style={styles.statNumber}>{paintings.length}</Text>
-              <Text style={[typography.caption, styles.statLabel]}>COLLECTED</Text>
+              <Text style={styles.statLabel}>collected</Text>
             </View>
           </View>
 
           {/* Info */}
           <View style={styles.infoSection}>
-            <Text style={[typography.body, styles.infoText]}>
+            <Text style={styles.infoText}>
               {palettePaintings.length === 0
                 ? 'Your palette is empty. Add paintings from your collection.'
                 : palettePaintings.length < 8
@@ -106,7 +99,7 @@ export function Palette() {
                   <View key={`empty-${index}`} style={styles.emptySlot}>
                     <View style={styles.emptyFrame}>
                       <Text style={styles.emptyIcon}>+</Text>
-                      <Text style={[typography.caption, styles.emptyText]}>EMPTY</Text>
+                      <Text style={styles.emptyText}>EMPTY</Text>
                     </View>
                   </View>
                 );
@@ -127,17 +120,17 @@ export function Palette() {
           <View style={styles.instructions}>
             <View style={[shared.rowCenter, styles.sectionHeader]}>
               <View style={shared.artDecoDivider} />
-              <Text style={[typography.label, styles.sectionTitle]}>HOW IT WORKS</Text>
+              <Text style={styles.sectionTitle}>HOW IT WORKS</Text>
               <View style={shared.artDecoDivider} />
             </View>
 
-            <Text style={[typography.body, styles.instructionText]}>
+            <Text style={styles.instructionText}>
               Tap a card to flip and preview details.
             </Text>
-            <Text style={[typography.body, styles.instructionText]}>
+            <Text style={styles.instructionText}>
               Long press to view the full artwork page.
             </Text>
-            <Text style={[typography.body, styles.instructionText]}>
+            <Text style={styles.instructionText}>
               Add paintings from Search or Collection.
             </Text>
           </View>
@@ -145,6 +138,6 @@ export function Palette() {
           <View style={{ height: SPACING.xxl }} />
         </ScrollView>
       </View>
-    </>
+    </SafeAreaView>
   );
 }

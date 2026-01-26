@@ -1,12 +1,13 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { COLORS, SPACING } from '@/constants';
 
 export const visitsStyles = StyleSheet.create({
+  // Header - Art Deco Black & Gold (matches Search)
   header: {
-    paddingTop: 60,
+    backgroundColor: COLORS.black,
+    paddingTop: Platform.OS === 'android' ? 65 : 60,
     paddingBottom: SPACING.lg,
     paddingHorizontal: SPACING.xl,
-    backgroundColor: COLORS.black,
     borderBottomWidth: 2,
     borderBottomColor: COLORS.gold,
     alignItems: 'center',
@@ -19,18 +20,21 @@ export const visitsStyles = StyleSheet.create({
     marginTop: SPACING.sm,
   },
 
+  // List Content
   listContent: {
-    padding: SPACING.lg,
-    gap: SPACING.md,
+    padding: SPACING.md,
+    paddingBottom: 100, // Space for FAB
     backgroundColor: COLORS.cream,
   },
 
+  // Visit Cards - Cleaner, more minimal
   visitCard: {
     backgroundColor: COLORS.ivory,
-    borderRadius: 8,
+    borderRadius: 2, // Sharper corners like Search
     borderWidth: 2,
-    borderColor: COLORS.gold + '40',
+    borderColor: 'rgba(212, 175, 55, 0.3)', // Matches Search border
     padding: SPACING.lg,
+    marginBottom: SPACING.md,
     shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -46,34 +50,41 @@ export const visitsStyles = StyleSheet.create({
     marginTop: SPACING.xs,
     color: COLORS.black + 'AA',
     fontStyle: 'italic',
+    fontSize: 13,
+    lineHeight: 18,
   },
 
+  // Empty State
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: SPACING.xxl * 2,
+    paddingHorizontal: SPACING.lg,
   },
 
   emptyIcon: {
     fontSize: 64,
     marginBottom: SPACING.lg,
-    opacity: 0.6,
+    opacity: 0.5,
   },
 
   emptyText: {
     textAlign: 'center',
-    color: COLORS.black + 'AA',
+    color: COLORS.textLight,
     marginTop: SPACING.sm,
+    fontSize: 13,
+    letterSpacing: 0.5,
   },
 
+  // FAB - Cleaner style
   fab: {
     position: 'absolute',
     right: SPACING.lg,
     bottom: SPACING.lg,
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: 2, // Sharp corners
     backgroundColor: COLORS.gold,
     justifyContent: 'center',
     alignItems: 'center',
@@ -87,16 +98,18 @@ export const visitsStyles = StyleSheet.create({
   },
 
   fabText: {
-    fontSize: 28,
+    fontSize: 32,
     color: COLORS.black,
     fontWeight: '300',
+    lineHeight: 32,
   },
 
+  // Modal Header - Matches Search modal
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 60,
+    paddingTop: Platform.OS === 'android' ? 65 : 60,
     paddingBottom: SPACING.lg,
     paddingHorizontal: SPACING.lg,
     backgroundColor: COLORS.black,
@@ -105,11 +118,13 @@ export const visitsStyles = StyleSheet.create({
   },
 
   closeButton: {
-    fontSize: 24,
+    fontSize: 28,
     color: COLORS.gold,
     fontWeight: '300',
+    lineHeight: 28,
   },
 
+  // Modal Content
   modalContent: {
     padding: SPACING.lg,
     gap: SPACING.md,
@@ -117,24 +132,25 @@ export const visitsStyles = StyleSheet.create({
     flex: 1,
   },
 
+  // Inputs - Cleaner style matching Search aesthetic
   input: {
-    backgroundColor: COLORS.ivory,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     borderWidth: 1,
-    borderColor: COLORS.gold + '40',
-    borderRadius: 8,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+    borderRadius: 2, // Sharp corners
     padding: SPACING.md,
-    fontSize: 16,
+    fontSize: 15,
     color: COLORS.black,
   },
 
   inputText: {
     color: COLORS.black,
-    fontSize: 16,
+    fontSize: 15,
   },
 
   inputPlaceholder: {
     color: COLORS.black + '60',
-    fontSize: 16,
+    fontSize: 15,
   },
 
   textArea: {
@@ -143,13 +159,14 @@ export const visitsStyles = StyleSheet.create({
   },
 
   buttonDisabled: {
-    opacity: 0.5,
+    opacity: 0.4,
   },
 
+  // Museum Picker Options
   museumOption: {
-    padding: SPACING.md,
+    padding: SPACING.lg,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.gold + '20',
+    borderBottomColor: 'rgba(212, 175, 55, 0.2)',
     backgroundColor: COLORS.cream,
   },
 });

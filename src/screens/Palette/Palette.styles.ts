@@ -1,56 +1,69 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { COLORS, SPACING, CARD } from '@/constants';
 
 const PALETTE_CARD_SIZE = (CARD.gridWidth * 3 + SPACING.md * 2) / 3;
 
 export const paletteStyles = StyleSheet.create({
-  /* Header */
-  header: {
-    paddingTop: 60,
-    paddingBottom: SPACING.lg,
+  /* Safe Area - Matches Search */
+  safeArea: {
+    flex: 1,
     backgroundColor: COLORS.black,
-    alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: COLORS.gold,
-  },
-  headerDivider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '60%',
-  },
-  dividerOrnament: {
-    fontSize: 12,
-    color: COLORS.gold,
-    marginHorizontal: SPACING.md,
+    paddingTop: Platform.OS === 'android' ? 25 : 0, // Fix Android notch overlap
   },
 
-  /* Stats */
-  statsBar: {
-    flexDirection: 'row',
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.cream,
+  },
+
+  /* Header - Compact like Search */
+  header: {
     backgroundColor: COLORS.black,
-    paddingVertical: SPACING.md,
-    justifyContent: 'space-around',
-    borderBottomWidth: 1,
-    borderBottomColor: `${COLORS.gold}4D`,
+    borderBottomColor: COLORS.gold,
+    borderBottomWidth: 2,
+    paddingBottom: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.md,
   },
-  statItem: {
-    alignItems: 'center',
-  },
-  statNumber: {
+  headerTitle: {
     fontSize: 28,
     fontWeight: '300',
+    letterSpacing: 4,
+    color: COLORS.gold,
+    textTransform: 'uppercase',
+  },
+
+  /* Compact Stats - Inline */
+  statsRow: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.black,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(212, 175, 55, 0.3)',
+  },
+  statCompact: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
+  },
+  statNumber: {
+    fontSize: 16,
+    fontWeight: '600',
     color: COLORS.gold,
   },
   statLabel: {
-    color: `${COLORS.gold}B3`,
-    marginTop: SPACING.xs,
+    fontSize: 10,
+    color: 'rgba(212, 175, 55, 0.5)',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   statDivider: {
-    justifyContent: 'center',
-  },
-  statDividerText: {
-    fontSize: 24,
-    color: `${COLORS.gold}4D`,
+    fontSize: 14,
+    color: 'rgba(212, 175, 55, 0.3)',
   },
 
   /* Info */
@@ -79,7 +92,8 @@ export const paletteStyles = StyleSheet.create({
   emptyFrame: {
     aspectRatio: 0.75,
     borderWidth: 2,
-    borderColor: `${COLORS.gold}4D`,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+    borderRadius: 2,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -88,8 +102,11 @@ export const paletteStyles = StyleSheet.create({
     color: COLORS.gray400,
   },
   emptyText: {
+    fontSize: 10,
     color: COLORS.gray400,
     marginTop: SPACING.xs,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
 
   /* Instructions */

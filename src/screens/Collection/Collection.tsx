@@ -5,6 +5,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import {
   Dimensions,
   FlatList,
+  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -15,6 +16,7 @@ import {
 import FastImage from 'react-native-fast-image';
 
 import { Paths } from '@/navigation/paths';
+import { COLORS } from '@/constants';
 
 import { usePaintings } from '@/contexts/PaintingsContext';
 import { collectionStyles as styles } from './Collection.styles';
@@ -170,38 +172,29 @@ export function Collection() {
   );
 
   return (
-    <>
-      <StatusBar backgroundColor="#1a1a1a" barStyle="light-content" />
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar backgroundColor={COLORS.black} barStyle="light-content" />
       <View style={styles.container}>
-        {/* Art Deco Header */}
+        {/* Compact Header - Like Search */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>COLLECTION</Text>
-          <View style={styles.headerDivider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerOrnament}>◆</Text>
-            <View style={styles.dividerLine} />
-          </View>
         </View>
 
-        {/* Art Deco Stats Bar */}
-        <View style={styles.statsBar}>
-          <View style={styles.statItem}>
+        {/* Compact Inline Stats */}
+        <View style={styles.statsRow}>
+          <View style={styles.statCompact}>
             <Text style={styles.statNumber}>{stats.total}</Text>
-            <Text style={styles.statLabel}>PAINTINGS</Text>
+            <Text style={styles.statLabel}>paintings</Text>
           </View>
-          <View style={styles.statDivider}>
-            <Text style={styles.statDividerText}>·</Text>
-          </View>
-          <View style={styles.statItem}>
+          <Text style={styles.statDivider}>·</Text>
+          <View style={styles.statCompact}>
             <Text style={[styles.statNumber, styles.seenNumber]}>{stats.seen}</Text>
-            <Text style={styles.statLabel}>SEEN</Text>
+            <Text style={styles.statLabel}>seen</Text>
           </View>
-          <View style={styles.statDivider}>
-            <Text style={styles.statDividerText}>·</Text>
-          </View>
-          <View style={styles.statItem}>
+          <Text style={styles.statDivider}>·</Text>
+          <View style={styles.statCompact}>
             <Text style={[styles.statNumber, styles.wantNumber]}>{stats.wantToVisit}</Text>
-            <Text style={styles.statLabel}>TO VISIT</Text>
+            <Text style={styles.statLabel}>to visit</Text>
           </View>
         </View>
 
@@ -305,6 +298,6 @@ export function Collection() {
           </ScrollView>
         )}
       </View>
-    </>
+    </SafeAreaView>
   );
 }
