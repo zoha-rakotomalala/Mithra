@@ -1,40 +1,40 @@
 import { supabase } from './supabase';
+import { resolveMuseumId } from './museumCache';
 import type { Visit } from '@/types/database';
 
 /**
- * Create a new museum visit
+ * Create a new museum visit.
+ * @param museumLegacyId - Short museum code, e.g. "MET", "RIJKS"
  */
 export async function createVisit(
-  museumId: string,
-  museumName: string,
+  museumLegacyId: string,
   visitDate: string,
   notes?: string
 ): Promise<Visit | null> {
-
-  // 1. GET THE CURRENT USER'S ID
   const { data: { user } } = await supabase.auth.getUser();
-
   if (!user) {
-    // CRITICAL: Cannot proceed without an authenticated user.
     console.error('Error creating visit: User is not logged in.');
     return null;
   }
 
-  // 2. INCLUDE user_id IN THE INSERT DATA
+  const museumUuid = await resolveMuseumId(museumLegacyId);
+  if (!museumUuid) {
+    console.error('Error creating visit: Museum not found for legacy ID:', museumLegacyId);
+    return null;
+  }
+
   const { data, error } = await supabase
     .from('visits')
     .insert({
-      user_id: user.id, // <--- ADD THIS LINE
-      museum_id: museumId,
-      museum_name: museumName,
+      user_id: user.id,
+      museum_id: museumUuid,
       visit_date: visitDate,
       notes,
     })
-    .select()
+    .select('*, museum:museums(name, short_name)')
     .single();
 
   if (error) {
-    // The RLS violation error will likely show up here if the user is NULL
     console.error('Error creating visit:', error);
     return null;
   }
@@ -43,12 +43,12 @@ export async function createVisit(
 }
 
 /**
- * Get all visits for current user
+ * Get all visits for the current user, with museum name joined.
  */
 export async function getVisits(): Promise<Visit[]> {
   const { data, error } = await supabase
     .from('visits')
-    .select('*')
+    .select('*, museum:museums(name, short_name)')
     .order('visit_date', { ascending: false });
 
   if (error) {
@@ -60,12 +60,12 @@ export async function getVisits(): Promise<Visit[]> {
 }
 
 /**
- * Get single visit by ID
+ * Get a single visit by ID.
  */
 export async function getVisitById(visitId: string): Promise<Visit | null> {
   const { data, error } = await supabase
     .from('visits')
-    .select('*')
+    .select('*, museum:museums(name, short_name)')
     .eq('id', visitId)
     .single();
 
@@ -78,17 +78,17 @@ export async function getVisitById(visitId: string): Promise<Visit | null> {
 }
 
 /**
- * Update visit
+ * Update visit notes or date.
  */
 export async function updateVisit(
   visitId: string,
-  updates: Partial<Pick<Visit, 'museum_name' | 'visit_date' | 'notes'>>
+  updates: Partial<Pick<Visit, 'visit_date' | 'notes'>>
 ): Promise<Visit | null> {
   const { data, error } = await supabase
     .from('visits')
     .update(updates)
     .eq('id', visitId)
-    .select()
+    .select('*, museum:museums(name, short_name)')
     .single();
 
   if (error) {
@@ -100,7 +100,7 @@ export async function updateVisit(
 }
 
 /**
- * Delete visit
+ * Delete a visit.
  */
 export async function deleteVisit(visitId: string): Promise<boolean> {
   const { error } = await supabase

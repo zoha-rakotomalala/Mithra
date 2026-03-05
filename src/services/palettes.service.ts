@@ -1,42 +1,73 @@
 import { supabase } from './supabase';
-import type { VisitPalette, CanonPalette } from '@/types/database';
+import type { VisitPalette, VisitPalettePainting, CanonPalette } from '@/types/database';
+
+export interface VisitPaletteWithPaintings {
+  palette: VisitPalette;
+  paintings: VisitPalettePainting[];
+}
 
 /**
- * Create or update visit palette (8 artworks)
+ * Save (create or replace) a visit palette of exactly 8 paintings.
+ * @param visitId - UUID of the visit
+ * @param paintingUuids - Array of 8 painting UUIDs
  */
 export async function saveVisitPalette(
   visitId: string,
-  paintingIds: string[]
+  paintingUuids: string[]
 ): Promise<VisitPalette | null> {
-  if (paintingIds.length !== 8) {
+  if (paintingUuids.length !== 8) {
     console.error('Visit palette must have exactly 8 artworks');
     return null;
   }
 
-  const { data, error } = await supabase
+  // Upsert the palette header row
+  const { data: palette, error: paletteError } = await supabase
     .from('visit_palettes')
-    .upsert({
-      visit_id: visitId,
-      painting_ids: paintingIds,
-    }, { onConflict: 'visit_id' })
+    .upsert({ visit_id: visitId }, { onConflict: 'visit_id' })
     .select()
     .single();
 
-  if (error) {
-    console.error('Error saving visit palette:', error);
+  if (paletteError || !palette) {
+    console.error('Error upserting visit palette:', paletteError);
     return null;
   }
 
-  return data;
+  // Replace all paintings for this palette
+  const { error: deleteError } = await supabase
+    .from('visit_palette_paintings')
+    .delete()
+    .eq('palette_id', palette.id);
+
+  if (deleteError) {
+    console.error('Error clearing palette paintings:', deleteError);
+    return null;
+  }
+
+  const rows = paintingUuids.map((painting_id, position) => ({
+    palette_id: palette.id,
+    painting_id,
+    position,
+  }));
+
+  const { error: insertError } = await supabase
+    .from('visit_palette_paintings')
+    .insert(rows);
+
+  if (insertError) {
+    console.error('Error inserting palette paintings:', insertError);
+    return null;
+  }
+
+  return palette;
 }
 
 /**
- * Get visit palette
+ * Get a visit palette with its ordered paintings.
  */
-export async function getVisitPalette(visitId: string): Promise<VisitPalette | null> {
+export async function getVisitPalette(visitId: string): Promise<VisitPaletteWithPaintings | null> {
   const { data, error } = await supabase
     .from('visit_palettes')
-    .select('*')
+    .select('*, visit_palette_paintings(*)')
     .eq('visit_id', visitId)
     .single();
 
@@ -46,11 +77,22 @@ export async function getVisitPalette(visitId: string): Promise<VisitPalette | n
     return null;
   }
 
-  return data;
+  const paintings: VisitPalettePainting[] = (data.visit_palette_paintings || [])
+    .sort((a: VisitPalettePainting, b: VisitPalettePainting) => a.position - b.position);
+
+  return {
+    palette: {
+      id: data.id,
+      visit_id: data.visit_id,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    },
+    paintings,
+  };
 }
 
 /**
- * Delete visit palette
+ * Delete a visit palette (cascade deletes its paintings via FK).
  */
 export async function deleteVisitPalette(visitId: string): Promise<boolean> {
   const { error } = await supabase
@@ -67,16 +109,16 @@ export async function deleteVisitPalette(visitId: string): Promise<boolean> {
 }
 
 /**
- * Create or update canon palette (8 artworks from all visits)
+ * Create or update the canon palette (8 paintings from across all visits).
+ * @param paintingUuids - Array of 8 painting UUIDs
  */
-export async function saveCanonPalette(paintingIds: string[]): Promise<CanonPalette | null> {
-  if (paintingIds.length !== 8) {
+export async function saveCanonPalette(paintingUuids: string[]): Promise<CanonPalette | null> {
+  if (paintingUuids.length !== 8) {
     console.error('Canon palette must have exactly 8 artworks');
     return null;
   }
 
   const { data: { user } } = await supabase.auth.getUser();
-
   if (!user) {
     console.error('Error saving canon palette: User is not logged in.');
     return null;
@@ -84,10 +126,10 @@ export async function saveCanonPalette(paintingIds: string[]): Promise<CanonPale
 
   const { data, error } = await supabase
     .from('canon_palettes')
-    .upsert({
-      user_id: user.id,
-      painting_ids: paintingIds,
-    }, { onConflict: 'user_id' })
+    .upsert(
+      { user_id: user.id, painting_ids: paintingUuids },
+      { onConflict: 'user_id' }
+    )
     .select()
     .single();
 
@@ -100,7 +142,7 @@ export async function saveCanonPalette(paintingIds: string[]): Promise<CanonPale
 }
 
 /**
- * Get canon palette
+ * Get the current user's canon palette.
  */
 export async function getCanonPalette(): Promise<CanonPalette | null> {
   const { data, error } = await supabase

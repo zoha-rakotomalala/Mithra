@@ -56,7 +56,6 @@ export function Visits() {
 
     await createVisit(
       newVisit.museumId,
-      newVisit.museumName,
       newVisit.visitDate,
       newVisit.notes || undefined
     );
@@ -79,7 +78,7 @@ export function Visits() {
       onPress={() => navigation.navigate(Paths.VisitDetail , { visitId: item.id } )}
     >
       <View style={styles.visitHeader}>
-        <Text style={[typography.h3, { color: COLORS.black }]}>{item.museum_name}</Text>
+        <Text style={[typography.h3, { color: COLORS.black }]}>{item.museum?.name ?? item.museum_id}</Text>
         <Text style={[typography.caption, { color: COLORS.black + 'AA' }]}>{formatDate(item.visit_date)}</Text>
       </View>
       {item.notes && (

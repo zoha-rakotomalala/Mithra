@@ -2,56 +2,46 @@ import { supabase } from './supabase';
 import type { UserPaintingLike } from '@/types/database';
 
 /**
- * Like a painting during a visit
+ * Resolve a legacy text painting ID (e.g. "met-12345") to its UUID in the paintings table.
+ * Returns null if not found.
+ */
+async function resolvePaintingUuid(legacyId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('paintings')
+    .select('id')
+    .eq('legacy_id', legacyId)
+    .single();
+
+  if (error || !data) return null;
+  return data.id;
+}
+
+/**
+ * Like a painting during a visit.
+ * @param legacyPaintingId - The old text ID, e.g. "met-12345"
+ * @param visitId - UUID of the visit
  */
 export async function likePainting(
-  paintingId: string,
-  visitId: string,
-  paintingData?: {
-    museum_id: string;
-    title: string;
-    artist: string;
-    year?: string;
-    image_url?: string;
-    metadata?: any;
-  }
+  legacyPaintingId: string,
+  visitId: string
 ): Promise<UserPaintingLike | null> {
   const { data: { user } } = await supabase.auth.getUser();
-
   if (!user) {
     console.error('Error liking painting: User is not logged in.');
     return null;
   }
 
-  // ✅ STEP 1: Ensure painting exists in database (if paintingData provided)
-  if (paintingData) {
-    const { error: paintingError } = await supabase
-      .from('paintings')
-      .upsert({
-        id: paintingId,
-        museum_id: paintingData.museum_id,
-        title: paintingData.title,
-        artist: paintingData.artist,
-        year: paintingData.year,
-        image_url: paintingData.image_url,
-        metadata: paintingData.metadata,
-      }, {
-        onConflict: 'id',
-        ignoreDuplicates: true
-      });
-
-    if (paintingError) {
-      console.error('Error upserting painting:', paintingError);
-      // Continue anyway - painting might already exist
-    }
+  const paintingUuid = await resolvePaintingUuid(legacyPaintingId);
+  if (!paintingUuid) {
+    console.error('Error liking painting: painting not found in DB for legacy ID:', legacyPaintingId);
+    return null;
   }
 
-  // ✅ STEP 2: Create the like relationship
   const { data, error } = await supabase
     .from('user_painting_likes')
     .insert({
       user_id: user.id,
-      painting_id: paintingId,
+      painting_id: paintingUuid,
       visit_id: visitId,
     })
     .select()
@@ -66,13 +56,20 @@ export async function likePainting(
 }
 
 /**
- * Unlike a painting
+ * Unlike a painting.
+ * @param legacyPaintingId - The old text ID, e.g. "met-12345"
  */
-export async function unlikePainting(paintingId: string, visitId: string): Promise<boolean> {
+export async function unlikePainting(legacyPaintingId: string, visitId: string): Promise<boolean> {
+  const paintingUuid = await resolvePaintingUuid(legacyPaintingId);
+  if (!paintingUuid) {
+    console.error('Error unliking painting: painting not found for legacy ID:', legacyPaintingId);
+    return false;
+  }
+
   const { error } = await supabase
     .from('user_painting_likes')
     .delete()
-    .eq('painting_id', paintingId)
+    .eq('painting_id', paintingUuid)
     .eq('visit_id', visitId);
 
   if (error) {
@@ -84,7 +81,7 @@ export async function unlikePainting(paintingId: string, visitId: string): Promi
 }
 
 /**
- * Get all liked paintings for a visit
+ * Get all liked paintings for a visit.
  */
 export async function getLikedPaintingsForVisit(visitId: string): Promise<UserPaintingLike[]> {
   const { data, error } = await supabase
@@ -102,16 +99,20 @@ export async function getLikedPaintingsForVisit(visitId: string): Promise<UserPa
 }
 
 /**
- * Check if painting is liked in a visit
+ * Check if a painting is liked in a visit.
+ * @param legacyPaintingId - The old text ID, e.g. "met-12345"
  */
 export async function isPaintingLiked(
-  paintingId: string,
+  legacyPaintingId: string,
   visitId: string
 ): Promise<boolean> {
+  const paintingUuid = await resolvePaintingUuid(legacyPaintingId);
+  if (!paintingUuid) return false;
+
   const { data, error } = await supabase
     .from('user_painting_likes')
     .select('id')
-    .eq('painting_id', paintingId)
+    .eq('painting_id', paintingUuid)
     .eq('visit_id', visitId)
     .single();
 
@@ -119,7 +120,7 @@ export async function isPaintingLiked(
 }
 
 /**
- * Get all liked paintings across all visits
+ * Get all liked paintings across all visits.
  */
 export async function getAllLikedPaintings(): Promise<UserPaintingLike[]> {
   const { data, error } = await supabase
@@ -133,4 +134,27 @@ export async function getAllLikedPaintings(): Promise<UserPaintingLike[]> {
   }
 
   return data || [];
+}
+
+/**
+ * Get the set of legacy painting IDs that are liked for a given visit.
+ * Useful for populating UI state without multiple round-trips.
+ */
+export async function getLikedLegacyIdsForVisit(visitId: string): Promise<Set<string>> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return new Set();
+
+  const { data, error } = await supabase
+    .from('user_painting_likes')
+    .select('painting:paintings(legacy_id)')
+    .eq('user_id', user.id)
+    .eq('visit_id', visitId);
+
+  if (error || !data) return new Set();
+
+  const ids = data
+    .map((row: any) => row.painting?.legacy_id)
+    .filter(Boolean) as string[];
+
+  return new Set(ids);
 }

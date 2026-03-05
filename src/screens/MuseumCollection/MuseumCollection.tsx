@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StatusBar, ActivityIndicator, TextInput } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { searchAllMuseums } from '@/services/unifiedMuseumService';
-import { likePainting, unlikePainting } from '@/services';
-import { supabase } from '@/services/supabase';
+import { likePainting, unlikePainting, getLikedLegacyIdsForVisit } from '@/services';
 import { GridPaintingCard } from '@/components/molecules';
 import { shared, typography } from '@/styles';
-import { COLORS, SPACING, GRID } from '@/constants';
+import { COLORS, GRID } from '@/constants';
 import { collectionStyles as styles } from './styles';
 import type { Painting } from '@/types/painting';
 
@@ -25,18 +24,8 @@ export function MuseumCollection() {
   }, [museumId, visitId]);
 
   const loadLikedPaintings = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from('user_painting_likes')
-      .select('painting_id')
-      .eq('user_id', user.id)
-      .eq('visit_id', visitId);
-
-    if (!error && data) {
-      setLikedIds(new Set(data.map(like => like.painting_id)));
-    }
+    const liked = await getLikedLegacyIdsForVisit(visitId);
+    setLikedIds(liked);
   };
 
   const searchCollection = async () => {
@@ -50,13 +39,14 @@ export function MuseumCollection() {
       // ✅ Use unified search with quality filters
       const result = await searchAllMuseums({
         query: searchQuery.trim(),
-        museumIds: [museumId], // Search only this museum
+        searchType: 'title',
+        museumIds: [museumId],
         maxResultsPerMuseum: 50,
         qualityFilters: {
           requireImage: true,
           requireArtist: true,
           paintingsOnly: true,
-          minRelevanceScore: 10, // Lower threshold for single museum
+          minRelevanceScore: 10,
         }
       });
 
@@ -84,21 +74,7 @@ export function MuseumCollection() {
         return next;
       });
     } else {
-      // ✅ Cache painting in Supabase when liking
-      await likePainting(paintingId, visitId, {
-        museum_id: museumId,
-        title: painting.title,
-        artist: painting.artist,
-        year: painting.year?.toString() || undefined,
-        image_url: painting.imageUrl || undefined,
-        metadata: {
-          objectId: String(painting.id),
-          thumbnailUrl: painting.thumbnailUrl,
-          medium: painting.medium,
-          dimensions: painting.dimensions,
-        },
-      });
-
+      await likePainting(paintingId, visitId);
       setLikedIds(prev => new Set(prev).add(paintingId));
     }
   };
@@ -141,7 +117,7 @@ export function MuseumCollection() {
           <TextInput
             style={styles.searchInput}
             placeholder="Search artworks (e.g., Monet, landscapes, impressionism)"
-            placeholderTextColor={COLORS.textSecondary || '#999'}
+            placeholderTextColor={'#999'}
             value={searchQuery}
             onChangeText={setSearchQuery}
             onSubmitEditing={searchCollection}
