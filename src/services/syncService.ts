@@ -482,11 +482,31 @@ export class SyncService {
         // Write updated local paintings back to MMKV (preserving the Painting[] shape)
         this.writeLocalCollection(localPaintings);
 
-        // For palette: remote palette contains UUID strings, local contains number/string IDs.
-        // Only overwrite local palette if remote has data AND local is empty (fresh install).
-        // Otherwise keep local palette as-is since the ID formats may differ.
-        if (remotePalette && localPaletteIds.length === 0) {
-          this.writeLocalPaletteIds(remotePalette.painting_ids);
+        // Palette sync: convert remote UUID palette to local legacy IDs
+        if (remotePalette && remotePalette.painting_ids.length > 0) {
+          // Fetch painting records for the palette UUIDs to get their legacy IDs
+          const { data: palettePaintingRows } = await supabase
+            .from('paintings')
+            .select('id, legacy_id, external_id')
+            .in('id', remotePalette.painting_ids);
+
+          const paletteUuidToLegacy = new Map<string, string>();
+          for (const row of (palettePaintingRows || [])) {
+            const legacyId = row.legacy_id || row.external_id;
+            if (legacyId) {
+              paletteUuidToLegacy.set(row.id, legacyId);
+            }
+          }
+
+          // Convert remote palette UUIDs to legacy IDs, preserving order
+          const remotePaletteAsLegacyIds = remotePalette.painting_ids
+            .map(uuid => paletteUuidToLegacy.get(uuid))
+            .filter((id): id is string => id !== null && id !== undefined);
+
+          if (remotePaletteAsLegacyIds.length > 0) {
+            // Use remote palette — it's the source of truth for cross-device sync
+            this.writeLocalPaletteIds(remotePaletteAsLegacyIds);
+          }
         }
 
         // Record last sync time
