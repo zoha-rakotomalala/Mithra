@@ -1,4 +1,5 @@
 import type { Painting } from '@/types/painting';
+import {  } from '@/utils/colorGenerator';
 
 const JOCONDE_API_BASE = 'https://data.culture.gouv.fr/api/explore/v2.1/catalog/datasets/base-joconde-extrait/records';
 
@@ -159,3 +160,18 @@ function generateColorFromString(string_: string): string {
   }
   return colors[Math.abs(hash) % colors.length];
 }
+
+import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import { registerAdapter } from './museumAdapterRegistry';
+
+export const jocondeAdapter: MuseumServiceAdapter = {
+  museumId: 'JOCONDE',
+  async search(params: MuseumSearchParams): Promise<MuseumSearchResult> {
+    return searchJoconde({
+      query: params.query,
+      limit: params.maxResults,
+    });
+  },
+};
+
+registerAdapter(jocondeAdapter);

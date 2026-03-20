@@ -4,14 +4,19 @@ import {
   updateCacheWithFreshResults,
   getCacheFreshness
 } from './paintingCacheService';
-import { searchMetMuseum } from './metMuseumService';
-import { searchRijksmuseum } from './rijksmuseumService';
-import { searchCleveland } from './clevelandService';
-import { searchChicago } from './chicagoService';
-import { searchHarvard } from './harvardService';
-import { searchVA } from './vaService';
-import { searchEuropeana } from './europeanaService';
-import { searchParisMuseums } from './parisMuseumsService';
+import { getAdapter } from './museumAdapterRegistry';
+// Side-effect imports: each module registers its adapter on load
+import './metMuseumService';
+import './rijksmuseumService';
+import './clevelandService';
+import './chicagoService';
+import './harvardService';
+import './vaService';
+import './europeanaService';
+import './parisMuseumsService';
+import './nationalGalleryService';
+import './jocondeService';
+import './wikidataService';
 import { getMuseumsByIds } from './museumRegistry';
 import {
   cleanArtistName,
@@ -224,7 +229,7 @@ export async function searchAllMuseums(
 }
 
 /**
- * Search a single museum via API
+ * Search a single museum via adapter registry
  */
 async function searchSingleMuseumAPI(
   museumId: string,
@@ -232,71 +237,13 @@ async function searchSingleMuseumAPI(
   searchType: SearchType,
   maxResults: number
 ): Promise<Painting[]> {
-  const searchQuery = query;
-
-  switch (museumId) {
-    case 'MET':
-      const metResult = await searchMetMuseum({
-        query: searchQuery,
-        hasImages: true,
-        artistOrCulture: searchType === 'artist',
-      });
-      return metResult.paintings.slice(0, maxResults);
-
-    case 'RIJKS':
-      const rijksResult = await searchRijksmuseum({
-        query: searchQuery,
-        limit: maxResults,
-        involvedMaker: searchType === 'artist' ? searchQuery : undefined,
-      });
-      return rijksResult.paintings;
-
-    case 'CLEVELAND':
-      const clevelandResult = await searchCleveland({
-        query: searchQuery,
-        limit: maxResults,
-      });
-      return clevelandResult.paintings;
-
-    case 'CHICAGO':
-      const chicagoResult = await searchChicago({
-        query: searchQuery,
-        limit: maxResults,
-      });
-      return chicagoResult.paintings;
-
-    case 'HARVARD':
-      const harvardResult = await searchHarvard({
-        query: searchQuery,
-        size: maxResults,
-      });
-      return harvardResult.paintings;
-
-    case 'VA':
-      const vaResult = await searchVA({
-        query: searchQuery,
-        pageSize: maxResults,
-      });
-      return vaResult.paintings;
-
-    case 'EUROPEANA':
-      const europeanaResult = await searchEuropeana({
-        query: searchQuery,
-        rows: maxResults,
-      });
-      return europeanaResult.paintings;
-
-    case 'PARIS':
-      const parisResult = await searchParisMuseums({
-        query: searchQuery,
-        limit: maxResults,
-      });
-      return parisResult.paintings;
-
-    default:
-      console.warn(`Unknown museum ID: ${museumId}`);
-      return [];
+  const adapter = getAdapter(museumId);
+  if (!adapter) {
+    console.warn(`No adapter registered for museum: ${museumId}`);
+    return [];
   }
+  const result = await adapter.search({ query, maxResults, searchType });
+  return result.paintings;
 }
 
 export function getPopularArtistsByMuseums(museumIds: string[]): string[] {

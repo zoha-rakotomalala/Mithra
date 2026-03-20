@@ -5,9 +5,10 @@ import { View, Text, FlatList, TouchableOpacity, StatusBar } from 'react-native'
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { shared, typography } from '@/styles';
 import { COLORS, SPACING } from '@/constants';
-import { museumBrowserStyles as styles } from './styles';
+import { getAllMuseums, type MuseumConfig } from '@/services/museumRegistry';
+import { museumBrowserStyles as styles } from './MuseumBrowser.styles';
 
-interface Museum {
+interface MuseumDisplay {
   id: string;
   name: string;
   shortName: string;
@@ -16,21 +17,30 @@ interface Museum {
   collectionSize: string;
 }
 
-const MUSEUMS: Museum[] = [
-  { id: 'MET', name: 'Metropolitan Museum of Art', shortName: 'MET', location: 'New York, USA', color: '#ce1126', collectionSize: '1.5M+' },
-  { id: 'RIJKS', name: 'Rijksmuseum', shortName: 'Rijks', location: 'Amsterdam, Netherlands', color: '#003d7a', collectionSize: '700K+' },
-  { id: 'CHICAGO', name: 'Art Institute of Chicago', shortName: 'AIC', location: 'Chicago, USA', color: '#b31b1b', collectionSize: '300K+' },
-  { id: 'CLEVELAND', name: 'Cleveland Museum of Art', shortName: 'CMA', location: 'Cleveland, USA', color: '#0066cc', collectionSize: '61K+' },
-  { id: 'NATIONAL_GALLERY', name: 'National Gallery', shortName: 'NG', location: 'London, UK', color: '#006400', collectionSize: '2.3K+' },
-  { id: 'HARVARD', name: 'Harvard Art Museums', shortName: 'Harvard', location: 'Cambridge, USA', color: '#a51c30', collectionSize: '250K+' },
-];
+function extractCollectionSize(description: string): string {
+  const match = description.match(/([\d,]+[MKB]?\+)\s*(?:artworks|objects|paintings)/i);
+  return match ? match[1] : '';
+}
+
+function toMuseumDisplay(config: MuseumConfig): MuseumDisplay {
+  return {
+    id: config.id,
+    name: config.name,
+    shortName: config.shortName,
+    location: config.country,
+    color: config.color,
+    collectionSize: extractCollectionSize(config.description),
+  };
+}
+
+const MUSEUMS: MuseumDisplay[] = getAllMuseums().map(toMuseumDisplay);
 
 export function MuseumBrowser() {
   const navigation = useNavigation<RootScreenProps['navigation']>();
   const route = useRoute();
   const { visitId } = route.params as { visitId: string };
 
-  const renderMuseum = ({ item }: { item: Museum }) => (
+  const renderMuseum = ({ item }: { item: MuseumDisplay }) => (
     <TouchableOpacity
       style={styles.museumCard}
       onPress={() => navigation.navigate(Paths.MuseumCollection, { museumId: item.id, visitId } )}

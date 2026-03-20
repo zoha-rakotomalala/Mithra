@@ -1,5 +1,6 @@
 import type { Painting } from '@/types/painting';
 import { cleanArtistName } from './utils/searchHelpers';
+import {  } from '@/utils/colorGenerator';
 
 const RIJKS_SEARCH_API = 'https://data.rijksmuseum.nl/search/collection';
 
@@ -368,3 +369,19 @@ function generateColorFromString(str: string): string {
   }
   return colors[Math.abs(hash) % colors.length];
 }
+
+import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import { registerAdapter } from './museumAdapterRegistry';
+
+export const rijksmuseumAdapter: MuseumServiceAdapter = {
+  museumId: 'RIJKS',
+  async search(params: MuseumSearchParams): Promise<MuseumSearchResult> {
+    return searchRijksmuseum({
+      query: params.query,
+      searchType: params.searchType,
+      limit: params.maxResults,
+    });
+  },
+};
+
+registerAdapter(rijksmuseumAdapter);

@@ -182,23 +182,6 @@ export const paintingDetailStyles = StyleSheet.create({
     backgroundColor: COLORS.cream,
     padding: SPACING.lg,
   },
-  quickAddDivider: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginBottom: SPACING.md + 4,
-  },
-  dividerLine: {
-    backgroundColor: COLORS.gold,
-    flex: 1,
-    height: 1,
-  },
-  dividerText: {
-    color: COLORS.text,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 2,
-    marginHorizontal: SPACING.md,
-  },
   quickAddRow: {
     flexDirection: 'row',
     gap: SPACING.sm + 4,

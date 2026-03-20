@@ -1,9 +1,8 @@
 import type { Painting } from '@/types/painting';
 import { useNavigation } from '@react-navigation/native';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Dimensions,
   FlatList,
   Modal,
@@ -16,20 +15,13 @@ import {
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { Paths } from '@/navigation/paths';
-import { MuseumSelector } from '@/components/MuseumSelector';
-import { usePaintings } from '@/contexts/PaintingsContext';
+import { MuseumSelector } from '@/components/organisms';
 import { searchStyles as styles } from './Search.styles';
-import { getAllMuseums, TIER_1_MUSEUMS } from '@/services/museumRegistry';
-import {
-  getMuseumBadgeInfo,
-  getPopularArtistsByMuseums,
-  searchAllMuseums,
-  type SearchType,
-  type ProgressUpdate
-} from '@/services/unifiedMuseumService';
+import { getMuseumBadgeInfo } from '@/services/unifiedMuseumService';
+import { useMuseumSearch } from '@/hooks/domain/museum/useMuseumSearch';
 
 const { width } = Dimensions.get('window');
-const CARD_SIZE = (width - 32) / 3; // 3 columns with padding
+const CARD_SIZE = (width - 32) / 3;
 const GRID_PADDING = 16;
 
 const GridItem = React.memo(({
@@ -47,7 +39,6 @@ const GridItem = React.memo(({
   const [imageError, setImageError] = React.useState(false);
   const badgeInfo = getMuseumBadgeInfo(painting);
 
-  // Debug Chicago images
   React.useEffect(() => {
     if (typeof painting.id === 'string' && painting.id.startsWith('chicago-')) {
       console.log('Chicago painting in grid:', {
@@ -127,116 +118,31 @@ const GridItem = React.memo(({
 
 export function Search() {
   const navigation = useNavigation();
-  const { paintings: existingPaintings } = usePaintings();
-  const allMuseums = getAllMuseums();
-
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchType, setSearchType] = useState<SearchType>('artist');
-  const [searchResults, setSearchResults] = useState<Painting[]>([]);
-  const [isLoadingCache, setIsLoadingCache] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
-  const [selectedMuseums, setSelectedMuseums] = useState<string[]>(TIER_1_MUSEUMS);
-  const [showMuseumPicker, setShowMuseumPicker] = useState(false);
-  const [cacheStats, setCacheStats] = useState({ added: 0 });
-
-  const handleProgressUpdate = useCallback((update: ProgressUpdate) => {
-    if (update.phase === 'cache') {
-      setIsLoadingCache(false);
-    } else if (update.phase === 'api') {
-      setIsRefreshing(true);
-    } else if (update.phase === 'complete') {
-      setIsRefreshing(false);
-      if (update.added) {
-        setCacheStats({ added: update.added });
-        setTimeout(() => setCacheStats({ added: 0 }), 3000);
-      }
-    }
-  }, []);
-
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
-    if (selectedMuseums.length === 0) {
-      Alert.alert('Notice', 'Please select at least one museum to search');
-      return;
-    }
-
-    setIsLoadingCache(true);
-    setHasSearched(true);
-    setCacheStats({ added: 0 });
-
-    try {
-      const result = await searchAllMuseums({
-        query: searchQuery,
-        searchType,
-        museumIds: selectedMuseums,
-        maxResultsPerMuseum: 20,
-        useCache: true,
-        onProgressUpdate: handleProgressUpdate,
-      });
-
-      setSearchResults(result.paintings);
-
-      if (result.paintings.length === 0) {
-        Alert.alert(
-          'No Results',
-          `No ${searchType === 'artist' ? 'works by' : 'paintings titled'} "${searchQuery}" found.\n\nTry different keywords or select more museums.`,
-          [{ text: 'OK' }]
-        );
-      }
-    } catch (error) {
-      Alert.alert(
-        'Search Error',
-        'Failed to search paintings. Please check your connection.',
-        [{ text: 'OK' }]
-      );
-      console.error('Search error:', error);
-    } finally {
-      setIsLoadingCache(false);
-      setIsRefreshing(false);
-    }
-  };
-
-  const handleArtistSearch = async (artistName: string) => {
-    setSearchQuery(artistName);
-    setSearchType('artist');
-    setIsLoadingCache(true);
-    setHasSearched(true);
-
-    try {
-      const result = await searchAllMuseums({
-        query: artistName,
-        searchType: 'artist',
-        museumIds: selectedMuseums,
-        maxResultsPerMuseum: 20,
-        useCache: true,
-        onProgressUpdate: handleProgressUpdate,
-      });
-
-      setSearchResults(result.paintings);
-    } catch {
-      Alert.alert('Search Error', 'Failed to search paintings by artist.');
-    } finally {
-      setIsLoadingCache(false);
-      setIsRefreshing(false);
-    }
-  };
+  const {
+    searchQuery,
+    setSearchQuery,
+    searchType,
+    setSearchType,
+    searchResults,
+    isLoadingCache,
+    isRefreshing,
+    hasSearched,
+    selectedMuseums,
+    setSelectedMuseums,
+    showMuseumPicker,
+    setShowMuseumPicker,
+    cacheStats,
+    allMuseums,
+    popularArtists,
+    handleSearch,
+    handleArtistSearch,
+    isAlreadyInCollection,
+    clearSearch,
+  } = useMuseumSearch();
 
   const handlePaintingPress = useCallback((painting: Painting) => {
     navigation.navigate(Paths.PaintingDetail, { painting });
   }, [navigation]);
-
-  const isAlreadyInCollection = useCallback((painting: Painting) => {
-    const found = existingPaintings.find(
-      p => p.id === painting.id ||
-      (p.title.toLowerCase() === painting.title.toLowerCase() &&
-       p.artist.toLowerCase() === painting.artist.toLowerCase())
-    );
-    return found ? {
-      inCollection: true,
-      status: { isSeen: found.isSeen || false, wantToVisit: found.wantToVisit || false }
-    } : { inCollection: false };
-  }, [existingPaintings]);
 
   const renderItem = useCallback(({ item }: { readonly item: Painting }) => {
     const collectionInfo = isAlreadyInCollection(item);
@@ -251,7 +157,6 @@ export function Search() {
   }, [handlePaintingPress, isAlreadyInCollection]);
 
   const keyExtractor = useCallback((item: Painting) => `painting-${item.id}`, []);
-  const popularArtists = getPopularArtistsByMuseums(selectedMuseums);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -271,7 +176,7 @@ export function Search() {
             )}
           </View>
 
-          {/* Search Type Selector - Clear labels */}
+          {/* Search Type Selector */}
           <View style={styles.searchTypeRow}>
             <Text style={styles.searchTypeLabel}>Search by:</Text>
             <View style={styles.searchTypeButtons}>
@@ -323,11 +228,7 @@ export function Search() {
               />
               {searchQuery.length > 0 && (
                 <TouchableOpacity
-                  onPress={() => {
-                    setSearchQuery('');
-                    setSearchResults([]);
-                    setHasSearched(false);
-                  }}
+                  onPress={clearSearch}
                   style={styles.clearButton}
                 >
                   <Text style={styles.clearButtonText}>×</Text>
@@ -344,7 +245,7 @@ export function Search() {
             </TouchableOpacity>
           </View>
 
-          {/* Museum Selector - Clear button */}
+          {/* Museum Selector */}
           <TouchableOpacity
             onPress={() => setShowMuseumPicker(true)}
             style={styles.museumSelectButton}

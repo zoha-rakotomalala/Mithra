@@ -1,5 +1,6 @@
 import type { Painting } from '@/types/painting';
 import { cleanArtistName } from './utils/searchHelpers';
+import {  } from '@/utils/colorGenerator';
 
 const NG_SEARCH_API = 'https://data.ng.ac.uk/search';
 const NG_DATA_BASE = 'https://data.ng.ac.uk';
@@ -308,3 +309,18 @@ function generateColorFromString(str: string): string {
   }
   return colors[Math.abs(hash) % colors.length];
 }
+
+import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import { registerAdapter } from './museumAdapterRegistry';
+
+export const nationalGalleryAdapter: MuseumServiceAdapter = {
+  museumId: 'NG',
+  async search(params: MuseumSearchParams): Promise<MuseumSearchResult> {
+    return searchNationalGallery({
+      query: params.query,
+      limit: params.maxResults,
+    });
+  },
+};
+
+registerAdapter(nationalGalleryAdapter);

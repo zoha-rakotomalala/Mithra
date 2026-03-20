@@ -3,6 +3,7 @@ import { View, Text, ScrollView, StatusBar, TouchableOpacity, SafeAreaView } fro
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { PaintingCard } from '@/components/molecules/PaintingCard/PaintingCard';
 import { ProfileCard } from '@/components/molecules/ProfileCard/ProfileCard';
+import { SectionHeader } from '@/components/molecules';
 import { usePaintings } from '@/contexts/PaintingsContext';
 import { shared, buttons } from '@/styles';
 import { COLORS, SPACING } from '@/constants';
@@ -118,11 +119,7 @@ export function Palette() {
 
           {/* Instructions */}
           <View style={styles.instructions}>
-            <View style={[shared.rowCenter, styles.sectionHeader]}>
-              <View style={shared.artDecoDivider} />
-              <Text style={styles.sectionTitle}>HOW IT WORKS</Text>
-              <View style={shared.artDecoDivider} />
-            </View>
+            <SectionHeader title="HOW IT WORKS" />
 
             <Text style={styles.instructionText}>
               Tap a card to flip and preview details.

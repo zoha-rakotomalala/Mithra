@@ -13,12 +13,6 @@ export const collectionStyles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
 
-  backText: {
-    fontSize: 32,
-    color: COLORS.text,
-    fontWeight: '300',
-  },
-
   loading: {
     flex: 1,
     justifyContent: 'center',

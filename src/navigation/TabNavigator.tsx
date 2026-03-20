@@ -8,6 +8,8 @@ import { Search } from '@/screens/Search/Search';
 import { Settings } from '@/screens/Settings/Settings';
 import { Visits } from '@/screens/Visits/Visits';
 import { Paths } from '@/navigation/paths';
+import { COLORS } from '@/constants/colors';
+import { TAB_BAR } from '@/constants/dimensions';
 
 const Tab = createBottomTabNavigator();
 
@@ -19,19 +21,19 @@ export function TabNavigator() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#1a1a1a',
+          backgroundColor: COLORS.black,
           borderTopWidth: 1,
-          borderTopColor: 'rgba(212,175,55,0.4)',
-          paddingBottom: Math.max(insets.bottom, 12),
-          height: 64 + insets.bottom,
+          borderTopColor: `${COLORS.gold}66`,
+          paddingBottom: Math.max(insets.bottom, TAB_BAR.minPaddingBottom),
+          height: TAB_BAR.height + insets.bottom,
         },
-        tabBarActiveTintColor: '#d4af37',
-        tabBarInactiveTintColor: 'rgba(255,255,255,0.5)',
+        tabBarActiveTintColor: COLORS.gold,
+        tabBarInactiveTintColor: `${COLORS.textInverse}80`,
         tabBarLabelStyle: {
-          fontSize: 10,
-          letterSpacing: 2,
+          fontSize: TAB_BAR.labelFontSize,
+          letterSpacing: TAB_BAR.labelLetterSpacing,
           fontWeight: '600',
-          marginTop: 4,
+          marginTop: TAB_BAR.labelMarginTop,
         },
       }}
     >
@@ -41,7 +43,7 @@ export function TabNavigator() {
         options={{
           tabBarLabel: 'VISITS',
           tabBarIcon: ({ color }) => (
-            <Text style={{ color, fontSize: 16 }}>🏛</Text>
+            <Text style={{ color, fontSize: TAB_BAR.iconFontSize }}>🏛</Text>
           ),
         }}
       />
@@ -51,7 +53,7 @@ export function TabNavigator() {
         options={{
           tabBarLabel: 'COLLECTION',
           tabBarIcon: ({ color }) => (
-            <Text style={{ color, fontSize: 16 }}>▦</Text>
+            <Text style={{ color, fontSize: TAB_BAR.iconFontSize }}>▦</Text>
           ),
         }}
       />
@@ -61,7 +63,7 @@ export function TabNavigator() {
         options={{
           tabBarLabel: 'SEARCH',
           tabBarIcon: ({ color }) => (
-            <Text style={{ color, fontSize: 16 }}>⌕</Text>
+            <Text style={{ color, fontSize: TAB_BAR.iconFontSize }}>⌕</Text>
           ),
         }}
       />
@@ -71,7 +73,7 @@ export function TabNavigator() {
         options={{
           tabBarLabel: 'PALETTE',
           tabBarIcon: ({ color }) => (
-            <Text style={{ color, fontSize: 16 }}>◆</Text>
+            <Text style={{ color, fontSize: TAB_BAR.iconFontSize }}>◆</Text>
           ),
         }}
       />
@@ -81,7 +83,7 @@ export function TabNavigator() {
         options={{
           tabBarLabel: 'SETTINGS',
           tabBarIcon: ({ color }) => (
-            <Text style={{ color, fontSize: 16 }}>⚙︎</Text>
+            <Text style={{ color, fontSize: TAB_BAR.iconFontSize }}>⚙︎</Text>
           ),
         }}
       />

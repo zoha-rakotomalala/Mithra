@@ -1,5 +1,6 @@
 import type { Painting } from '@/types/painting';
 import { cleanArtistName } from './utils/searchHelpers';
+import {  } from '@/utils/colorGenerator';
 import Config from 'react-native-config';
 
 const HARVARD_API_BASE = 'https://api.harvardartmuseums.org/v1';
@@ -162,3 +163,18 @@ function generateColorFromString(str: string): string {
   }
   return colors[Math.abs(hash) % colors.length];
 }
+
+import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import { registerAdapter } from './museumAdapterRegistry';
+
+export const harvardAdapter: MuseumServiceAdapter = {
+  museumId: 'HARVARD',
+  async search(params: MuseumSearchParams): Promise<MuseumSearchResult> {
+    return searchHarvard({
+      query: params.query,
+      size: params.maxResults,
+    });
+  },
+};
+
+registerAdapter(harvardAdapter);

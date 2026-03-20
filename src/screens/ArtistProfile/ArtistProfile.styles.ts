@@ -262,29 +262,4 @@ export const artistProfileStyles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
   },
-
-  /* Empty State */
-  emptyState: {
-    alignItems: 'center',
-    paddingHorizontal: 40,
-    paddingVertical: 80,
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: SPACING.md,
-    opacity: 0.5,
-  },
-  emptyTitle: {
-    color: COLORS.text,
-    fontSize: 20,
-    fontWeight: '600',
-    letterSpacing: 1,
-    marginBottom: SPACING.sm + 4,
-  },
-  emptyText: {
-    color: COLORS.textLight,
-    fontSize: 14,
-    lineHeight: 20,
-    textAlign: 'center',
-  },
 });

@@ -1,81 +1,35 @@
 import type { RootScreenProps } from '@/navigation/types';
 import { Paths } from '@/navigation/paths';
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, StatusBar, Modal, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { getVisits, createVisit } from '@/services/visits.service';
+import { EmptyState, ModalHeader } from '@/components/molecules';
 import { shared, typography, buttons } from '@/styles';
 import { COLORS, SPACING } from '@/constants';
 import { formatDate } from '@/utils';
-import { visitsStyles as styles } from './styles';
+import { visitsStyles as styles } from './Visits.styles';
+import { useVisits } from '@/hooks/domain/visits/useVisits';
 import type { Visit } from '@/types/database';
-
-const MUSEUMS = [
-  { id: 'MET', name: 'Metropolitan Museum of Art' },
-  { id: 'RIJKS', name: 'Rijksmuseum' },
-  { id: 'CHICAGO', name: 'Art Institute of Chicago' },
-  { id: 'CLEVELAND', name: 'Cleveland Museum of Art' },
-  { id: 'NATIONAL_GALLERY', name: 'National Gallery' },
-  { id: 'HARVARD', name: 'Harvard Art Museums' },
-];
 
 export function Visits() {
   const navigation = useNavigation<RootScreenProps['navigation']>();
-  const [visits, setVisits] = useState<Visit[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showMuseumPicker, setShowMuseumPicker] = useState(false);
-  const [newVisit, setNewVisit] = useState({
-    museumId: '',
-    museumName: '',
-    visitDate: new Date().toISOString().split('T')[0],
-    notes: '',
-  });
-
-  useEffect(() => {
-    loadVisits();
-  }, []);
-
-  // ✅ Add focus listener to refresh when returning to screen
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      loadVisits();
-    });
-    return unsubscribe;
-  }, [navigation]);
-
-  const loadVisits = async () => {
-    setLoading(true);
-    const data = await getVisits();
-    setVisits(data);
-    setLoading(false);
-  };
-
-  const handleAddVisit = async () => {
-    if (!newVisit.museumId || !newVisit.museumName) return;
-
-    await createVisit(
-      newVisit.museumId,
-      newVisit.visitDate,
-      newVisit.notes || undefined
-    );
-
-    setShowAddModal(false);
-    setNewVisit({
-      museumId: '',
-      museumName: '',
-      visitDate: new Date().toISOString().split('T')[0],
-      notes: ''
-    });
-
-    // ✅ Reload immediately after creating
-    await loadVisits();
-  };
+  const {
+    visits,
+    showAddModal,
+    setShowAddModal,
+    showMuseumPicker,
+    setShowMuseumPicker,
+    newVisit,
+    museums,
+    handleAddVisit,
+    selectMuseum,
+    updateNewVisitField,
+  } = useVisits();
 
   const renderVisit = ({ item }: { item: Visit }) => (
     <TouchableOpacity
       style={styles.visitCard}
-      onPress={() => navigation.navigate(Paths.VisitDetail , { visitId: item.id } )}
+      onPress={() => navigation.navigate(Paths.VisitDetail, { visitId: item.id })}
     >
       <View style={styles.visitHeader}>
         <Text style={[typography.h3, { color: COLORS.black }]}>{item.museum?.name ?? item.museum_id}</Text>
@@ -108,13 +62,11 @@ export function Visits() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>🏛️</Text>
-              <Text style={[typography.h2, { color: COLORS.black, marginBottom: SPACING.sm }]}>No Visits Yet</Text>
-              <Text style={[typography.body, styles.emptyText]}>
-                Log your first museum visit to get started!
-              </Text>
-            </View>
+            <EmptyState
+              icon="🏛️"
+              title="No Visits Yet"
+              subtitle="Log your first museum visit to get started!"
+            />
           }
         />
 
@@ -125,12 +77,11 @@ export function Visits() {
 
       <Modal visible={showAddModal} animationType="slide" presentationStyle="pageSheet">
         <View style={[shared.container, { backgroundColor: COLORS.cream }]}>
-          <View style={styles.modalHeader}>
-            <Text style={[typography.h2, { color: COLORS.gold }]}>LOG MUSEUM VISIT</Text>
-            <TouchableOpacity onPress={() => setShowAddModal(false)}>
-              <Text style={styles.closeButton}>✕</Text>
-            </TouchableOpacity>
-          </View>
+          <ModalHeader
+            title="LOG MUSEUM VISIT"
+            onClose={() => setShowAddModal(false)}
+            titleStyle={[typography.h2, { color: COLORS.gold }]}
+          />
 
           <View style={styles.modalContent}>
             <TouchableOpacity
@@ -147,7 +98,7 @@ export function Visits() {
               placeholder="Date (YYYY-MM-DD)"
               placeholderTextColor={COLORS.black + '60'}
               value={newVisit.visitDate}
-              onChangeText={(text) => setNewVisit({...newVisit, visitDate: text})}
+              onChangeText={(text) => updateNewVisitField('visitDate', text)}
             />
 
             <TextInput
@@ -155,7 +106,7 @@ export function Visits() {
               placeholder="Notes (optional)"
               placeholderTextColor={COLORS.black + '60'}
               value={newVisit.notes}
-              onChangeText={(text) => setNewVisit({...newVisit, notes: text})}
+              onChangeText={(text) => updateNewVisitField('notes', text)}
               multiline
               numberOfLines={4}
             />
@@ -173,22 +124,18 @@ export function Visits() {
 
       <Modal visible={showMuseumPicker} animationType="slide" presentationStyle="pageSheet">
         <View style={[shared.container, { backgroundColor: COLORS.cream }]}>
-          <View style={styles.modalHeader}>
-            <Text style={[typography.h2, { color: COLORS.gold }]}>SELECT MUSEUM</Text>
-            <TouchableOpacity onPress={() => setShowMuseumPicker(false)}>
-              <Text style={styles.closeButton}>✕</Text>
-            </TouchableOpacity>
-          </View>
+          <ModalHeader
+            title="SELECT MUSEUM"
+            onClose={() => setShowMuseumPicker(false)}
+            titleStyle={[typography.h2, { color: COLORS.gold }]}
+          />
           <FlatList
-            data={MUSEUMS}
+            data={museums}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={styles.museumOption}
-                onPress={() => {
-                  setNewVisit({...newVisit, museumId: item.id, museumName: item.name});
-                  setShowMuseumPicker(false);
-                }}
+                onPress={() => selectMuseum(item)}
               >
                 <Text style={[typography.body, { color: COLORS.black }]}>{item.name}</Text>
               </TouchableOpacity>

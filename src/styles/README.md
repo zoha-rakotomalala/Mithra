@@ -29,19 +29,51 @@ import { COLORS, SPACING, CARD } from '@/constants';
 
 ## Architecture
 
+The Palette app uses a consolidated styling approach with three layers:
+
+| Layer                  | Location                      | Purpose                                                                                  |
+|------------------------|-------------------------------|------------------------------------------------------------------------------------------|
+| **Colors**             | `src/constants/colors.ts`     | All color values: Art Deco palette, museum brand colors, semantic colors, opacity values |
+| **Dimensions**         | `src/constants/dimensions.ts` | Spacing scale, grid system, card sizes, tab bar dimensions, screen dimensions            |
+| **StyleSheet objects** | `src/styles/`                 | Pre-built `StyleSheet.create()` objects for reusable UI patterns                         |
+
 ### Constants (`src/constants/`)
 Foundational values used throughout the app:
-- **colors.ts** - Color palette, museum colors, semantic colors
-- **dimensions.ts** - Spacing, card sizes, proportions
-- **museums.ts** - Museum badge metadata
+
+- **colors.ts** — Art Deco color palette (`COLORS`), museum brand colors (`MUSEUM_COLORS`), opacity
+  values (`OPACITY`)
+- **dimensions.ts** — Spacing scale (`SPACING`), grid system (`GRID`), card sizes (`CARD`), tab bar
+  dimensions (`TAB_BAR`), screen dimensions (`SCREEN`), proportions (`PROPORTIONS`)
+- **museums.ts** — Museum badge metadata
 
 ### Styles (`src/styles/`)
 Pre-built StyleSheet objects for common patterns:
-- **shared.ts** - Common layouts, containers, helpers
-- **cards.ts** - Painting card styles
-- **badges.ts** - Status and museum badges
-- **typography.ts** - Text styles
-- **buttons.ts** - Button styles
+
+- **shared.ts** — Common layouts, containers, flex helpers, shadows, dividers
+- **cards.ts** — Painting card styles (grid cards, images, placeholders)
+- **badges.ts** — Status and museum badges
+- **typography.ts** — Text styles (headings, body, Art Deco titles)
+- **buttons.ts** — Button styles (primary, secondary, icon, small)
+
+### ⚠️ Deprecated: `src/theme/` (Legacy Boilerplate System)
+
+The `src/theme/` directory contains a theming system inherited from the React Native boilerplate. It
+defines its own color palette (`purple50`, `gray100`, etc.) and layout utilities that **do not align
+** with the Art Deco design language.
+
+**Status:** Deprecated — do not use for new code.
+
+**Why it still exists:** The theme system is consumed by boilerplate infrastructure components (
+`AssetByVariant`, `IconByVariant`, `Skeleton`, `SafeScreen`, `DefaultError`, `Example`) and the
+navigation provider (`Application.tsx`). Removing it would break these components.
+
+**Rules:**
+
+- Do **not** import from `@/theme` in Art Deco screens or new components
+- Use `src/constants/colors.ts` for colors, `src/constants/dimensions.ts` for spacing/sizing, and
+  `src/styles/` for shared StyleSheet objects
+- If you need a value that only exists in `src/theme/`, migrate it to `src/constants/` or
+  `src/styles/` first
 
 ---
 

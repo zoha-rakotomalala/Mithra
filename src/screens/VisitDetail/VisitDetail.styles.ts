@@ -13,12 +13,6 @@ export const visitDetailStyles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
 
-  backText: {
-    fontSize: 32,
-    color: COLORS.text,
-    fontWeight: '300',
-  },
-
   content: {
     padding: SPACING.lg,
     gap: SPACING.lg,

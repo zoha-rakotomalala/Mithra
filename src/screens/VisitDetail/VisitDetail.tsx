@@ -1,91 +1,32 @@
 import type { RootScreenProps } from '@/navigation/types';
 import { Paths } from '@/navigation/paths';
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StatusBar, Alert, Modal, TextInput } from 'react-native';
+import React from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StatusBar, Modal, TextInput } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { getVisitById, updateVisit, deleteVisit, getLikedPaintingsForVisit, getVisitPalette } from '@/services';
+import { ModalHeader } from '@/components/molecules';
 import { shared, typography, buttons } from '@/styles';
-import { COLORS, SPACING } from '@/constants';
+import { COLORS } from '@/constants';
 import { formatDate } from '@/utils';
-import { visitDetailStyles as styles } from './styles';
-import type { Visit } from '@/types/database';
+import { visitDetailStyles as styles } from './VisitDetail.styles';
+import { useVisitDetail } from '@/hooks/domain/visits/useVisitDetail';
 
 export function VisitDetail() {
   const navigation = useNavigation<RootScreenProps['navigation']>();
   const route = useRoute();
   const { visitId } = route.params as { visitId: string };
 
-  const [visit, setVisit] = useState<Visit | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [likedCount, setLikedCount] = useState(0);
-  const [likedPaintings, setLikedPaintings] = useState([]); // ✅ Add this
-  const [hasPalette, setHasPalette] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editForm, setEditForm] = useState({
-    museumName: '',
-    visitDate: '',
-    notes: '',
-  });
-
-  useEffect(() => {
-    loadVisit();
-  }, [visitId]);
-
-  const loadVisit = async () => {
-    setLoading(true);
-    const data = await getVisitById(visitId);
-    if (data) {
-      setVisit(data);
-      setEditForm({
-        museumName: data.museum_name,
-        visitDate: data.visit_date,
-        notes: data.notes || '',
-      });
-      const likes = await getLikedPaintingsForVisit(visitId);
-      setLikedCount(likes.length);
-      setLikedPaintings(likes); // ✅ Store the paintings
-      
-      const palette = await getVisitPalette(visitId);
-      setHasPalette(!!palette);
-    }
-    setLoading(false);
-  };
-
-  const handleEdit = async () => {
-    if (!editForm.museumName) return;
-    
-    await updateVisit(visitId, {
-      museum_name: editForm.museumName,
-      visit_date: editForm.visitDate,
-      notes: editForm.notes || undefined,
-    });
-    
-    setShowEditModal(false);
-    loadVisit();
-  };
-
-const handleDelete = () => {
-  Alert.alert(
-    'Delete Visit',
-    'Are you sure you want to delete this visit? This cannot be undone.',
-    [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          const success = await deleteVisit(visitId);
-          if (success) {
-            // ✅ Navigate back and the focus listener will refresh
-            navigation.goBack();
-          } else {
-            Alert.alert('Error', 'Failed to delete visit');
-          }
-        },
-      },
-    ]
-  );
-};
+  const {
+    visit,
+    loading,
+    likedCount,
+    hasPalette,
+    showEditModal,
+    setShowEditModal,
+    editForm,
+    handleEdit,
+    handleDelete,
+    updateEditFormField,
+  } = useVisitDetail(visitId);
 
   if (loading || !visit) {
     return (
@@ -96,127 +37,126 @@ const handleDelete = () => {
   }
 
   return (
-      <>
-        <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
-        <ScrollView style={shared.container}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-              <Text style={styles.backText}>←</Text>
-            </TouchableOpacity>
-            <Text style={typography.artDecoTitle}>{visit.museum_name.toUpperCase()}</Text>
-            <View style={shared.artDecoDivider} />
-          </View>
+    <>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      <ScrollView style={shared.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Text style={styles.backText}>←</Text>
+          </TouchableOpacity>
+          <Text style={typography.artDecoTitle}>{visit.museum_name.toUpperCase()}</Text>
+          <View style={shared.artDecoDivider} />
+        </View>
 
-          <View style={styles.content}>
-            <View style={styles.infoCard}>
-              <View style={styles.infoRow}>
-                <Text style={typography.label}>Date</Text>
-                <Text style={typography.body}>{formatDate(visit.visit_date)}</Text>
-              </View>
-
-              {visit.notes && (
-                <View style={styles.infoRow}>
-                  <Text style={typography.label}>Notes</Text>
-                  <Text style={typography.body}>{visit.notes}</Text>
-                </View>
-              )}
-
-              <View style={styles.infoRow}>
-                <Text style={typography.label}>Liked Artworks</Text>
-                <Text style={typography.body}>{likedCount} artworks</Text>
-              </View>
+        <View style={styles.content}>
+          <View style={styles.infoCard}>
+            <View style={styles.infoRow}>
+              <Text style={typography.label}>Date</Text>
+              <Text style={typography.body}>{formatDate(visit.visit_date)}</Text>
             </View>
 
-            {/* ✅ ALWAYS show browse button */}
-            <View style={styles.actions}>
-              <TouchableOpacity
-                style={buttons.primary}
-                onPress={() => navigation.navigate(Paths.MuseumBrowser, { visitId })}
-              >
-                <Text style={buttons.primaryText}>Browse Museums</Text>
-              </TouchableOpacity>
+            {visit.notes && (
+              <View style={styles.infoRow}>
+                <Text style={typography.label}>Notes</Text>
+                <Text style={typography.body}>{visit.notes}</Text>
+              </View>
+            )}
 
-              {/* ✅ Show liked paintings list if any */}
-              {likedCount > 0 && (
-                <TouchableOpacity
-                  style={buttons.secondary}
-                  onPress={() => navigation.navigate(Paths.LikedPaintings, { visitId })}
-                >
-                  <Text style={buttons.secondaryText}>View Liked Artworks ({likedCount})</Text>
-                </TouchableOpacity>
-              )}
+            <View style={styles.infoRow}>
+              <Text style={typography.label}>Liked Artworks</Text>
+              <Text style={typography.body}>{likedCount} artworks</Text>
+            </View>
+          </View>
 
-              {hasPalette ? (
-                <TouchableOpacity
-                  style={buttons.primary}
-                  onPress={() => navigation.navigate(Paths.ViewPalette, { visitId })}
-                >
-                  <Text style={buttons.primaryText}>View Palette</Text>
-                </TouchableOpacity>
-              ) : likedCount >= 8 ? (
-                <TouchableOpacity
-                  style={buttons.primary}
-                  onPress={() => navigation.navigate(Paths.VisitPalette, { visitId })}
-                >
-                  <Text style={buttons.primaryText}>Create Palette</Text>
-                </TouchableOpacity>
-              ) : null}
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={buttons.primary}
+              onPress={() => navigation.navigate(Paths.MuseumBrowser, { visitId })}
+            >
+              <Text style={buttons.primaryText}>Browse Museums</Text>
+            </TouchableOpacity>
 
+            {likedCount > 0 && (
               <TouchableOpacity
                 style={buttons.secondary}
-                onPress={() => setShowEditModal(true)}
+                onPress={() => navigation.navigate(Paths.LikedPaintings, { visitId })}
               >
-                <Text style={buttons.secondaryText}>Edit Visit</Text>
+                <Text style={buttons.secondaryText}>View Liked Artworks ({likedCount})</Text>
               </TouchableOpacity>
+            )}
 
+            {hasPalette ? (
               <TouchableOpacity
-                style={[buttons.secondary, styles.deleteButton]}
-                onPress={handleDelete}
+                style={buttons.primary}
+                onPress={() => navigation.navigate(Paths.ViewPalette, { visitId })}
               >
-                <Text style={[buttons.secondaryText, styles.deleteText]}>Delete Visit</Text>
+                <Text style={buttons.primaryText}>View Palette</Text>
               </TouchableOpacity>
-            </View>
+            ) : likedCount >= 8 ? (
+              <TouchableOpacity
+                style={buttons.primary}
+                onPress={() => navigation.navigate(Paths.VisitPalette, { visitId })}
+              >
+                <Text style={buttons.primaryText}>Create Palette</Text>
+              </TouchableOpacity>
+            ) : null}
+
+            <TouchableOpacity
+              style={buttons.secondary}
+              onPress={() => setShowEditModal(true)}
+            >
+              <Text style={buttons.secondaryText}>Edit Visit</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[buttons.secondary, styles.deleteButton]}
+              onPress={handleDelete}
+            >
+              <Text style={[buttons.secondaryText, styles.deleteText]}>Delete Visit</Text>
+            </TouchableOpacity>
           </View>
-        </ScrollView>
+        </View>
+      </ScrollView>
 
       <Modal visible={showEditModal} animationType="slide" presentationStyle="pageSheet">
         <View style={shared.container}>
-          <View style={styles.modalHeader}>
-            <Text style={typography.h2}>Edit Visit</Text>
-            <TouchableOpacity onPress={() => setShowEditModal(false)}>
-              <Text style={styles.closeButton}>✕</Text>
-            </TouchableOpacity>
-          </View>
-          
+          <ModalHeader
+            title="Edit Visit"
+            onClose={() => setShowEditModal(false)}
+            titleStyle={typography.h2}
+            style={{ backgroundColor: undefined, borderBottomWidth: 1 }}
+            closeButtonStyle={{ fontSize: 32, color: COLORS.text }}
+          />
+
           <View style={styles.modalContent}>
             <TextInput
               style={styles.input}
               placeholder="Museum Name"
               placeholderTextColor={COLORS.textLight}
               value={editForm.museumName}
-              onChangeText={(text) => setEditForm({...editForm, museumName: text})}
+              onChangeText={(text) => updateEditFormField('museumName', text)}
             />
-            
+
             <TextInput
               style={styles.input}
               placeholder="Date (YYYY-MM-DD)"
               placeholderTextColor={COLORS.textLight}
               value={editForm.visitDate}
-              onChangeText={(text) => setEditForm({...editForm, visitDate: text})}
+              onChangeText={(text) => updateEditFormField('visitDate', text)}
             />
-            
+
             <TextInput
               style={[styles.input, styles.textArea]}
               placeholder="Notes (optional)"
               placeholderTextColor={COLORS.textLight}
               value={editForm.notes}
-              onChangeText={(text) => setEditForm({...editForm, notes: text})}
+              onChangeText={(text) => updateEditFormField('notes', text)}
               multiline
               numberOfLines={4}
             />
-            
-            <TouchableOpacity 
-              style={[buttons.primary, !editForm.museumName && styles.buttonDisabled]} 
+
+            <TouchableOpacity
+              style={[buttons.primary, !editForm.museumName && styles.buttonDisabled]}
               onPress={handleEdit}
               disabled={!editForm.museumName}
             >

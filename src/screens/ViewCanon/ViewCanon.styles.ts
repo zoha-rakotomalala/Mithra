@@ -4,7 +4,7 @@ import { COLORS, SPACING } from '@/constants';
 const { width } = Dimensions.get('window');
 const gridSize = (width - (SPACING.lg * 2) - (SPACING.sm * 2)) / 3;
 
-export const viewPaletteStyles = StyleSheet.create({
+export const viewCanonStyles = StyleSheet.create({
   header: {
     paddingTop: 60,
     paddingBottom: SPACING.lg,
@@ -14,12 +14,6 @@ export const viewPaletteStyles = StyleSheet.create({
 
   backButton: {
     marginBottom: SPACING.md,
-  },
-
-  backText: {
-    fontSize: 32,
-    color: COLORS.text,
-    fontWeight: '300',
   },
 
   loading: {
@@ -78,18 +72,19 @@ export const viewPaletteStyles = StyleSheet.create({
   },
 
   centerTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
     color: COLORS.black,
     textAlign: 'center',
-    letterSpacing: 1,
+    letterSpacing: 2,
     marginBottom: SPACING.xs,
   },
 
-  centerDate: {
+  centerSubtitle: {
     fontSize: 11,
     color: COLORS.black,
     textAlign: 'center',
+    fontWeight: '600',
   },
 
   actions: {

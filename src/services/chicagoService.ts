@@ -1,5 +1,6 @@
 import type { Painting } from '@/types/painting';
 import { cleanArtistName } from './utils/searchHelpers';
+import {  } from '@/utils/colorGenerator';
 
 const AIC_API_BASE = 'https://api.artic.edu/api/v1';
 const AIC_IMAGE_BASE = 'https://www.artic.edu/iiif/2';
@@ -177,3 +178,18 @@ function generateColorFromString(str: string): string {
   }
   return colors[Math.abs(hash) % colors.length];
 }
+
+import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import { registerAdapter } from './museumAdapterRegistry';
+
+export const chicagoAdapter: MuseumServiceAdapter = {
+  museumId: 'CHICAGO',
+  async search(params: MuseumSearchParams): Promise<MuseumSearchResult> {
+    return searchChicago({
+      query: params.query,
+      limit: params.maxResults,
+    });
+  },
+};
+
+registerAdapter(chicagoAdapter);

@@ -6,7 +6,7 @@ import { Paths } from '@/navigation/paths';
 import { shared, typography } from '@/styles';
 import { COLORS } from '@/constants';
 
-function Startup({ navigation }: RootScreenProps<Paths.Startup>) {
+export function Startup({ navigation }: RootScreenProps<Paths.Startup>) {
   const { isError, isFetching, isSuccess } = useQuery({
     queryFn: () => Promise.resolve(true),
     queryKey: ['startup'],
@@ -45,4 +45,3 @@ function Startup({ navigation }: RootScreenProps<Paths.Startup>) {
   );
 }
 
-export default Startup;

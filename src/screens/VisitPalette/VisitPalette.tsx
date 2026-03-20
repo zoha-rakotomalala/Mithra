@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StatusBar, Alert } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { getLikedPaintingsForVisit, getCachedPaintings, saveVisitPalette, getVisitPalette } from '@/services';
-import { GridPaintingCard } from '@/components/molecules';
+import { GridPaintingCard, EmptyState } from '@/components/molecules';
 import { shared, typography, buttons } from '@/styles';
 import { COLORS, SPACING, GRID } from '@/constants';
-import { visitPaletteStyles as styles } from './styles';
+import { visitPaletteStyles as styles } from './VisitPalette.styles';
 import type { Painting as CachedPainting } from '@/types/database';
 import type { Painting } from '@/types/painting';
 
@@ -107,11 +107,11 @@ export function VisitPalette() {
         </View>
 
         {paintings.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>🎨</Text>
-            <Text style={typography.h3}>No Liked Artworks</Text>
-            <Text style={typography.body}>Like artworks first to create a palette</Text>
-          </View>
+          <EmptyState
+            icon="��"
+            title="No Liked Artworks"
+            subtitle="Like artworks first to create a palette"
+          />
         ) : (
           <>
             <FlatList

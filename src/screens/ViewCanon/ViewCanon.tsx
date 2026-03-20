@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StatusBar, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { getCanonPalette, getCachedPaintings } from '@/services';
+import { EmptyState } from '@/components/molecules';
 import { shared, typography, buttons } from '@/styles';
 import { COLORS, SPACING } from '@/constants';
-import { viewCanonStyles as styles } from './styles';
+import { viewCanonStyles as styles } from './ViewCanon.styles';
 import type { Painting as CachedPainting } from '@/types/database';
 
 export function ViewCanon() {
@@ -80,17 +81,12 @@ export function ViewCanon() {
             </View>
           </View>
         ) : (
-          <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>🎨</Text>
-            <Text style={typography.h3}>No Canon Yet</Text>
-            <Text style={typography.body}>Create your ultimate collection</Text>
-            <TouchableOpacity 
-              style={buttons.primary}
-              onPress={() => navigation.navigate('canonPalette' as never)}
-            >
-              <Text style={buttons.primaryText}>Create Canon</Text>
-            </TouchableOpacity>
-          </View>
+          <EmptyState
+            icon="🎨"
+            title="No Canon Yet"
+            subtitle="Create your ultimate collection"
+            action={{ label: 'Create Canon', onPress: () => navigation.navigate('canonPalette' as never) }}
+          />
         )}
       </ScrollView>
     </>

@@ -1,14 +1,13 @@
 import type { Painting } from '@/types/painting';
 
 import { useNavigation } from '@react-navigation/native';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback } from 'react';
 import {
   Dimensions,
   FlatList,
   SafeAreaView,
   ScrollView,
   StatusBar,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -18,18 +17,11 @@ import FastImage from 'react-native-fast-image';
 import { Paths } from '@/navigation/paths';
 import { COLORS } from '@/constants';
 
-import { usePaintings } from '@/contexts/PaintingsContext';
+import { EmptyState } from '@/components/molecules';
+import { useCollection } from '@/hooks/domain/collection/useCollection';
 import { collectionStyles as styles } from './Collection.styles';
 
 const { width } = Dimensions.get('window');
-
-type FilterType = 'all' | 'artist' | 'museum' | 'seen' | 'wantToVisit';
-type GroupedSection = {
-  data: Painting[];
-  title: string;
-};
-
-type SortType = 'alphabetical' | 'recentlyAdded' | 'yearNewest' | 'yearOldest';
 
 // Memoized painting card
 const PaintingCard = React.memo(({
@@ -84,98 +76,34 @@ const PaintingCard = React.memo(({
 
 export function Collection() {
   const navigation = useNavigation();
-  const { getPaintingsByArtist, getPaintingsByMuseum, paintings } = usePaintings();
-
-  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
-  const [sortBy, setSortBy] = useState<SortType>('recentlyAdded');
-
-  // Calculate stats
-  const stats = useMemo(() => {
-    const total = paintings.length;
-    const seen = paintings.filter(p => p.isSeen).length;
-    const wantToVisit = paintings.filter(p => p.wantToVisit).length;
-    return { seen, total, wantToVisit };
-  }, [paintings]);
-
-  // Prepare data based on filter
-  const preparedData = useMemo(() => {
-    if (activeFilter === 'artist') {
-      const grouped = getPaintingsByArtist();
-      return [...grouped.entries()].map(([artist, paintingsData]) => ({
-        data: paintingsData,
-        title: artist,
-      }));
-    }
-
-    if (activeFilter === 'museum') {
-      const grouped = getPaintingsByMuseum();
-      return [...grouped.entries()].map(([museum, paintingsData]) => ({
-        data: paintingsData,
-        title: museum,
-      }));
-    }
-
-    let filtered = [...paintings];
-
-    switch (activeFilter) {
-      case 'seen': {
-        filtered = filtered.filter(p => p.isSeen);
-        break;
-      }
-      case 'wantToVisit': {
-        filtered = filtered.filter(p => p.wantToVisit);
-        break;
-      }
-    }
-
-    // Apply sorting
-    switch (sortBy) {
-      case 'alphabetical': {
-        filtered.sort((a, b) => a.title.localeCompare(b.title));
-        break;
-      }
-      case 'recentlyAdded': {
-        filtered.sort((a, b) => {
-          const dateA = new Date(a.dateAdded || 0).getTime();
-          const dateB = new Date(b.dateAdded || 0).getTime();
-          return dateB - dateA;
-        });
-        break;
-      }
-      case 'yearNewest': {
-        filtered.sort((a, b) => (b.year || 0) - (a.year || 0));
-        break;
-      }
-      case 'yearOldest': {
-        filtered.sort((a, b) => (a.year || 0) - (b.year || 0));
-        break;
-      }
-    }
-
-    return [{ data: filtered, title: '' }];
-  }, [paintings, activeFilter, sortBy, getPaintingsByArtist, getPaintingsByMuseum]);
-
-  const isGroupedView = activeFilter === 'artist' || activeFilter === 'museum';
+  const {
+    paintings,
+    activeFilter,
+    setActiveFilter,
+    sortBy,
+    setSortBy,
+    stats,
+    preparedData,
+    isGroupedView,
+  } = useCollection();
 
   const handlePaintingPress = useCallback((painting: Painting) => {
     navigation.navigate(Paths.PaintingDetail, { painting });
   }, [navigation]);
 
   const renderEmpty = () => (
-    <View style={styles.emptyState}>
-      <Text style={styles.emptyIcon}>🖼️</Text>
-      <Text style={styles.emptyTitle}>No Paintings Yet</Text>
-      <Text style={styles.emptyText}>
-        Start building your collection by searching for paintings in the Search tab.
-      </Text>
-    </View>
+    <EmptyState
+      icon="🖼️"
+      title="No Paintings Yet"
+      subtitle="Start building your collection by searching for paintings in the Search tab."
+    />
   );
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar backgroundColor={COLORS.black} barStyle="light-content" />
       <View style={styles.container}>
-        {/* Compact Header - Like Search */}
+        {/* Compact Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>COLLECTION</Text>
         </View>
@@ -213,7 +141,7 @@ export function Collection() {
             keyExtractor={item => item.key}
             renderItem={({ item }) => (
               <TouchableOpacity
-                onPress={() => { setActiveFilter(item.key as FilterType); }}
+                onPress={() => { setActiveFilter(item.key as any); }}
                 style={[styles.filterChip, activeFilter === item.key && styles.filterChipActive]}
               >
                 <Text style={[styles.filterChipText, activeFilter === item.key && styles.filterChipTextActive]}>
@@ -240,7 +168,7 @@ export function Collection() {
               keyExtractor={item => item.key}
               renderItem={({ item }) => (
                 <TouchableOpacity
-                  onPress={() => { setSortBy(item.key as SortType); }}
+                  onPress={() => { setSortBy(item.key as any); }}
                   style={[styles.sortOption, sortBy === item.key && styles.sortOptionActive]}
                 >
                   <Text style={[styles.sortOptionText, sortBy === item.key && styles.sortOptionTextActive]}>

@@ -1,4 +1,5 @@
 import type { Painting } from '@/types/painting';
+import {  } from '@/utils/colorGenerator';
 import Config from 'react-native-config';
 
 const EUROPEANA_API_BASE = 'https://api.europeana.eu/record/v2';
@@ -204,3 +205,18 @@ function generateColorFromString(str: string): string {
   }
   return colors[Math.abs(hash) % colors.length];
 }
+
+import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import { registerAdapter } from './museumAdapterRegistry';
+
+export const europeanaAdapter: MuseumServiceAdapter = {
+  museumId: 'EUROPEANA',
+  async search(params: MuseumSearchParams): Promise<MuseumSearchResult> {
+    return searchEuropeana({
+      query: params.query,
+      rows: params.maxResults,
+    });
+  },
+};
+
+registerAdapter(europeanaAdapter);

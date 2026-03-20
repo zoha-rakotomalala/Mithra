@@ -1,13 +1,15 @@
 import React from 'react';
 import {
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 
+import { SectionHeader } from '@/components/molecules';
 import { getAllMuseums, getMuseumsByTier, type MuseumConfig } from '@/services/museumRegistry';
+
+import { styles } from './MuseumSelector.styles';
 
 type MuseumSelectorProps = {
   readonly onMuseumsChange: (museums: string[]) => void;
@@ -22,12 +24,10 @@ export function MuseumSelector({ onMuseumsChange, selectedMuseums }: MuseumSelec
 
   const toggleMuseum = (museumId: string) => {
     if (selectedMuseums.includes(museumId)) {
-      // Unselect - but keep at least one
       if (selectedMuseums.length > 1) {
         onMuseumsChange(selectedMuseums.filter(id => id !== museumId));
       }
     } else {
-      // Select
       onMuseumsChange([...selectedMuseums, museumId]);
     }
   };
@@ -41,7 +41,6 @@ export function MuseumSelector({ onMuseumsChange, selectedMuseums }: MuseumSelec
   };
 
   const unselectAll = () => {
-    // Keep at least MET selected
     onMuseumsChange(['MET']);
   };
 
@@ -99,33 +98,21 @@ export function MuseumSelector({ onMuseumsChange, selectedMuseums }: MuseumSelec
       <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
         {/* Tier 1: Best Collections */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionDivider} />
-            <Text style={styles.sectionTitle}>BEST COLLECTIONS</Text>
-            <View style={styles.sectionDivider} />
-          </View>
+          <SectionHeader title="BEST COLLECTIONS" titleStyle={styles.sectionTitle} />
           <Text style={styles.sectionSubtitle}>Fast, reliable, high-quality</Text>
           {tier1.map(renderMuseum)}
         </View>
 
         {/* Tier 2: More Options */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionDivider} />
-            <Text style={styles.sectionTitle}>MORE MUSEUMS</Text>
-            <View style={styles.sectionDivider} />
-          </View>
+          <SectionHeader title="MORE MUSEUMS" titleStyle={styles.sectionTitle} />
           <Text style={styles.sectionSubtitle}>Specialized collections</Text>
           {tier2.map(renderMuseum)}
         </View>
 
         {/* Tier 3: Advanced */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionDivider} />
-            <Text style={styles.sectionTitle}>ADVANCED</Text>
-            <View style={styles.sectionDivider} />
-          </View>
+          <SectionHeader title="ADVANCED" titleStyle={styles.sectionTitle} />
           <Text style={styles.sectionSubtitle}>Aggregators · Variable quality</Text>
           {tier3.map(renderMuseum)}
         </View>
@@ -133,141 +120,3 @@ export function MuseumSelector({ onMuseumsChange, selectedMuseums }: MuseumSelec
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  checkbox: {
-    alignItems: 'center',
-    borderColor: '#999',
-    borderRadius: 4,
-    borderWidth: 2,
-    height: 24,
-    justifyContent: 'center',
-    marginRight: 12,
-    width: 24,
-  },
-  checkboxSelected: {
-    borderColor: 'transparent',
-  },
-  checkmark: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  container: {
-    backgroundColor: '#f5f3ed',
-    flex: 1,
-  },
-  museumCard: {
-    backgroundColor: '#fff',
-    borderColor: '#e0ddd5',
-    borderRadius: 4,
-    borderWidth: 2,
-    marginBottom: 10,
-    padding: 14,
-  },
-  museumCardHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginBottom: 8,
-  },
-  museumCardSelected: {
-    backgroundColor: 'rgba(212, 175, 55, 0.05)',
-    borderWidth: 2,
-  },
-  museumCountry: {
-    color: '#999',
-    fontSize: 10,
-    letterSpacing: 0.5,
-  },
-  museumDescription: {
-    color: '#666',
-    fontSize: 11,
-    lineHeight: 16,
-  },
-  museumInfo: {
-    flex: 1,
-  },
-  museumName: {
-    color: '#2c2c2c',
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  museumNameSelected: {
-    color: '#004d40',
-  },
-  quickActions: {
-    borderBottomColor: '#e0ddd5',
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    gap: 8,
-    padding: 16,
-  },
-  quickButton: {
-    alignItems: 'center',
-    backgroundColor: '#004d40',
-    borderColor: '#d4af37',
-    borderRadius: 4,
-    borderWidth: 1,
-    flex: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  quickButtonClear: {
-    backgroundColor: 'transparent',
-    borderColor: '#999',
-  },
-  quickButtonClearText: {
-    color: '#666',
-  },
-  quickButtonText: {
-    color: '#d4af37',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  section: {
-    padding: 16,
-  },
-  sectionDivider: {
-    backgroundColor: '#d4af37',
-    flex: 1,
-    height: 1,
-    opacity: 0.3,
-  },
-  sectionHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginBottom: 4,
-  },
-  sectionSubtitle: {
-    color: '#666',
-    fontSize: 11,
-    fontStyle: 'italic',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  sectionTitle: {
-    color: '#004d40',
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 2,
-    marginHorizontal: 12,
-  },
-  selectedInfo: {
-    backgroundColor: '#fff',
-    borderBottomColor: '#e0ddd5',
-    borderBottomWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  selectedText: {
-    color: '#004d40',
-    fontSize: 12,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-});

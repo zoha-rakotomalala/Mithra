@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StatusBar, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { getVisits, getVisitPalette, getCachedPaintings, saveCanonPalette, getCanonPalette } from '@/services';
-import { GridPaintingCard } from '@/components/molecules';
+import { GridPaintingCard, EmptyState } from '@/components/molecules';
 import { shared, typography, buttons } from '@/styles';
 import { COLORS, SPACING, GRID } from '@/constants';
-import { canonPaletteStyles as styles } from './styles';
+import { canonPaletteStyles as styles } from './CanonPalette.styles';
 import type { Painting as CachedPainting } from '@/types/database';
 import type { Painting } from '@/types/painting';
 
@@ -113,11 +113,11 @@ export function CanonPalette() {
         </View>
 
         {paintings.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>🎨</Text>
-            <Text style={typography.h3}>No Visit Palettes</Text>
-            <Text style={typography.body}>Create visit palettes first</Text>
-          </View>
+          <EmptyState
+            icon="🎨"
+            title="No Visit Palettes"
+            subtitle="Create visit palettes first"
+          />
         ) : (
           <>
             <FlatList

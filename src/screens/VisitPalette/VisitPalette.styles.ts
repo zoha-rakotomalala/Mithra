@@ -13,12 +13,6 @@ export const visitPaletteStyles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
 
-  backText: {
-    fontSize: 32,
-    color: COLORS.text,
-    fontWeight: '300',
-  },
-
   subtitle: {
     fontSize: 16,
     color: COLORS.gold,

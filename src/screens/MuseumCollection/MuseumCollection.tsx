@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, StatusBar, ActivityIndicator, TextInput } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { searchAllMuseums } from '@/services/unifiedMuseumService';
-import { likePainting, unlikePainting, getLikedLegacyIdsForVisit } from '@/services';
 import { GridPaintingCard } from '@/components/molecules';
 import { shared, typography } from '@/styles';
 import { COLORS, GRID } from '@/constants';
-import { collectionStyles as styles } from './styles';
+import { collectionStyles as styles } from './MuseumCollection.styles';
+import { useMuseumCollection } from '@/hooks/domain/museum/useMuseumCollection';
 import type { Painting } from '@/types/painting';
 
 export function MuseumCollection() {
@@ -14,75 +13,18 @@ export function MuseumCollection() {
   const route = useRoute();
   const { museumId, visitId } = route.params as { museumId: string; visitId: string };
 
-  const [paintings, setPaintings] = useState<Painting[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
-  const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    loadLikedPaintings();
-  }, [museumId, visitId]);
-
-  const loadLikedPaintings = async () => {
-    const liked = await getLikedLegacyIdsForVisit(visitId);
-    setLikedIds(liked);
-  };
-
-  const searchCollection = async () => {
-    if (!searchQuery.trim()) {
-      alert('Please enter a search term');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // ✅ Use unified search with quality filters
-      const result = await searchAllMuseums({
-        query: searchQuery.trim(),
-        searchType: 'title',
-        museumIds: [museumId],
-        maxResultsPerMuseum: 50,
-        qualityFilters: {
-          requireImage: true,
-          requireArtist: true,
-          paintingsOnly: true,
-          minRelevanceScore: 10,
-        }
-      });
-
-      setPaintings(result.paintings);
-
-      if (result.paintings.length === 0) {
-        alert('No results found. Try a different search term.');
-      }
-    } catch (error) {
-      console.error('Error searching collection:', error);
-      alert('Failed to search. Please try again.');
-    }
-    setLoading(false);
-  };
-
-  const handleLike = async (painting: Painting) => {
-    const paintingId = `${museumId.toLowerCase()}-${painting.id}`;
-    const isLiked = likedIds.has(paintingId);
-
-    if (isLiked) {
-      await unlikePainting(paintingId, visitId);
-      setLikedIds(prev => {
-        const next = new Set(prev);
-        next.delete(paintingId);
-        return next;
-      });
-    } else {
-      await likePainting(paintingId, visitId);
-      setLikedIds(prev => new Set(prev).add(paintingId));
-    }
-  };
+  const {
+    paintings,
+    loading,
+    searchQuery,
+    setSearchQuery,
+    searchCollection,
+    handleLike,
+    isLiked,
+  } = useMuseumCollection(museumId, visitId);
 
   const renderPainting = ({ item }: { item: Painting }) => {
-    const paintingId = `${museumId.toLowerCase()}-${item.id}`;
-    const isLiked = likedIds.has(paintingId);
-
+    const liked = isLiked(item);
     return (
       <View style={styles.cardWrapper}>
         <GridPaintingCard
@@ -91,10 +33,10 @@ export function MuseumCollection() {
           onPress={() => console.log('View painting:', item.id)}
         />
         <TouchableOpacity
-          style={[styles.likeButton, isLiked && styles.likeButtonActive]}
+          style={[styles.likeButton, liked && styles.likeButtonActive]}
           onPress={() => handleLike(item)}
         >
-          <Text style={styles.likeIcon}>{isLiked ? '♥' : '♡'}</Text>
+          <Text style={styles.likeIcon}>{liked ? '♥' : '♡'}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -112,7 +54,6 @@ export function MuseumCollection() {
           <View style={shared.artDecoDivider} />
         </View>
 
-        {/* ✅ Search Input */}
         <View style={styles.searchContainer}>
           <TextInput
             style={styles.searchInput}
@@ -134,7 +75,6 @@ export function MuseumCollection() {
           </TouchableOpacity>
         </View>
 
-        {/* Results or Empty State */}
         {paintings.length === 0 && !loading ? (
           <View style={styles.emptyState}>
             <Text style={[typography.body, styles.emptyText]}>

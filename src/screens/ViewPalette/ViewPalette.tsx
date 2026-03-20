@@ -4,9 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StatusBar, Image } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { getVisitPalette, getCachedPaintings, getVisitById } from '@/services';
+import { EmptyState } from '@/components/molecules';
 import { shared, typography, buttons } from '@/styles';
 import { COLORS, SPACING } from '@/constants';
-import { viewPaletteStyles as styles } from './styles';
+import { viewPaletteStyles as styles } from './ViewPalette.styles';
 import type { Painting as CachedPainting, Visit } from '@/types/database';
 
 export function ViewPalette() {
@@ -91,11 +92,11 @@ export function ViewPalette() {
             </View>
           </View>
         ) : (
-          <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>🎨</Text>
-            <Text style={typography.h3}>No Palette Yet</Text>
-            <Text style={typography.body}>Create a palette to see it here</Text>
-          </View>
+          <EmptyState
+            icon="🎨"
+            title="No Palette Yet"
+            subtitle="Create a palette to see it here"
+          />
         )}
       </ScrollView>
     </>
