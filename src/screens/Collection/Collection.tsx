@@ -3,6 +3,7 @@ import type { Painting } from '@/types/painting';
 import { useNavigation } from '@react-navigation/native';
 import React, { useCallback } from 'react';
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
   SafeAreaView,
@@ -17,8 +18,9 @@ import FastImage from 'react-native-fast-image';
 import { Paths } from '@/navigation/paths';
 import { COLORS } from '@/constants';
 
-import { EmptyState } from '@/components/molecules';
+import { EmptyState, SyncErrorBanner } from '@/components/molecules';
 import { useCollection } from '@/hooks/domain/collection/useCollection';
+import { usePaintings } from '@/contexts/PaintingsContext';
 import { collectionStyles as styles } from './Collection.styles';
 
 const { width } = Dimensions.get('window');
@@ -86,6 +88,7 @@ export function Collection() {
     preparedData,
     isGroupedView,
   } = useCollection();
+  const { syncing, syncError } = usePaintings();
 
   const handlePaintingPress = useCallback((painting: Painting) => {
     navigation.navigate(Paths.PaintingDetail, { painting });
@@ -107,6 +110,15 @@ export function Collection() {
         <View style={styles.header}>
           <Text style={styles.headerTitle}>COLLECTION</Text>
         </View>
+
+        {syncing && (
+          <View style={{ alignItems: 'center', paddingVertical: 8 }}>
+            <ActivityIndicator color={COLORS.white} size="small" />
+            <Text style={{ color: COLORS.white, fontSize: 12, marginTop: 4, opacity: 0.7 }}>Syncing...</Text>
+          </View>
+        )}
+
+        <SyncErrorBanner error={syncError} />
 
         {/* Compact Inline Stats */}
         <View style={styles.statsRow}>

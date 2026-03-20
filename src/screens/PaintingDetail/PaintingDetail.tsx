@@ -169,7 +169,6 @@ export function PaintingDetail() {
                     setImageError(true);
                   }}
                   onLoadEnd={() => { setImageLoading(false); }}
-                  onLoadStart={() => { setImageLoading(true); }}
                   resizeMode={FastImage.resizeMode.contain}
                   source={{
                     cache: FastImage.cacheControl.immutable,

@@ -70,3 +70,24 @@ export interface CanonPalette {
   created_at: string;
   updated_at: string;
 }
+
+export interface UserCollectionEntry {
+  id: string;
+  user_id: string;
+  painting_id: string;
+  is_seen: boolean;
+  want_to_visit: boolean;
+  seen_date: string | null;
+  date_added: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserPalette {
+  id: string;
+  user_id: string;
+  painting_ids: string[];
+  created_at: string;
+  updated_at: string;
+}

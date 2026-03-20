@@ -82,12 +82,14 @@ export const paletteStyles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'center',
     paddingHorizontal: SPACING.md,
     paddingTop: SPACING.lg,
   },
   emptySlot: {
     width: PALETTE_CARD_SIZE,
-    margin: SPACING.xs,
+    height: PALETTE_CARD_SIZE * 1.3,
+    padding: 4,
   },
   emptyFrame: {
     aspectRatio: 0.75,

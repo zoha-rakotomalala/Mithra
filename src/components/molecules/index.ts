@@ -5,3 +5,4 @@ export { ModalHeader } from './ModalHeader/ModalHeader';
 export * from './PaintingCard/PaintingCard';
 export * from './ProfileCard/ProfileCard';
 export { SectionHeader } from './SectionHeader/SectionHeader';
+export { SyncErrorBanner } from './SyncErrorBanner/SyncErrorBanner';

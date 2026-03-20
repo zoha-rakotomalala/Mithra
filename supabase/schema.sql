@@ -1,156 +1,184 @@
--- Mithra Database Schema
--- Run this in Supabase SQL Editor
+-- =============================================================================
+-- Palette Database Schema
+-- Complete reference of the current production database schema.
+-- Last updated: 2026-03-20
+-- =============================================================================
 
--- Enable UUID extension
+-- Extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Users table (Supabase Auth handles this, but we can extend it)
--- No need to create, use auth.users
+-- =============================================================================
+-- 1. TABLES
+-- =============================================================================
 
--- Visits table
-CREATE TABLE visits (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  museum_id TEXT NOT NULL,
-  museum_name TEXT NOT NULL,
-  visit_date DATE NOT NULL,
-  notes TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- Profiles (extends Supabase auth.users)
+CREATE TABLE public.profiles (
+  id UUID NOT NULL PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Paintings table (cached from museum APIs)
-CREATE TABLE paintings (
-  id TEXT PRIMARY KEY,  -- Format: "met-12345", "rijks-SK-A-1234"
-  museum_id TEXT NOT NULL,
+-- Museums
+CREATE TABLE public.museums (
+  id UUID DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL,
+  short_name TEXT NOT NULL,
+  location TEXT,
+  api_config JSONB DEFAULT '{}'::jsonb NOT NULL,
+  metadata JSONB DEFAULT '{}'::jsonb NOT NULL,
+  is_active BOOLEAN DEFAULT true NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- Paintings (cached from museum APIs)
+CREATE TABLE public.paintings (
+  id UUID DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
+  legacy_id TEXT,
+  museum_id UUID NOT NULL CONSTRAINT fk_paintings_museum REFERENCES public.museums ON DELETE RESTRICT,
+  external_id TEXT NOT NULL,
   title TEXT NOT NULL,
-  artist TEXT NOT NULL,
+  artist TEXT,
   year TEXT,
   image_url TEXT,
   thumbnail_url TEXT,
-  color TEXT,  -- Fallback color
-  metadata JSONB,  -- Store full API response for flexibility
-  cached_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  color TEXT,
+  medium TEXT,
+  dimensions TEXT,
+  metadata JSONB,
+  cached_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ,
+  last_verified_at TIMESTAMPTZ,
+  verification_source TEXT,
+  verification_status TEXT,
+  CONSTRAINT uq_paintings_museum_external UNIQUE (museum_id, external_id)
 );
 
--- Index for faster museum queries
-CREATE INDEX idx_paintings_museum ON paintings(museum_id);
-CREATE INDEX idx_paintings_artist ON paintings(artist);
+-- Visits
+CREATE TABLE public.visits (
+  id UUID NOT NULL PRIMARY KEY,
+  user_id UUID,
+  museum_id UUID CONSTRAINT fk_visits_museum REFERENCES public.museums ON DELETE RESTRICT,
+  visit_date DATE,
+  notes TEXT,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ,
+  CONSTRAINT uq_visits_user_museum_date UNIQUE (user_id, museum_id, visit_date)
+);
 
 -- User painting likes (many-to-many)
-CREATE TABLE user_painting_likes (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  painting_id TEXT REFERENCES paintings(id) ON DELETE CASCADE,
-  visit_id UUID REFERENCES visits(id) ON DELETE CASCADE,
-  liked_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(user_id, painting_id, visit_id)
+CREATE TABLE public.user_painting_likes (
+  id UUID,
+  user_id UUID,
+  painting_id UUID NOT NULL CONSTRAINT fk_likes_painting REFERENCES public.paintings ON DELETE CASCADE,
+  visit_id UUID CONSTRAINT fk_likes_visit REFERENCES public.visits ON DELETE SET NULL,
+  liked_at TIMESTAMPTZ,
+  CONSTRAINT uq_likes_user_painting UNIQUE (user_id, painting_id)
 );
 
--- Indexes for faster queries
-CREATE INDEX idx_likes_user ON user_painting_likes(user_id);
-CREATE INDEX idx_likes_visit ON user_painting_likes(visit_id);
-CREATE INDEX idx_likes_painting ON user_painting_likes(painting_id);
-
--- Visit palettes (8 artworks per visit)
-CREATE TABLE visit_palettes (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  visit_id UUID REFERENCES visits(id) ON DELETE CASCADE UNIQUE,
-  painting_ids TEXT[] NOT NULL CHECK (array_length(painting_ids, 1) = 8),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- Visit palettes (one per visit)
+CREATE TABLE public.visit_palettes (
+  id UUID DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
+  visit_id UUID NOT NULL UNIQUE REFERENCES public.visits ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
--- Canon palette (one per user - ultimate 8 artworks)
-CREATE TABLE canon_palettes (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
-  painting_ids TEXT[] NOT NULL CHECK (array_length(painting_ids, 1) = 8),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- Visit palette paintings (junction table, max 8 per palette)
+CREATE TABLE public.visit_palette_paintings (
+  id UUID DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
+  palette_id UUID NOT NULL REFERENCES public.visit_palettes ON DELETE CASCADE,
+  painting_id UUID NOT NULL REFERENCES public.paintings ON DELETE CASCADE,
+  position INTEGER NOT NULL CHECK (position >= 0 AND position < 8),
+  added_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  UNIQUE (palette_id, painting_id),
+  UNIQUE (palette_id, position)
 );
 
--- Row Level Security (RLS) Policies
--- Enable RLS on all tables
-ALTER TABLE visits ENABLE ROW LEVEL SECURITY;
-ALTER TABLE paintings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_painting_likes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE visit_palettes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE canon_palettes ENABLE ROW LEVEL SECURITY;
+-- Canon palettes (legacy, one per user)
+CREATE TABLE public.canon_palettes (
+  id UUID,
+  user_id UUID,
+  painting_ids TEXT[],
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ
+);
 
--- Visits: Users can only see their own visits
-CREATE POLICY "Users can view own visits" ON visits
-  FOR SELECT USING (auth.uid() = user_id);
+-- Search cache
+CREATE TABLE public.search_cache (
+  id UUID DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
+  query TEXT NOT NULL,
+  search_type TEXT NOT NULL CHECK (search_type = ANY (ARRAY['artist'::text, 'title'::text])),
+  museum_id TEXT NOT NULL,
+  painting_ids TEXT[] NOT NULL,
+  last_verified_at TIMESTAMPTZ DEFAULT NOW(),
+  verification_status TEXT DEFAULT 'fresh'::text,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (query, search_type, museum_id)
+);
 
-CREATE POLICY "Users can insert own visits" ON visits
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+-- User collection: links a user to a painting with status metadata
+CREATE TABLE public.user_collection (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  painting_id UUID NOT NULL REFERENCES public.paintings(id) ON DELETE CASCADE,
+  is_seen BOOLEAN NOT NULL DEFAULT false,
+  want_to_visit BOOLEAN NOT NULL DEFAULT false,
+  seen_date TIMESTAMPTZ,
+  date_added TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_user_collection_user_painting UNIQUE (user_id, painting_id),
+  CONSTRAINT chk_user_collection_status_exclusivity CHECK (NOT (is_seen AND want_to_visit))
+);
 
-CREATE POLICY "Users can update own visits" ON visits
-  FOR UPDATE USING (auth.uid() = user_id);
+-- User palette: one row per user, ordered array of painting UUIDs (max 8)
+CREATE TABLE public.user_palette (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  painting_ids UUID[] NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_user_palette_user UNIQUE (user_id),
+  CONSTRAINT chk_user_palette_max_size CHECK (array_length(painting_ids, 1) IS NULL OR array_length(painting_ids, 1) <= 8)
+);
 
-CREATE POLICY "Users can delete own visits" ON visits
-  FOR DELETE USING (auth.uid() = user_id);
+-- =============================================================================
+-- 2. INDEXES
+-- =============================================================================
 
--- Paintings: Everyone can read (cached data), only system can write
-CREATE POLICY "Anyone can view paintings" ON paintings
-  FOR SELECT USING (true);
+CREATE INDEX idx_museums_active ON public.museums (is_active);
+CREATE INDEX idx_museums_short_name ON public.museums (short_name);
 
-CREATE POLICY "Service role can insert paintings" ON paintings
-  FOR INSERT WITH CHECK (true);
+CREATE INDEX idx_paintings_museum ON public.paintings (museum_id);
+CREATE INDEX idx_paintings_external_id ON public.paintings (external_id);
 
-CREATE POLICY "Service role can update paintings" ON paintings
-  FOR UPDATE USING (true);
+CREATE INDEX idx_visits_user ON public.visits (user_id);
+CREATE INDEX idx_visits_museum ON public.visits (museum_id);
+CREATE INDEX idx_visits_date ON public.visits (visit_date DESC);
 
--- User likes: Users can only see/modify their own likes
-CREATE POLICY "Users can view own likes" ON user_painting_likes
-  FOR SELECT USING (auth.uid() = user_id);
+CREATE INDEX idx_likes_user ON public.user_painting_likes (user_id);
+CREATE INDEX idx_likes_painting ON public.user_painting_likes (painting_id);
+CREATE INDEX idx_likes_visit ON public.user_painting_likes (visit_id);
 
-CREATE POLICY "Users can insert own likes" ON user_painting_likes
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE INDEX idx_palettes_visit ON public.visit_palettes (visit_id);
 
-CREATE POLICY "Users can delete own likes" ON user_painting_likes
-  FOR DELETE USING (auth.uid() = user_id);
+CREATE INDEX idx_palette_paintings_palette ON public.visit_palette_paintings (palette_id);
+CREATE INDEX idx_palette_paintings_position ON public.visit_palette_paintings (palette_id, position);
 
--- Visit palettes: Users can only see/modify palettes for their visits
-CREATE POLICY "Users can view own visit palettes" ON visit_palettes
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM visits 
-      WHERE visits.id = visit_palettes.visit_id 
-      AND visits.user_id = auth.uid()
-    )
-  );
+CREATE INDEX idx_search_cache_lookup ON public.search_cache (query, search_type, museum_id);
+CREATE INDEX idx_search_cache_verified ON public.search_cache (last_verified_at);
 
-CREATE POLICY "Users can insert own visit palettes" ON visit_palettes
-  FOR INSERT WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM visits 
-      WHERE visits.id = visit_palettes.visit_id 
-      AND visits.user_id = auth.uid()
-    )
-  );
+CREATE INDEX idx_user_collection_user_id ON public.user_collection (user_id);
+CREATE INDEX idx_user_collection_painting_id ON public.user_collection (painting_id);
 
-CREATE POLICY "Users can update own visit palettes" ON visit_palettes
-  FOR UPDATE USING (
-    EXISTS (
-      SELECT 1 FROM visits 
-      WHERE visits.id = visit_palettes.visit_id 
-      AND visits.user_id = auth.uid()
-    )
-  );
+-- =============================================================================
+-- 3. TRIGGER FUNCTION
+-- =============================================================================
 
--- Canon palettes: Users can only see/modify their own canon palette
-CREATE POLICY "Users can view own canon palette" ON canon_palettes
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own canon palette" ON canon_palettes
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own canon palette" ON canon_palettes
-  FOR UPDATE USING (auth.uid() = user_id);
-
--- Functions for updated_at timestamps
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -159,45 +187,47 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Triggers for updated_at
-CREATE TRIGGER update_visits_updated_at BEFORE UPDATE ON visits
+-- =============================================================================
+-- 4. TRIGGERS
+-- =============================================================================
+
+CREATE TRIGGER update_user_collection_updated_at
+  BEFORE UPDATE ON public.user_collection
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_paintings_updated_at BEFORE UPDATE ON paintings
+CREATE TRIGGER update_user_palette_updated_at
+  BEFORE UPDATE ON public.user_palette
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_visit_palettes_updated_at BEFORE UPDATE ON visit_palettes
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- =============================================================================
+-- 5. ROW LEVEL SECURITY
+-- =============================================================================
 
-CREATE TRIGGER update_canon_palettes_updated_at BEFORE UPDATE ON canon_palettes
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+ALTER TABLE public.user_collection ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_palette ENABLE ROW LEVEL SECURITY;
 
-CREATE TABLE IF NOT EXISTS profiles (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  email TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+-- user_collection policies
+CREATE POLICY "Users can view own collection" ON public.user_collection
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own collection" ON public.user_collection
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own collection" ON public.user_collection
+  FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own collection" ON public.user_collection
+  FOR DELETE USING (auth.uid() = user_id);
 
-CREATE TABLE search_cache (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+-- user_palette policies
+CREATE POLICY "Users can view own palette" ON public.user_palette
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own palette" ON public.user_palette
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own palette" ON public.user_palette
+  FOR UPDATE USING (auth.uid() = user_id);
 
-  query TEXT NOT NULL,
-  search_type TEXT NOT NULL CHECK (search_type IN ('artist', 'title')),
-  museum_id TEXT NOT NULL,
+-- =============================================================================
+-- 6. BACKUP TABLES (legacy, kept for reference)
+-- =============================================================================
 
-  painting_ids TEXT[] NOT NULL,
-
-  last_verified_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  verification_status TEXT DEFAULT 'fresh',
-
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-
-  UNIQUE (query, search_type, museum_id)
-);
-
-ALTER TABLE paintings
-ADD COLUMN IF NOT EXISTS last_verified_at TIMESTAMPTZ,
-ADD COLUMN IF NOT EXISTS verification_source TEXT,
-ADD COLUMN IF NOT EXISTS verification_status TEXT DEFAULT 'unverified';
+-- profiles_backup, paintings_backup, search_cache_backup, search_cache_backup_2,
+-- user_painting_likes_backup, visits_backup, visit_palettes_backup, canon_palettes_backup
+-- These are unstructured backup copies of earlier table versions. Not referenced by the app.

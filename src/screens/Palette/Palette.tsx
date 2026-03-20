@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StatusBar, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, ScrollView, StatusBar, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { PaintingCard } from '@/components/molecules/PaintingCard/PaintingCard';
 import { ProfileCard } from '@/components/molecules/ProfileCard/ProfileCard';
-import { SectionHeader } from '@/components/molecules';
+import { SectionHeader, SyncErrorBanner } from '@/components/molecules';
 import { usePaintings } from '@/contexts/PaintingsContext';
 import { shared, buttons } from '@/styles';
 import { COLORS, SPACING } from '@/constants';
@@ -13,7 +13,7 @@ import type { UserProfile } from '@/types/painting';
 export function Palette() {
   const isFocused = useIsFocused();
   const navigation = useNavigation();
-  const { getPalettePaintings, paintings } = usePaintings();
+  const { getPalettePaintings, paintings, syncing, syncError } = usePaintings();
 
   const [flippedCardId, setFlippedCardId] = useState<number | string | 'profile' | null>(null);
 
@@ -48,6 +48,15 @@ export function Palette() {
           <View style={styles.header}>
             <Text style={styles.headerTitle}>PALETTE</Text>
           </View>
+
+          {syncing && (
+            <View style={{ alignItems: 'center', paddingVertical: SPACING.sm }}>
+              <ActivityIndicator color={COLORS.white} size="small" />
+              <Text style={{ color: COLORS.white, fontSize: 12, marginTop: 4, opacity: 0.7 }}>Syncing...</Text>
+            </View>
+          )}
+
+          <SyncErrorBanner error={syncError} />
 
           {/* Compact Inline Stats */}
           <View style={styles.statsRow}>
