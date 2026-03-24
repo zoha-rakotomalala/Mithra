@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { searchAllMuseums } from '@/services/unifiedMuseumService';
-import { likePainting, unlikePainting, getLikedLegacyIdsForVisit } from '@/services';
+import { likePainting, unlikePainting, getLikedUuidsForVisit } from '@/services';
 import type { Painting } from '@/types/painting';
 
 export function useMuseumCollection(museumId: string, visitId: string) {
@@ -14,7 +14,7 @@ export function useMuseumCollection(museumId: string, visitId: string) {
   }, [museumId, visitId]);
 
   const loadLikedPaintings = async () => {
-    const liked = await getLikedLegacyIdsForVisit(visitId);
+    const liked = await getLikedUuidsForVisit(visitId);
     setLikedIds(liked);
   };
 
@@ -52,29 +52,27 @@ export function useMuseumCollection(museumId: string, visitId: string) {
   };
 
   const handleLike = async (painting: Painting) => {
-    const paintingId = `${museumId.toLowerCase()}-${painting.id}`;
-    const isLiked = likedIds.has(paintingId);
+    const isCurrentlyLiked = likedIds.has(painting.id);
 
-    if (isLiked) {
-      await unlikePainting(paintingId, visitId);
+    if (isCurrentlyLiked) {
+      await unlikePainting(painting.id, visitId);
       setLikedIds(prev => {
         const next = new Set(prev);
-        next.delete(paintingId);
+        next.delete(painting.id);
         return next;
       });
     } else {
-      await likePainting(paintingId, visitId);
-      setLikedIds(prev => new Set(prev).add(paintingId));
+      await likePainting(painting.id, visitId);
+      setLikedIds(prev => new Set(prev).add(painting.id));
     }
   };
 
   const isLiked = (painting: Painting) => {
-    const paintingId = `${museumId.toLowerCase()}-${painting.id}`;
-    return likedIds.has(paintingId);
+    return likedIds.has(painting.id);
   };
 
   const getPaintingId = (painting: Painting) => {
-    return `${museumId.toLowerCase()}-${painting.id}`;
+    return painting.id;
   };
 
   return {

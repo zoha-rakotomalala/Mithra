@@ -21,24 +21,6 @@ export async function getCachedPainting(paintingUuid: string): Promise<CachedPai
 }
 
 /**
- * Get a painting by its legacy text ID (e.g. "met-12345").
- */
-export async function getCachedPaintingByLegacyId(legacyId: string): Promise<CachedPainting | null> {
-  const { data, error } = await supabase
-    .from('paintings')
-    .select('*')
-    .eq('legacy_id', legacyId)
-    .single();
-
-  if (error) {
-    console.error('Error fetching painting by legacy ID:', error);
-    return null;
-  }
-
-  return data;
-}
-
-/**
  * Cache a painting from a museum API.
  * Uses (museum_id, external_id) as the upsert key.
  * @param painting.museumLegacyId - Short museum code, e.g. "MET"

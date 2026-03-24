@@ -5,7 +5,7 @@ export type Painting = {
   department?: string;
   description?: string;
   dimensions?: string;
-  id: number | string;
+  id: string;
   imageUrl?: string;          // Full size image for detail view
   location?: string;
   medium?: string;

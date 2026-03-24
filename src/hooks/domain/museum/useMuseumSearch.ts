@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { usePaintings } from '@/contexts/PaintingsContext';
 import { getAllMuseums, TIER_1_MUSEUMS } from '@/services/museumRegistry';
@@ -9,8 +9,19 @@ import {
   type ProgressUpdate,
 } from '@/services/unifiedMuseumService';
 import type { Painting } from '@/types/painting';
+import {
+  getLikedUuidsForVisit,
+  likePainting,
+  unlikePainting,
+} from '@/services/likes.service';
 
-export function useMuseumSearch() {
+interface UseMuseumSearchOptions {
+  initialMuseumId?: string;
+  visitId?: string;
+}
+
+export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
+  const { initialMuseumId, visitId } = options;
   const { paintings: existingPaintings } = usePaintings();
   const allMuseums = getAllMuseums();
 
@@ -20,9 +31,42 @@ export function useMuseumSearch() {
   const [isLoadingCache, setIsLoadingCache] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [selectedMuseums, setSelectedMuseums] = useState<string[]>(TIER_1_MUSEUMS);
+  const [selectedMuseums, setSelectedMuseums] = useState<string[]>(
+    initialMuseumId ? [initialMuseumId] : TIER_1_MUSEUMS
+  );
   const [showMuseumPicker, setShowMuseumPicker] = useState(false);
   const [cacheStats, setCacheStats] = useState({ added: 0 });
+  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+
+  // Load liked painting UUIDs when visitId is provided
+  useEffect(() => {
+    if (!visitId) return;
+    let cancelled = false;
+    getLikedUuidsForVisit(visitId).then((ids) => {
+      if (!cancelled) setLikedIds(ids);
+    });
+    return () => { cancelled = true; };
+  }, [visitId]);
+
+  const handleLike = useCallback(async (painting: Painting) => {
+    if (!visitId) return;
+    const paintingId = painting.id;
+    if (likedIds.has(paintingId)) {
+      await unlikePainting(paintingId, visitId);
+      setLikedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(paintingId);
+        return next;
+      });
+    } else {
+      await likePainting(paintingId, visitId);
+      setLikedIds((prev) => new Set(prev).add(paintingId));
+    }
+  }, [visitId, likedIds]);
+
+  const isLiked = useCallback((painting: Painting) => {
+    return likedIds.has(painting.id);
+  }, [likedIds]);
 
   const handleProgressUpdate = useCallback((update: ProgressUpdate) => {
     if (update.phase === 'cache') {
@@ -146,5 +190,8 @@ export function useMuseumSearch() {
     handleArtistSearch,
     isAlreadyInCollection,
     clearSearch,
+    visitId,
+    handleLike,
+    isLiked,
   };
 }

@@ -11,7 +11,7 @@ import type { Painting as CachedPainting } from '@/types/database';
 
 function toUIPainting(db: CachedPainting): Painting {
   return {
-    id: db.legacy_id || db.external_id,
+    id: db.id,
     title: db.title,
     artist: db.artist,
     year: db.year,

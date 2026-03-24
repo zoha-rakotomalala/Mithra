@@ -170,7 +170,7 @@ function parseMetObject(data: any, objectID: number): null | Painting {
       color: generateColorFromString(title),
       description,
       dimensions,
-      id: objectID,
+      id: `met-${objectID}`,
       imageUrl: images.full,        // Full resolution for detail view
       isSeen: false,
       location: 'New York City, USA',

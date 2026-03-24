@@ -71,7 +71,7 @@ export function VisitDetail() {
           <View style={styles.actions}>
             <TouchableOpacity
               style={buttons.primary}
-              onPress={() => navigation.navigate(Paths.MuseumCollection, { visitId, museumId: museumShortName })}
+              onPress={() => navigation.navigate(Paths.Search, { museumId: museumShortName, visitId })}
             >
               <Text style={buttons.primaryText}>Browse Collection</Text>
             </TouchableOpacity>

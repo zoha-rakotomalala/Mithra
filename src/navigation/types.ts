@@ -12,7 +12,7 @@ export type RootStackParamList = {
   [Paths.Home]: undefined;
   [Paths.Palette]: undefined;
   [Paths.Settings]: undefined;
-  [Paths.Search]: undefined;
+  [Paths.Search]: { museumId?: string; visitId?: string } | undefined;
   [Paths.Palette]: undefined;
   [Paths.PaintingDetail]: { painting: Painting };
   [Paths.ArtistProfile]: { artistName: string };

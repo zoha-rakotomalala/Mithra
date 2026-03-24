@@ -129,42 +129,6 @@ export class SyncService {
   }
 
   /**
-   * Resolves a local painting ID (legacy_id like "met-12345" or numeric) to the
-   * database UUID from the paintings table. Returns null if not found.
-   */
-  private async resolvePaintingUuid(localId: string): Promise<string | null> {
-    // Try legacy_id first (e.g. "met-12345")
-    const { data, error } = await supabase
-      .from('paintings')
-      .select('id')
-      .eq('legacy_id', localId)
-      .maybeSingle();
-
-    if (error) {
-      console.warn(`[SyncService] Error resolving painting UUID for "${localId}":`, error.message);
-    }
-
-    if (data?.id) return data.id;
-
-    // Fallback: try external_id (the numeric part after the prefix)
-    const match = localId.match(/^[a-z]+-(.+)$/);
-    if (match) {
-      const { data: extData, error: extError } = await supabase
-        .from('paintings')
-        .select('id')
-        .eq('external_id', match[1])
-        .maybeSingle();
-      if (extError) {
-        console.warn(`[SyncService] Error resolving by external_id "${match[1]}":`, extError.message);
-      }
-      if (extData?.id) return extData.id;
-    }
-
-    console.warn(`[SyncService] No painting found in DB for local ID: "${localId}"`);
-    return null;
-  }
-
-  /**
    * Upserts a collection entry: writes to MMKV immediately, then syncs to Supabase.
    * If isSyncing is true or network fails, the operation is enqueued for later replay.
    *
@@ -192,21 +156,14 @@ export class SyncService {
       return;
     }
 
-    // Resolve local painting ID to database UUID
-    const paintingUuid = await this.resolvePaintingUuid(entry.painting_id);
-    if (!paintingUuid) {
-      console.warn(`[SyncService] Could not resolve painting UUID for local ID: ${entry.painting_id}`);
-      return;
-    }
-
-    // Attempt to write to Supabase
+    // Attempt to write to Supabase — painting_id is already a UUID
     try {
       const { error } = await supabase
         .from('user_collection')
         .upsert(
           {
             user_id: userId,
-            painting_id: paintingUuid,
+            painting_id: entry.painting_id,
             is_seen: entry.is_seen,
             want_to_visit: entry.want_to_visit,
             seen_date: entry.seen_date,
@@ -222,7 +179,7 @@ export class SyncService {
       }
     } catch (err: any) {
       // Network failure or Supabase error — log and enqueue for later
-      console.error(`[SyncService] upsertCollectionEntry failed for painting ${paintingUuid}:`, err?.message || err);
+      console.error(`[SyncService] upsertCollectionEntry failed for painting ${entry.painting_id}:`, err?.message || err);
       this.enqueueOperation('upsert_collection', {
         userId,
         entry: entryWithTimestamp,
@@ -252,20 +209,13 @@ export class SyncService {
       return;
     }
 
-    // Resolve local painting ID to database UUID
-    const paintingUuid = await this.resolvePaintingUuid(paintingId);
-    if (!paintingUuid) {
-      console.warn(`[SyncService] Could not resolve painting UUID for local ID: ${paintingId}`);
-      return;
-    }
-
-    // Attempt to delete from Supabase
+    // Attempt to delete from Supabase — paintingId is already a UUID
     try {
       const { error } = await supabase
         .from('user_collection')
         .delete()
         .eq('user_id', userId)
-        .eq('painting_id', paintingUuid);
+        .eq('painting_id', paintingId);
 
       if (error) {
         throw error;
@@ -301,24 +251,19 @@ export class SyncService {
       return;
     }
 
-    // Resolve all local painting IDs to database UUIDs
-    const uuidPromises = paintingIds.map(id => this.resolvePaintingUuid(id));
-    const resolvedUuids = await Promise.all(uuidPromises);
-    const validUuids = resolvedUuids.filter((uuid): uuid is string => uuid !== null);
-
-    if (validUuids.length === 0) {
-      console.warn('[SyncService] Could not resolve any painting UUIDs for palette');
+    // Attempt to write to Supabase — paintingIds are already UUIDs
+    if (paintingIds.length === 0) {
+      console.warn('[SyncService] No painting UUIDs provided for palette');
       return;
     }
 
-    // Attempt to write to Supabase
     try {
       const { error } = await supabase
         .from('user_palette')
         .upsert(
           {
             user_id: userId,
-            painting_ids: validUuids,
+            painting_ids: paintingIds,
             updated_at: new Date().toISOString(),
           },
           { onConflict: 'user_id' },
@@ -413,46 +358,36 @@ export class SyncService {
             .select('*')
             .in('id', remoteUuids);
 
-          // Build a map of UUID → legacy_id for matching against local paintings
-          const uuidToLegacyId = new Map<string, string>();
+          // Build a map of UUID → painting row for quick lookup
+          const remotePaintingRowMap = new Map<string, any>();
           for (const row of (remotePaintingRows || [])) {
-            const legacyId = row.legacy_id || row.external_id;
-            if (legacyId) {
-              uuidToLegacyId.set(row.id, legacyId);
-            }
+            remotePaintingRowMap.set(row.id, row);
           }
 
-          // 1. Update metadata on paintings that exist locally
+          // 1. Update metadata on paintings that exist locally (match by UUID directly)
           for (const painting of localPaintings) {
-            // Find the remote entry that matches this local painting
-            for (const [uuid, legacyId] of uuidToLegacyId) {
-              if (String(painting.id) === legacyId) {
-                const remoteEntry = remoteByUuid.get(uuid);
-                if (remoteEntry) {
-                  painting.isSeen = remoteEntry.is_seen;
-                  painting.wantToVisit = remoteEntry.want_to_visit;
-                  painting.seenDate = remoteEntry.seen_date || undefined;
-                  painting.notes = remoteEntry.notes || undefined;
-                }
-                break;
-              }
+            const remoteEntry = remoteByUuid.get(String(painting.id));
+            if (remoteEntry) {
+              painting.isSeen = remoteEntry.is_seen;
+              painting.wantToVisit = remoteEntry.want_to_visit;
+              painting.seenDate = remoteEntry.seen_date || undefined;
+              painting.notes = remoteEntry.notes || undefined;
             }
           }
 
           // 2. Add remote-only paintings to local collection
           for (const row of (remotePaintingRows || [])) {
-            const legacyId = row.legacy_id || row.external_id;
-            if (legacyId && !localIdSet.has(legacyId)) {
+            if (!localIdSet.has(row.id)) {
               const remoteEntry = remoteByUuid.get(row.id);
               const m = row.metadata || {};
               let imageUrl = row.image_url;
               let thumbnailUrl = row.thumbnail_url;
-              if (!imageUrl && m.image_id && legacyId.indexOf('chicago-') === 0) {
+              if (!imageUrl && m.image_id) {
                 imageUrl = `https://www.artic.edu/iiif/2/${m.image_id}/full/843,/0/default.jpg`;
                 thumbnailUrl = `https://www.artic.edu/iiif/2/${m.image_id}/full/200,/0/default.jpg`;
               }
               localPaintings.push({
-                id: legacyId,
+                id: row.id,
                 title: row.title,
                 artist: row.artist,
                 year: row.year,
@@ -474,7 +409,7 @@ export class SyncService {
                 seenDate: remoteEntry?.seen_date || undefined,
                 notes: remoteEntry?.notes || undefined,
               });
-              localIdSet.add(legacyId);
+              localIdSet.add(row.id);
             }
           }
         }
@@ -482,31 +417,10 @@ export class SyncService {
         // Write updated local paintings back to MMKV (preserving the Painting[] shape)
         this.writeLocalCollection(localPaintings);
 
-        // Palette sync: convert remote UUID palette to local legacy IDs
+        // Palette sync: store remote palette UUIDs directly in local storage
         if (remotePalette && remotePalette.painting_ids.length > 0) {
-          // Fetch painting records for the palette UUIDs to get their legacy IDs
-          const { data: palettePaintingRows } = await supabase
-            .from('paintings')
-            .select('id, legacy_id, external_id')
-            .in('id', remotePalette.painting_ids);
-
-          const paletteUuidToLegacy = new Map<string, string>();
-          for (const row of (palettePaintingRows || [])) {
-            const legacyId = row.legacy_id || row.external_id;
-            if (legacyId) {
-              paletteUuidToLegacy.set(row.id, legacyId);
-            }
-          }
-
-          // Convert remote palette UUIDs to legacy IDs, preserving order
-          const remotePaletteAsLegacyIds = remotePalette.painting_ids
-            .map(uuid => paletteUuidToLegacy.get(uuid))
-            .filter((id): id is string => id !== null && id !== undefined);
-
-          if (remotePaletteAsLegacyIds.length > 0) {
-            // Use remote palette — it's the source of truth for cross-device sync
-            this.writeLocalPaletteIds(remotePaletteAsLegacyIds);
-          }
+          // Remote palette painting_ids are already UUIDs — store directly
+          this.writeLocalPaletteIds(remotePalette.painting_ids);
         }
 
         // Record last sync time
@@ -566,17 +480,13 @@ export class SyncService {
       switch (operation.type) {
         case 'upsert_collection': {
           const { userId, entry } = operation.payload;
-          const paintingUuid = await this.resolvePaintingUuid(entry.painting_id);
-          if (!paintingUuid) {
-            console.warn(`[SyncService] Replay: Could not resolve UUID for ${entry.painting_id}`);
-            return;
-          }
+          // painting_id is already a UUID — no resolution needed
           const { error } = await supabase
             .from('user_collection')
             .upsert(
               {
                 user_id: userId,
-                painting_id: paintingUuid,
+                painting_id: entry.painting_id,
                 is_seen: entry.is_seen,
                 want_to_visit: entry.want_to_visit,
                 seen_date: entry.seen_date,
@@ -591,31 +501,25 @@ export class SyncService {
         }
         case 'delete_collection': {
           const { userId, paintingId } = operation.payload;
-          const deleteUuid = await this.resolvePaintingUuid(paintingId);
-          if (!deleteUuid) {
-            console.warn(`[SyncService] Replay: Could not resolve UUID for ${paintingId}`);
-            return;
-          }
+          // paintingId is already a UUID — no resolution needed
           const { error } = await supabase
             .from('user_collection')
             .delete()
             .eq('user_id', userId)
-            .eq('painting_id', deleteUuid);
+            .eq('painting_id', paintingId);
           if (error) throw error;
           break;
         }
         case 'upsert_palette': {
           const { userId, paintingIds } = operation.payload;
-          const uuidPromises = paintingIds.map((id: string) => this.resolvePaintingUuid(id));
-          const resolvedUuids = await Promise.all(uuidPromises);
-          const validUuids = resolvedUuids.filter((uuid: string | null): uuid is string => uuid !== null);
-          if (validUuids.length === 0) return;
+          // paintingIds are already UUIDs — no resolution needed
+          if (paintingIds.length === 0) return;
           const { error } = await supabase
             .from('user_palette')
             .upsert(
               {
                 user_id: userId,
-                painting_ids: validUuids,
+                painting_ids: paintingIds,
                 updated_at: new Date().toISOString(),
               },
               { onConflict: 'user_id' },

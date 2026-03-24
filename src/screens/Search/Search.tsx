@@ -1,5 +1,5 @@
 import type { Painting } from '@/types/painting';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback } from 'react';
 import {
   ActivityIndicator,
@@ -27,12 +27,16 @@ const GRID_PADDING = 16;
 const GridItem = React.memo(({
   collectionStatus,
   inCollection,
+  isLiked,
   onPress,
+  onToggleLike,
   painting
 }: {
   readonly collectionStatus?: { isSeen: boolean; wantToVisit: boolean };
   readonly inCollection: boolean;
+  readonly isLiked?: boolean;
   readonly onPress: () => void;
+  readonly onToggleLike?: () => void;
   readonly painting: Painting;
 }) => {
   const [imageLoading, setImageLoading] = React.useState(true);
@@ -103,6 +107,19 @@ const GridItem = React.memo(({
         <View style={[styles.museumBadge, { backgroundColor: badgeInfo.color }]}>
           <Text style={styles.museumBadgeText}>{badgeInfo.shortName}</Text>
         </View>
+
+        {onToggleLike && (
+          <TouchableOpacity
+            onPress={(e) => {
+              e.stopPropagation?.();
+              onToggleLike();
+            }}
+            style={styles.likeButton}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={styles.likeButtonText}>{isLiked ? '❤️' : '🤍'}</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <Text numberOfLines={2} style={styles.resultTitle}>
@@ -118,6 +135,8 @@ const GridItem = React.memo(({
 
 export function Search() {
   const navigation = useNavigation();
+  const route = useRoute();
+  const { museumId, visitId } = (route.params as { museumId?: string; visitId?: string } | undefined) ?? {};
   const {
     searchQuery,
     setSearchQuery,
@@ -138,7 +157,10 @@ export function Search() {
     handleArtistSearch,
     isAlreadyInCollection,
     clearSearch,
-  } = useMuseumSearch();
+    visitId: activeVisitId,
+    handleLike,
+    isLiked,
+  } = useMuseumSearch({ initialMuseumId: museumId, visitId });
 
   const handlePaintingPress = useCallback((painting: Painting) => {
     navigation.navigate(Paths.PaintingDetail, { painting });
@@ -150,11 +172,13 @@ export function Search() {
       <GridItem
         collectionStatus={collectionInfo.status}
         inCollection={collectionInfo.inCollection}
+        isLiked={activeVisitId ? isLiked(item) : undefined}
         onPress={() => handlePaintingPress(item)}
+        onToggleLike={activeVisitId ? () => handleLike(item) : undefined}
         painting={item}
       />
     );
-  }, [handlePaintingPress, isAlreadyInCollection]);
+  }, [handlePaintingPress, isAlreadyInCollection, activeVisitId, isLiked, handleLike]);
 
   const keyExtractor = useCallback((item: Painting) => `painting-${item.id}`, []);
 

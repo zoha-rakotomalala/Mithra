@@ -350,6 +350,22 @@ export const searchStyles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
+  likeButton: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  likeButtonText: {
+    fontSize: 14,
+  },
+
   resultTitle: {
     fontSize: 12,
     fontWeight: '600',

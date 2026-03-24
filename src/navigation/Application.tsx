@@ -10,7 +10,7 @@ import { Paths } from '@/navigation/paths';
 import { useTheme } from '@/theme';
 import { useAuth } from '@/contexts/AuthContext';
 
-import { Example, Startup, Home, Palette, Settings, PaintingDetail, ArtistProfile, Visits, VisitDetail, MuseumCollection, LikedPaintings, Auth } from '@/screens';
+import { Example, Startup, Home, Palette, Settings, PaintingDetail, ArtistProfile, Visits, VisitDetail, MuseumCollection, LikedPaintings, Auth, Search } from '@/screens';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -58,6 +58,11 @@ function ApplicationNavigator() {
               <Stack.Screen
                 component={MuseumCollection}
                 name={Paths.MuseumCollection}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                component={Search}
+                name={Paths.Search}
                 options={{ headerShown: false }}
               />
               <Stack.Screen

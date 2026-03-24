@@ -16,7 +16,7 @@ function convertToPainting(db: any): Painting {
         thumbnailUrl = 'https://www.artic.edu/iiif/2/' + m.image_id + '/full/200,/0/default.jpg';
     }
     return {
-        id: db.legacy_id || db.external_id,
+        id: db.id,
         title: db.title,
         artist: db.artist,
         year: db.year,
@@ -65,11 +65,12 @@ export async function getCachedPaintings(museumLegacyId: string, searchQuery: st
 export async function updateCacheWithFreshResults(museumLegacyId: string, searchQuery: string, searchType: 'artist' | 'title', freshPaintings: Painting[]): Promise<{
     added: number;
     updated: number;
-    unchanged: number
+    unchanged: number;
+    legacyToUuid: Record<string, string>;
 }> {
     try {
         const query = searchQuery.toLowerCase().trim();
-        const stats = {added: 0, updated: 0, unchanged: 0};
+        const stats = {added: 0, updated: 0, unchanged: 0, legacyToUuid: {} as Record<string, string>};
         if (freshPaintings.length === 0) return stats;
         const museumMap = await getMuseumMap();
         const museum = museumMap[museumLegacyId];
@@ -126,6 +127,20 @@ export async function updateCacheWithFreshResults(museumLegacyId: string, search
         const externalIds = freshPaintings.map((p: any) => extractExternalId(String(p.id)));
         const {data: upserted} = await supabase.from('paintings').select('id, external_id').eq('museum_id', museumUuid).in('external_id', externalIds);
         const freshUuids = (upserted || []).map((p: any) => p.id);
+
+        // Build legacy ID → UUID mapping so callers can update in-memory paintings
+        const externalToUuid = new Map<string, string>();
+        for (const row of (upserted || [])) {
+            externalToUuid.set(row.external_id, row.id);
+        }
+        for (const painting of freshPaintings) {
+            const legacyId = String(painting.id);
+            const extId = extractExternalId(legacyId);
+            const uuid = externalToUuid.get(extId);
+            if (uuid) {
+                stats.legacyToUuid[legacyId] = uuid;
+            }
+        }
         stats.added = freshPaintings.filter((p: any) => !currentIds[String(p.id)]).length;
         stats.updated = freshPaintings.filter((p: any) => !!currentIds[String(p.id)]).length;
         await supabase.from('search_cache').upsert({
@@ -141,7 +156,7 @@ export async function updateCacheWithFreshResults(museumLegacyId: string, search
         return stats;
     } catch (err) {
         console.error('Error updating cache:', err);
-        return {added: 0, updated: 0, unchanged: 0};
+        return {added: 0, updated: 0, unchanged: 0, legacyToUuid: {}};
     }
 }
 
