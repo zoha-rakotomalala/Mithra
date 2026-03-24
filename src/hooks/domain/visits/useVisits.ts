@@ -1,16 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { getVisits, createVisit } from '@/services/visits.service';
+import { getAllMuseums, type MuseumConfig } from '@/services/museumRegistry';
 import type { Visit } from '@/types/database';
 
-const MUSEUMS = [
-  { id: 'MET', name: 'Metropolitan Museum of Art' },
-  { id: 'RIJKS', name: 'Rijksmuseum' },
-  { id: 'CHICAGO', name: 'Art Institute of Chicago' },
-  { id: 'CLEVELAND', name: 'Cleveland Museum of Art' },
-  { id: 'NATIONAL_GALLERY', name: 'National Gallery' },
-  { id: 'HARVARD', name: 'Harvard Art Museums' },
-];
+const isValidDate = (dateStr: string): boolean => {
+  return /^\d{4}-\d{2}-\d{2}$/.test(dateStr) && !isNaN(Date.parse(dateStr));
+};
 
 export function useVisits() {
   const navigation = useNavigation();
@@ -63,7 +59,7 @@ export function useVisits() {
     await loadVisits();
   };
 
-  const selectMuseum = (museum: { id: string; name: string }) => {
+  const selectMuseum = (museum: MuseumConfig) => {
     setNewVisit({ ...newVisit, museumId: museum.id, museumName: museum.name });
     setShowMuseumPicker(false);
   };
@@ -80,9 +76,10 @@ export function useVisits() {
     showMuseumPicker,
     setShowMuseumPicker,
     newVisit,
-    museums: MUSEUMS,
+    museums: getAllMuseums(),
     handleAddVisit,
     selectMuseum,
     updateNewVisitField,
+    isValidDate,
   };
 }

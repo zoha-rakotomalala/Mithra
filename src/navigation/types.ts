@@ -18,12 +18,8 @@ export type RootStackParamList = {
   [Paths.ArtistProfile]: { artistName: string };
   [Paths.Visits]: undefined;
   [Paths.VisitDetail]: { visitId: string };
-  [Paths.MuseumBrowser]: { visitId: string };
   [Paths.MuseumCollection]: { visitId: string; museumId: string };
-  [Paths.VisitPalette]: { visitId: string };
-  [Paths.ViewPalette]: { visitId: string };
-  [Paths.CanonPalette]: undefined;
-  [Paths.ViewCanon]: undefined;
+  [Paths.LikedPaintings]: { visitId: string };
   [Paths.Auth]: undefined;
   Main: undefined;
 };

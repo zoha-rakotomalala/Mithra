@@ -98,4 +98,14 @@ export const visitDetailStyles = StyleSheet.create({
   buttonDisabled: {
     opacity: 0.5,
   },
+
+  readOnlyField: {
+    color: COLORS.textLight,
+    backgroundColor: COLORS.background,
+  },
+
+  backText: {
+    fontSize: 24,
+    color: COLORS.text,
+  },
 });

@@ -19,7 +19,7 @@ export function VisitDetail() {
     visit,
     loading,
     likedCount,
-    hasPalette,
+    museumShortName,
     showEditModal,
     setShowEditModal,
     editForm,
@@ -44,7 +44,7 @@ export function VisitDetail() {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
-          <Text style={typography.artDecoTitle}>{visit.museum_name.toUpperCase()}</Text>
+          <Text style={typography.artDecoTitle}>{visit.museum?.name?.toUpperCase()}</Text>
           <View style={shared.artDecoDivider} />
         </View>
 
@@ -71,9 +71,9 @@ export function VisitDetail() {
           <View style={styles.actions}>
             <TouchableOpacity
               style={buttons.primary}
-              onPress={() => navigation.navigate(Paths.MuseumBrowser, { visitId })}
+              onPress={() => navigation.navigate(Paths.MuseumCollection, { visitId, museumId: museumShortName })}
             >
-              <Text style={buttons.primaryText}>Browse Museums</Text>
+              <Text style={buttons.primaryText}>Browse Collection</Text>
             </TouchableOpacity>
 
             {likedCount > 0 && (
@@ -84,22 +84,6 @@ export function VisitDetail() {
                 <Text style={buttons.secondaryText}>View Liked Artworks ({likedCount})</Text>
               </TouchableOpacity>
             )}
-
-            {hasPalette ? (
-              <TouchableOpacity
-                style={buttons.primary}
-                onPress={() => navigation.navigate(Paths.ViewPalette, { visitId })}
-              >
-                <Text style={buttons.primaryText}>View Palette</Text>
-              </TouchableOpacity>
-            ) : likedCount >= 8 ? (
-              <TouchableOpacity
-                style={buttons.primary}
-                onPress={() => navigation.navigate(Paths.VisitPalette, { visitId })}
-              >
-                <Text style={buttons.primaryText}>Create Palette</Text>
-              </TouchableOpacity>
-            ) : null}
 
             <TouchableOpacity
               style={buttons.secondary}
@@ -129,13 +113,7 @@ export function VisitDetail() {
           />
 
           <View style={styles.modalContent}>
-            <TextInput
-              style={styles.input}
-              placeholder="Museum Name"
-              placeholderTextColor={COLORS.textLight}
-              value={editForm.museumName}
-              onChangeText={(text) => updateEditFormField('museumName', text)}
-            />
+            <Text style={[styles.input, styles.readOnlyField]}>{visit.museum?.name}</Text>
 
             <TextInput
               style={styles.input}
@@ -156,9 +134,9 @@ export function VisitDetail() {
             />
 
             <TouchableOpacity
-              style={[buttons.primary, !editForm.museumName && styles.buttonDisabled]}
+              style={[buttons.primary, !editForm.visitDate && styles.buttonDisabled]}
               onPress={handleEdit}
-              disabled={!editForm.museumName}
+              disabled={!editForm.visitDate}
             >
               <Text style={buttons.primaryText}>Save Changes</Text>
             </TouchableOpacity>

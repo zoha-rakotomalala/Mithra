@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { getVisitById, updateVisit, deleteVisit, getLikedPaintingsForVisit, getVisitPalette } from '@/services';
+import { getVisitById, updateVisit, deleteVisit, getLikedPaintingsForVisit } from '@/services';
 import type { Visit } from '@/types/database';
 
 export function useVisitDetail(visitId: string) {
@@ -10,10 +10,8 @@ export function useVisitDetail(visitId: string) {
   const [loading, setLoading] = useState(true);
   const [likedCount, setLikedCount] = useState(0);
   const [likedPaintings, setLikedPaintings] = useState<any[]>([]);
-  const [hasPalette, setHasPalette] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({
-    museumName: '',
     visitDate: '',
     notes: '',
   });
@@ -24,16 +22,12 @@ export function useVisitDetail(visitId: string) {
     if (data) {
       setVisit(data);
       setEditForm({
-        museumName: data.museum_name,
         visitDate: data.visit_date,
         notes: data.notes || '',
       });
       const likes = await getLikedPaintingsForVisit(visitId);
       setLikedCount(likes.length);
       setLikedPaintings(likes);
-
-      const palette = await getVisitPalette(visitId);
-      setHasPalette(!!palette);
     }
     setLoading(false);
   };
@@ -43,10 +37,9 @@ export function useVisitDetail(visitId: string) {
   }, [visitId]);
 
   const handleEdit = async () => {
-    if (!editForm.museumName) return;
+    if (!editForm.visitDate) return;
 
     await updateVisit(visitId, {
-      museum_name: editForm.museumName,
       visit_date: editForm.visitDate,
       notes: editForm.notes || undefined,
     });
@@ -81,12 +74,14 @@ export function useVisitDetail(visitId: string) {
     setEditForm({ ...editForm, [field]: value });
   };
 
+  const museumShortName = visit?.museum?.short_name ?? '';
+
   return {
     visit,
     loading,
     likedCount,
     likedPaintings,
-    hasPalette,
+    museumShortName,
     showEditModal,
     setShowEditModal,
     editForm,

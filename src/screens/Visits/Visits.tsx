@@ -10,6 +10,7 @@ import { formatDate } from '@/utils';
 import { visitsStyles as styles } from './Visits.styles';
 import { useVisits } from '@/hooks/domain/visits/useVisits';
 import type { Visit } from '@/types/database';
+import type { MuseumConfig } from '@/services/museumRegistry';
 
 export function Visits() {
   const navigation = useNavigation<RootScreenProps['navigation']>();
@@ -24,7 +25,11 @@ export function Visits() {
     handleAddVisit,
     selectMuseum,
     updateNewVisitField,
+    isValidDate,
   } = useVisits();
+
+  const dateValid = isValidDate(newVisit.visitDate);
+  const canSave = !!newVisit.museumName && dateValid;
 
   const renderVisit = ({ item }: { item: Visit }) => (
     <TouchableOpacity
@@ -94,12 +99,15 @@ export function Visits() {
             </TouchableOpacity>
 
             <TextInput
-              style={styles.input}
+              style={[styles.input, newVisit.visitDate.length > 0 && !dateValid && styles.inputError]}
               placeholder="Date (YYYY-MM-DD)"
               placeholderTextColor={COLORS.black + '60'}
               value={newVisit.visitDate}
               onChangeText={(text) => updateNewVisitField('visitDate', text)}
             />
+            {newVisit.visitDate.length > 0 && !dateValid && (
+              <Text style={styles.validationText}>Please enter a valid date (YYYY-MM-DD)</Text>
+            )}
 
             <TextInput
               style={[styles.input, styles.textArea]}
@@ -112,9 +120,9 @@ export function Visits() {
             />
 
             <TouchableOpacity
-              style={[buttons.primary, !newVisit.museumName && styles.buttonDisabled]}
+              style={[buttons.primary, !canSave && styles.buttonDisabled]}
               onPress={handleAddVisit}
-              disabled={!newVisit.museumName}
+              disabled={!canSave}
             >
               <Text style={buttons.primaryText}>SAVE VISIT</Text>
             </TouchableOpacity>
@@ -132,12 +140,16 @@ export function Visits() {
           <FlatList
             data={museums}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
+            renderItem={({ item }: { item: MuseumConfig }) => (
               <TouchableOpacity
                 style={styles.museumOption}
                 onPress={() => selectMuseum(item)}
               >
-                <Text style={[typography.body, { color: COLORS.black }]}>{item.name}</Text>
+                <View style={[styles.colorBadge, { backgroundColor: item.color }]} />
+                <View style={styles.museumOptionText}>
+                  <Text style={[typography.body, { color: COLORS.black }]}>{item.name}</Text>
+                  <Text style={[typography.caption, { color: COLORS.black + '88' }]}>{item.shortName} · {item.country}</Text>
+                </View>
               </TouchableOpacity>
             )}
           />

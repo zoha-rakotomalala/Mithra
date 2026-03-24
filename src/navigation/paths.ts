@@ -10,11 +10,7 @@ export const enum Paths {
   ArtistProfile = 'artistProfile',
   Visits = 'visits',
   VisitDetail = 'visitDetail',
-  MuseumBrowser = 'museumBrowser',
   MuseumCollection = 'museumCollection',
-  VisitPalette = 'visitPalette',
-  ViewPalette = 'viewPalette',
-  CanonPalette = 'canonPalette',
-  ViewCanon = 'viewCanon',
+  LikedPaintings = 'likedPaintings',
   Auth = 'auth'
 }

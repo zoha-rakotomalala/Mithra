@@ -1,0 +1,1 @@
+export { LikedPaintings } from './LikedPaintings';

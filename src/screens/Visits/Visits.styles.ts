@@ -164,9 +164,33 @@ export const visitsStyles = StyleSheet.create({
 
   // Museum Picker Options
   museumOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: SPACING.lg,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(212, 175, 55, 0.2)',
     backgroundColor: COLORS.cream,
+  },
+
+  colorBadge: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: SPACING.md,
+  },
+
+  museumOptionText: {
+    flex: 1,
+  },
+
+  // Validation
+  inputError: {
+    borderColor: '#A4161A',
+  },
+
+  validationText: {
+    color: '#A4161A',
+    fontSize: 12,
+    marginTop: -SPACING.xs,
   },
 });
