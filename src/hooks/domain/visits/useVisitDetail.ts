@@ -37,6 +37,13 @@ export function useVisitDetail(visitId: string) {
     loadVisit();
   }, [visitId]);
 
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadVisit();
+    });
+    return unsubscribe;
+  }, [navigation]);
+
   const handleEdit = async () => {
     if (!editForm.visitDate) return;
 

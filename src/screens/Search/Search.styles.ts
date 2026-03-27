@@ -33,6 +33,16 @@ export const searchStyles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
 
+  backButton: {
+    marginRight: SPACING.sm,
+    paddingVertical: SPACING.xs,
+  },
+
+  backText: {
+    fontSize: 24,
+    color: COLORS.gold,
+  },
+
   headerTitle: {
     fontSize: 28,
     fontWeight: '300',
@@ -256,8 +266,9 @@ export const searchStyles = StyleSheet.create({
   },
 
   gridRow: {
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     marginBottom: SPACING.sm,
+    gap: SPACING.sm,
   },
 
   // Result Cards
@@ -363,7 +374,9 @@ export const searchStyles = StyleSheet.create({
   },
 
   likeButtonText: {
-    fontSize: 14,
+    fontSize: 16,
+    color: COLORS.gold,
+    fontWeight: '700',
   },
 
   resultTitle: {

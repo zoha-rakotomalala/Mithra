@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { GridPaintingCard, EmptyState } from '@/components/molecules';
@@ -7,8 +7,12 @@ import { COLORS, GRID } from '@/constants';
 import { useLikedPaintings } from '@/hooks/domain/visits/useLikedPaintings';
 import { likedPaintingsStyles as styles } from './LikedPaintings.styles';
 import { Paths } from '@/navigation/paths';
+import { createSyncService } from '@/services/syncService';
+import { useAuth } from '@/contexts/AuthContext';
+import { storage } from '@/App';
 import type { Painting } from '@/types/painting';
 import type { Painting as CachedPainting } from '@/types/database';
+import type { UserCollectionEntry } from '@/types/database';
 
 function toUIPainting(db: CachedPainting): Painting {
   return {
@@ -27,16 +31,43 @@ export function LikedPaintings() {
   const navigation = useNavigation();
   const route = useRoute();
   const { visitId } = route.params as { visitId: string };
+  const { user } = useAuth();
 
-  const { paintings, loading, count } = useLikedPaintings(visitId);
+  const { paintings, loading, count, museumName, visitDate } = useLikedPaintings(visitId);
 
   const uiPaintings = paintings.map(toUIPainting);
+
+  const onPaintingPress = useCallback((item: Painting) => {
+    // Guard: skip upsert if painting_id is falsy
+    if (item.id && user?.id) {
+      const now = new Date().toISOString();
+      const entry: UserCollectionEntry = {
+        id: '',
+        user_id: user.id,
+        painting_id: String(item.id),
+        is_seen: true,
+        want_to_visit: false,
+        seen_date: visitDate || null,
+        date_added: now,
+        notes: null,
+        created_at: now,
+        updated_at: now,
+      };
+
+      const syncService = createSyncService(storage);
+      syncService.upsertCollectionEntry(user.id, entry).catch(err => {
+        console.error('[LikedPaintings] Failed to upsert collection entry:', err?.message || err);
+      });
+    }
+
+    navigation.navigate(Paths.PaintingDetail as never, { painting: item } as never);
+  }, [user, museumName, visitDate, navigation]);
 
   const renderPainting = ({ item }: { item: Painting }) => (
     <GridPaintingCard
       variant="minimal"
       painting={item}
-      onPress={() => navigation.navigate(Paths.PaintingDetail as never, { painting: item } as never)}
+      onPress={() => onPaintingPress(item)}
     />
   );
 
@@ -90,9 +121,10 @@ export function LikedPaintings() {
                 keyExtractor={(item) => String(item.id)}
                 numColumns={GRID.columns}
                 columnWrapperStyle={{
-                  justifyContent: 'space-between',
+                  justifyContent: 'flex-start',
                   paddingHorizontal: GRID.margin,
                   marginBottom: GRID.gutter,
+                  gap: GRID.gutter,
                 }}
                 contentContainerStyle={{
                   paddingTop: GRID.margin,

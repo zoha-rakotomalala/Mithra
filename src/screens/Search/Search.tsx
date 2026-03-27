@@ -19,7 +19,7 @@ import { MuseumSelector } from '@/components/organisms';
 import { searchStyles as styles } from './Search.styles';
 import { getMuseumBadgeInfo } from '@/services/unifiedMuseumService';
 import { useMuseumSearch } from '@/hooks/domain/museum/useMuseumSearch';
-import { COLORS, SPACING } from '@/constants';
+import { COLORS } from '@/constants';
 
 const { width } = Dimensions.get('window');
 const CARD_SIZE = (width - 32) / 3;
@@ -118,7 +118,7 @@ const GridItem = React.memo(({
             style={styles.likeButton}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Text style={styles.likeButtonText}>{isLiked ? '❤️' : '🤍'}</Text>
+            <Text style={styles.likeButtonText}>{isLiked ? '♥' : '♡'}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -189,12 +189,12 @@ export function Search() {
       <View style={styles.container}>
         {/* Improved Header */}
         <View style={styles.header}>
-          {visitId && (
-            <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginBottom: SPACING.sm }}>
-              <Text style={{ fontSize: 24, color: COLORS.gold }}>←</Text>
-            </TouchableOpacity>
-          )}
           <View style={styles.headerTop}>
+            {visitId && (
+              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                <Text style={styles.backText}>←</Text>
+              </TouchableOpacity>
+            )}
             <Text style={styles.headerTitle}>SEARCH ART</Text>
             {isRefreshing && (
               <ActivityIndicator size="small" color="#d4af37" style={styles.headerSpinner} />

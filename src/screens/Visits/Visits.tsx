@@ -1,12 +1,12 @@
 import type { RootScreenProps } from '@/navigation/types';
 import { Paths } from '@/navigation/paths';
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StatusBar, Modal, TextInput, Platform } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StatusBar, Modal, TextInput, Platform, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { EmptyState, ModalHeader } from '@/components/molecules';
 import { shared, typography, buttons } from '@/styles';
-import { COLORS, SPACING } from '@/constants';
+import { COLORS } from '@/constants';
 import { formatDate } from '@/utils';
 import { visitsStyles as styles } from './Visits.styles';
 import { useVisits } from '@/hooks/domain/visits/useVisits';
@@ -52,14 +52,18 @@ export function Visits() {
 
   return (
     <>
+    <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
       <View style={[shared.container, { backgroundColor: COLORS.cream }]}>
         <View style={styles.header}>
-          <Text style={[typography.artDecoTitle, { color: COLORS.gold }]}>MY VISITS</Text>
-          <View style={styles.headerDivider}>
-            <View style={shared.artDecoDivider} />
-            <Text style={[typography.caption, { color: COLORS.gold, marginHorizontal: SPACING.sm }]}>◆</Text>
-            <View style={shared.artDecoDivider} />
+          <Text style={styles.headerTitle}>MY VISITS</Text>
+        </View>
+
+        {/* Stats Row */}
+        <View style={styles.statsRow}>
+          <View style={styles.statCompact}>
+            <Text style={styles.statNumber}>{visits.length}</Text>
+            <Text style={styles.statLabel}>visits</Text>
           </View>
         </View>
 
@@ -86,6 +90,7 @@ export function Visits() {
           <Text style={styles.fabText}>+</Text>
         </TouchableOpacity>
       </View>
+    </SafeAreaView>
 
       <Modal visible={showAddModal} animationType="slide" presentationStyle="pageSheet">
         <View style={[shared.container, { backgroundColor: COLORS.cream }]}>
@@ -113,7 +118,7 @@ export function Visits() {
               <Text style={newVisit.visitDate ? styles.inputText : styles.inputPlaceholder}>
                 {newVisit.visitDate || 'Select Date'}
               </Text>
-              <Text style={styles.chevronIcon}>▩</Text>
+              <Text style={[styles.chevronIcon, { fontSize: 18 }]}>▩</Text>
             </TouchableOpacity>
             {showDatePicker && (
               <DateTimePicker

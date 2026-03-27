@@ -1,7 +1,13 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { COLORS, SPACING } from '@/constants';
 
 export const visitDetailStyles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.black,
+    paddingTop: Platform.OS === 'android' ? 25 : 0,
+  },
+
   header: {
     backgroundColor: COLORS.black,
     borderBottomColor: COLORS.gold,
@@ -11,13 +17,35 @@ export const visitDetailStyles = StyleSheet.create({
     paddingTop: SPACING.md,
   },
 
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
   backButton: {
-    marginBottom: SPACING.md,
+    marginRight: SPACING.sm,
+  },
+
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '300',
+    letterSpacing: 4,
+    color: COLORS.gold,
+    textTransform: 'uppercase',
+    flexShrink: 1,
   },
 
   content: {
+    flex: 1,
     padding: SPACING.lg,
     gap: SPACING.lg,
+    backgroundColor: COLORS.cream,
+  },
+
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: COLORS.cream,
   },
 

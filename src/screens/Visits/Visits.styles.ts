@@ -2,22 +2,58 @@ import { StyleSheet, Platform } from 'react-native';
 import { COLORS, SPACING } from '@/constants';
 
 export const visitsStyles = StyleSheet.create({
-  // Header - Art Deco Black & Gold (matches Search)
-  header: {
+  // Safe Area - Matches Collection/Search
+  safeArea: {
+    flex: 1,
     backgroundColor: COLORS.black,
-    paddingTop: Platform.OS === 'android' ? 65 : 60,
-    paddingBottom: SPACING.lg,
-    paddingHorizontal: SPACING.xl,
-    borderBottomWidth: 2,
-    borderBottomColor: COLORS.gold,
-    alignItems: 'center',
+    paddingTop: Platform.OS === 'android' ? 25 : 0,
   },
 
-  headerDivider: {
-    alignItems: 'center',
+  // Header - Art Deco Black & Gold (matches Collection)
+  header: {
+    backgroundColor: COLORS.black,
+    borderBottomColor: COLORS.gold,
+    borderBottomWidth: 2,
+    paddingBottom: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.md,
+  },
+
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '300',
+    letterSpacing: 4,
+    color: COLORS.gold,
+    textTransform: 'uppercase',
+  },
+
+  // Stats Row - Matches Collection's statsRow pattern
+  statsRow: {
     flexDirection: 'row',
-    width: '60%',
-    marginTop: SPACING.sm,
+    backgroundColor: COLORS.black,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(212, 175, 55, 0.3)',
+  },
+  statCompact: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
+  },
+  statNumber: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.gold,
+  },
+  statLabel: {
+    fontSize: 10,
+    color: 'rgba(212, 175, 55, 0.5)',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
 
   // List Content

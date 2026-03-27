@@ -1,7 +1,7 @@
 import type { RootScreenProps } from '@/navigation/types';
 import { Paths } from '@/navigation/paths';
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StatusBar, Modal, TextInput } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StatusBar, Modal, TextInput, SafeAreaView, ActivityIndicator } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ModalHeader } from '@/components/molecules';
 import { shared, typography, buttons } from '@/styles';
@@ -31,25 +31,30 @@ export function VisitDetail() {
 
   if (loading || !visit) {
     return (
-      <View style={shared.container}>
-        <Text style={typography.body}>Loading...</Text>
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.gold} />
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
     <>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
-      <ScrollView style={shared.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={styles.backText}>←</Text>
-          </TouchableOpacity>
-          <Text style={[typography.artDecoTitle, { color: COLORS.gold }]}>{visit.museum?.name?.toUpperCase()}</Text>
-          <View style={shared.artDecoDivider} />
-        </View>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
+        <ScrollView style={{ flex: 1, backgroundColor: COLORS.cream }}>
+          <View style={styles.header}>
+            <View style={styles.headerRow}>
+              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                <Text style={styles.backText}>←</Text>
+              </TouchableOpacity>
+              <Text style={styles.headerTitle} numberOfLines={1}>{visit.museum?.name}</Text>
+            </View>
+          </View>
 
-        <View style={styles.content}>
+          <View style={styles.content}>
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
               <Text style={typography.label}>Date</Text>
@@ -101,7 +106,8 @@ export function VisitDetail() {
             </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
+        </ScrollView>
+      </SafeAreaView>
 
       <Modal visible={showEditModal} animationType="slide" presentationStyle="pageSheet">
         <View style={shared.container}>
