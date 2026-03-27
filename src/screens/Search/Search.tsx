@@ -19,6 +19,7 @@ import { MuseumSelector } from '@/components/organisms';
 import { searchStyles as styles } from './Search.styles';
 import { getMuseumBadgeInfo } from '@/services/unifiedMuseumService';
 import { useMuseumSearch } from '@/hooks/domain/museum/useMuseumSearch';
+import { COLORS, SPACING } from '@/constants';
 
 const { width } = Dimensions.get('window');
 const CARD_SIZE = (width - 32) / 3;
@@ -188,6 +189,11 @@ export function Search() {
       <View style={styles.container}>
         {/* Improved Header */}
         <View style={styles.header}>
+          {visitId && (
+            <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginBottom: SPACING.sm }}>
+              <Text style={{ fontSize: 24, color: COLORS.gold }}>←</Text>
+            </TouchableOpacity>
+          )}
           <View style={styles.headerTop}>
             <Text style={styles.headerTitle}>SEARCH ART</Text>
             {isRefreshing && (

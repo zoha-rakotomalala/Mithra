@@ -3,10 +3,12 @@ import { COLORS, SPACING } from '@/constants';
 
 export const visitDetailStyles = StyleSheet.create({
   header: {
-    paddingTop: 60,
-    paddingBottom: SPACING.lg,
-    paddingHorizontal: SPACING.lg,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.black,
+    borderBottomColor: COLORS.gold,
+    borderBottomWidth: 2,
+    paddingBottom: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.md,
   },
 
   backButton: {
@@ -16,6 +18,7 @@ export const visitDetailStyles = StyleSheet.create({
   content: {
     padding: SPACING.lg,
     gap: SPACING.lg,
+    backgroundColor: COLORS.cream,
   },
 
   infoCard: {
@@ -106,6 +109,6 @@ export const visitDetailStyles = StyleSheet.create({
 
   backText: {
     fontSize: 24,
-    color: COLORS.text,
+    color: COLORS.gold,
   },
 });

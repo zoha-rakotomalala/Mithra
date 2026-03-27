@@ -6,6 +6,7 @@ import { shared, typography } from '@/styles';
 import { COLORS, GRID } from '@/constants';
 import { useLikedPaintings } from '@/hooks/domain/visits/useLikedPaintings';
 import { likedPaintingsStyles as styles } from './LikedPaintings.styles';
+import { Paths } from '@/navigation/paths';
 import type { Painting } from '@/types/painting';
 import type { Painting as CachedPainting } from '@/types/database';
 
@@ -35,7 +36,7 @@ export function LikedPaintings() {
     <GridPaintingCard
       variant="minimal"
       painting={item}
-      onPress={() => console.log('View painting:', item.id)}
+      onPress={() => navigation.navigate(Paths.PaintingDetail as never, { painting: item } as never)}
     />
   );
 
@@ -59,7 +60,7 @@ export function LikedPaintings() {
 
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
       <View style={shared.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
@@ -69,36 +70,38 @@ export function LikedPaintings() {
           <View style={shared.artDecoDivider} />
         </View>
 
-        {count === 0 ? (
-          <EmptyState
-            icon="♡"
-            title="No Liked Artworks"
-            subtitle="Browse the collection to like paintings"
-          />
-        ) : (
-          <>
-            <View style={styles.resultsHeader}>
-              <Text style={typography.caption}>
-                {count} liked artwork{count !== 1 ? 's' : ''}
-              </Text>
-            </View>
-            <FlatList
-              data={uiPaintings}
-              renderItem={renderPainting}
-              keyExtractor={(item) => String(item.id)}
-              numColumns={GRID.columns}
-              columnWrapperStyle={{
-                justifyContent: 'space-between',
-                paddingHorizontal: GRID.margin,
-                marginBottom: GRID.gutter,
-              }}
-              contentContainerStyle={{
-                paddingTop: GRID.margin,
-                paddingBottom: GRID.margin,
-              }}
+        <View style={styles.contentArea}>
+          {count === 0 ? (
+            <EmptyState
+              icon="♡"
+              title="No Liked Artworks"
+              subtitle="Browse the collection to like paintings"
             />
-          </>
-        )}
+          ) : (
+            <>
+              <View style={styles.resultsHeader}>
+                <Text style={typography.caption}>
+                  {count} liked artwork{count !== 1 ? 's' : ''}
+                </Text>
+              </View>
+              <FlatList
+                data={uiPaintings}
+                renderItem={renderPainting}
+                keyExtractor={(item) => String(item.id)}
+                numColumns={GRID.columns}
+                columnWrapperStyle={{
+                  justifyContent: 'space-between',
+                  paddingHorizontal: GRID.margin,
+                  marginBottom: GRID.gutter,
+                }}
+                contentContainerStyle={{
+                  paddingTop: GRID.margin,
+                  paddingBottom: GRID.margin,
+                }}
+              />
+            </>
+          )}
+        </View>
       </View>
     </>
   );

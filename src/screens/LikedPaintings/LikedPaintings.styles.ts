@@ -4,9 +4,11 @@ import { COLORS, SPACING } from '@/constants';
 export const likedPaintingsStyles = StyleSheet.create({
   header: {
     paddingTop: 60,
-    paddingBottom: SPACING.lg,
-    paddingHorizontal: SPACING.lg,
-    backgroundColor: COLORS.background,
+    paddingBottom: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    backgroundColor: COLORS.black,
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.gold,
   },
 
   backButton: {
@@ -15,13 +17,24 @@ export const likedPaintingsStyles = StyleSheet.create({
 
   backText: {
     fontSize: 24,
-    color: COLORS.text,
+    color: COLORS.gold,
   },
 
   resultsHeader: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: COLORS.cream,
+  },
+
+  contentArea: {
+    flex: 1,
+    backgroundColor: COLORS.cream,
+  },
+
+  paintingCard: {
+    borderWidth: 2,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+    borderRadius: 2,
   },
 
   loading: {

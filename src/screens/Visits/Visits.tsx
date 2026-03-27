@@ -1,8 +1,9 @@
 import type { RootScreenProps } from '@/navigation/types';
 import { Paths } from '@/navigation/paths';
-import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, StatusBar, Modal, TextInput } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StatusBar, Modal, TextInput, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { EmptyState, ModalHeader } from '@/components/molecules';
 import { shared, typography, buttons } from '@/styles';
 import { COLORS, SPACING } from '@/constants';
@@ -25,11 +26,12 @@ export function Visits() {
     handleAddVisit,
     selectMuseum,
     updateNewVisitField,
-    isValidDate,
   } = useVisits();
 
-  const dateValid = isValidDate(newVisit.visitDate);
-  const canSave = !!newVisit.museumName && dateValid;
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  const canSave = !!newVisit.museumName && !!newVisit.visitDate;
 
   const renderVisit = ({ item }: { item: Visit }) => (
     <TouchableOpacity
@@ -75,7 +77,12 @@ export function Visits() {
           }
         />
 
-        <TouchableOpacity style={styles.fab} onPress={() => setShowAddModal(true)}>
+        <TouchableOpacity style={styles.fab} onPress={() => {
+          const today = new Date();
+          setSelectedDate(today);
+          updateNewVisitField('visitDate', today.toISOString().split('T')[0]);
+          setShowAddModal(true);
+        }}>
           <Text style={styles.fabText}>+</Text>
         </TouchableOpacity>
       </View>
@@ -90,23 +97,37 @@ export function Visits() {
 
           <View style={styles.modalContent}>
             <TouchableOpacity
-              style={styles.input}
+              style={styles.museumPickerField}
               onPress={() => setShowMuseumPicker(true)}
             >
               <Text style={newVisit.museumName ? styles.inputText : styles.inputPlaceholder}>
                 {newVisit.museumName || 'Select Museum'}
               </Text>
+              <Text style={styles.chevronIcon}>⌵</Text>
             </TouchableOpacity>
 
-            <TextInput
-              style={[styles.input, newVisit.visitDate.length > 0 && !dateValid && styles.inputError]}
-              placeholder="Date (YYYY-MM-DD)"
-              placeholderTextColor={COLORS.black + '60'}
-              value={newVisit.visitDate}
-              onChangeText={(text) => updateNewVisitField('visitDate', text)}
-            />
-            {newVisit.visitDate.length > 0 && !dateValid && (
-              <Text style={styles.validationText}>Please enter a valid date (YYYY-MM-DD)</Text>
+            <TouchableOpacity
+              style={styles.datePickerField}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text style={newVisit.visitDate ? styles.inputText : styles.inputPlaceholder}>
+                {newVisit.visitDate || 'Select Date'}
+              </Text>
+              <Text style={styles.chevronIcon}>▩</Text>
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={selectedDate}
+                mode="date"
+                display="default"
+                onChange={(event, date) => {
+                  setShowDatePicker(Platform.OS === 'ios');
+                  if (date) {
+                    setSelectedDate(date);
+                    updateNewVisitField('visitDate', date.toISOString().split('T')[0]);
+                  }
+                }}
+              />
             )}
 
             <TextInput
@@ -147,8 +168,8 @@ export function Visits() {
               >
                 <View style={[styles.colorBadge, { backgroundColor: item.color }]} />
                 <View style={styles.museumOptionText}>
-                  <Text style={[typography.body, { color: COLORS.black }]}>{item.name}</Text>
-                  <Text style={[typography.caption, { color: COLORS.black + '88' }]}>{item.shortName} · {item.country}</Text>
+                  <Text style={[typography.h4, { color: COLORS.black }]}>{item.name}</Text>
+                  <Text style={[typography.caption, { color: COLORS.gold + 'AA' }]}>{item.shortName} · {item.country}</Text>
                 </View>
               </TouchableOpacity>
             )}

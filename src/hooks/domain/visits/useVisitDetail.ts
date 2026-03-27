@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { getVisitById, updateVisit, deleteVisit, getLikedPaintingsForVisit } from '@/services';
+import { getAllMuseums } from '@/services/museumRegistry';
 import type { Visit } from '@/types/database';
 
 export function useVisitDetail(visitId: string) {
@@ -76,12 +77,21 @@ export function useVisitDetail(visitId: string) {
 
   const museumShortName = visit?.museum?.short_name ?? '';
 
+  const museumRegistryId = (() => {
+    const shortName = visit?.museum?.short_name ?? '';
+    const match = getAllMuseums().find(
+      m => m.shortName.toUpperCase() === shortName.toUpperCase()
+    );
+    return match?.id ?? '';
+  })();
+
   return {
     visit,
     loading,
     likedCount,
     likedPaintings,
     museumShortName,
+    museumRegistryId,
     showEditModal,
     setShowEditModal,
     editForm,

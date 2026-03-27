@@ -69,11 +69,11 @@ CREATE TABLE public.visits (
 
 -- User painting likes (many-to-many)
 CREATE TABLE public.user_painting_likes (
-  id UUID,
+  id UUID DEFAULT gen_random_uuid(),
   user_id UUID,
   painting_id UUID NOT NULL CONSTRAINT fk_likes_painting REFERENCES public.paintings ON DELETE CASCADE,
   visit_id UUID CONSTRAINT fk_likes_visit REFERENCES public.visits ON DELETE SET NULL,
-  liked_at TIMESTAMPTZ,
+  liked_at TIMESTAMPTZ DEFAULT now(),
   CONSTRAINT uq_likes_user_painting UNIQUE (user_id, painting_id)
 );
 

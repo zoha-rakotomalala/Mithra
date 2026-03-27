@@ -20,6 +20,7 @@ export function VisitDetail() {
     loading,
     likedCount,
     museumShortName,
+    museumRegistryId,
     showEditModal,
     setShowEditModal,
     editForm,
@@ -38,13 +39,13 @@ export function VisitDetail() {
 
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
       <ScrollView style={shared.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
-          <Text style={typography.artDecoTitle}>{visit.museum?.name?.toUpperCase()}</Text>
+          <Text style={[typography.artDecoTitle, { color: COLORS.gold }]}>{visit.museum?.name?.toUpperCase()}</Text>
           <View style={shared.artDecoDivider} />
         </View>
 
@@ -71,7 +72,7 @@ export function VisitDetail() {
           <View style={styles.actions}>
             <TouchableOpacity
               style={buttons.primary}
-              onPress={() => navigation.navigate(Paths.Search, { museumId: museumShortName, visitId })}
+              onPress={() => navigation.navigate(Paths.Search, { museumId: museumRegistryId, visitId })}
             >
               <Text style={buttons.primaryText}>Browse Collection</Text>
             </TouchableOpacity>

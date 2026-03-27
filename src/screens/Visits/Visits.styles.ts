@@ -166,10 +166,18 @@ export const visitsStyles = StyleSheet.create({
   museumOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: SPACING.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(212, 175, 55, 0.2)',
     backgroundColor: COLORS.cream,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+    borderRadius: 2,
+    padding: SPACING.lg,
+    marginHorizontal: SPACING.md,
+    marginVertical: SPACING.xs,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
 
   colorBadge: {
@@ -181,6 +189,40 @@ export const visitsStyles = StyleSheet.create({
 
   museumOptionText: {
     flex: 1,
+  },
+
+  // Museum Picker Field - distinct from free-text inputs
+  museumPickerField: {
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+    borderRadius: 2,
+    padding: SPACING.md,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.gold,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  chevronIcon: {
+    fontSize: 12,
+    color: COLORS.gold,
+    marginLeft: SPACING.sm,
+  },
+
+  // Date Picker Field - matches museum picker treatment
+  datePickerField: {
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+    borderRadius: 2,
+    padding: SPACING.md,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.gold,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
 
   // Validation
