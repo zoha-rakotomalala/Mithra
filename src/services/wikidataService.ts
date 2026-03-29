@@ -1,4 +1,5 @@
 import type { Painting } from '@/types/painting';
+import {  } from '@/utils/colorGenerator';
 
 const WIKIDATA_ENDPOINT = 'https://query.wikidata.org/sparql';
 
@@ -350,3 +351,18 @@ export function getPopularMuseums(): string[] {
     'Hermitage Museum',
   ];
 }
+
+import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import { registerAdapter } from './museumAdapterRegistry';
+
+export const wikidataAdapter: MuseumServiceAdapter = {
+  museumId: 'WIKIDATA',
+  async search(params: MuseumSearchParams): Promise<MuseumSearchResult> {
+    return searchPaintings({
+      query: params.query,
+      limit: params.maxResults,
+    });
+  },
+};
+
+registerAdapter(wikidataAdapter);

@@ -1,75 +1,73 @@
-import type { UserProfile } from '@/types/painting';
-
-import { useIsFocused } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
-import {
-  ScrollView,
-  StatusBar,
-  Text,
-  View,
-} from 'react-native';
-
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, StatusBar, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { PaintingCard } from '@/components/molecules/PaintingCard/PaintingCard';
 import { ProfileCard } from '@/components/molecules/ProfileCard/ProfileCard';
-
+import { SectionHeader, SyncErrorBanner } from '@/components/molecules';
 import { usePaintings } from '@/contexts/PaintingsContext';
+import { shared, buttons } from '@/styles';
+import { COLORS, SPACING } from '@/constants';
 import { paletteStyles as styles } from './Palette.styles';
+import type { UserProfile } from '@/types/painting';
 
 export function Palette() {
   const isFocused = useIsFocused();
-  const { getPalettePaintings, paintings } = usePaintings();
+  const navigation = useNavigation();
+  const { getPalettePaintings, paintings, syncing, syncError } = usePaintings();
 
-  const [flippedCardId, setFlippedCardId] = useState<'profile' | null | number>(null);
+  const [flippedCardId, setFlippedCardId] = useState<number | string | 'profile' | null>(null);
 
   const palettePaintings = getPalettePaintings();
 
   const userProfile: UserProfile = {
+    username: 'zoha',
     profileColor: '#004d40',
     stats: {
+      paintings: paintings.length,
       followers: '1.2k',
       following: 342,
-      paintings: paintings.length,
     },
-    username: 'artlover',
   };
 
   useEffect(() => {
     if (!isFocused) setFlippedCardId(null);
   }, [isFocused]);
 
-  const handleCardPress = (cardId: 'profile' | number) => {
-    setFlippedCardId(previous => (previous === cardId ? null : cardId));
+  const handleCardPress = (cardId: number | string | 'profile') => {
+    setFlippedCardId(prev => (prev === cardId ? null : cardId));
   };
 
   const gridPositions = [0, 1, 2, 3, 'profile', 4, 5, 6, 7];
 
   return (
-    <>
-      <StatusBar backgroundColor="#1a1a1a" barStyle="light-content" />
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
       <View style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Art Deco Header */}
+          {/* Compact Header - Like Search */}
           <View style={styles.header}>
             <Text style={styles.headerTitle}>PALETTE</Text>
-            <View style={styles.headerDivider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerOrnament}>◆</Text>
-              <View style={styles.dividerLine} />
-            </View>
           </View>
 
-          {/* Stats Bar */}
-          <View style={styles.statsBar}>
-            <View style={styles.statItem}>
+          {syncing && (
+            <View style={{ alignItems: 'center', paddingVertical: SPACING.sm }}>
+              <ActivityIndicator color={COLORS.white} size="small" />
+              <Text style={{ color: COLORS.white, fontSize: 12, marginTop: 4, opacity: 0.7 }}>Syncing...</Text>
+            </View>
+          )}
+
+          <SyncErrorBanner error={syncError} />
+
+          {/* Compact Inline Stats */}
+          <View style={styles.statsRow}>
+            <View style={styles.statCompact}>
               <Text style={styles.statNumber}>{palettePaintings.length}</Text>
-              <Text style={styles.statLabel}>IN PALETTE</Text>
+              <Text style={styles.statLabel}>in palette</Text>
             </View>
-            <View style={styles.statDivider}>
-              <Text style={styles.statDividerText}>·</Text>
-            </View>
-            <View style={styles.statItem}>
+            <Text style={styles.statDivider}>·</Text>
+            <View style={styles.statCompact}>
               <Text style={styles.statNumber}>{paintings.length}</Text>
-              <Text style={styles.statLabel}>COLLECTED</Text>
+              <Text style={styles.statLabel}>collected</Text>
             </View>
           </View>
 
@@ -82,18 +80,24 @@ export function Palette() {
                 ? `${8 - palettePaintings.length} open spots remain in your palette.`
                 : 'Your palette is complete.'}
             </Text>
+            <TouchableOpacity
+              style={[buttons.primary, { marginTop: SPACING.md }]}
+              onPress={() => navigation.navigate('viewCanon' as never)}
+            >
+              <Text style={buttons.primaryText}>View Canon Palette</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Gallery Grid */}
+          {/* Gallery Grid - 3x3 with profile in center */}
           <View style={styles.grid}>
             {gridPositions.map((position, index) => {
               if (position === 'profile') {
                 return (
                   <ProfileCard
-                    isFlipped={flippedCardId === 'profile'}
                     key="profile"
-                    onPress={() => { handleCardPress('profile'); }}
                     profile={userProfile}
+                    isFlipped={flippedCardId === 'profile'}
+                    onPress={() => handleCardPress('profile')}
                   />
                 );
               }
@@ -113,10 +117,10 @@ export function Palette() {
 
               return (
                 <PaintingCard
-                  isFlipped={flippedCardId === painting.id}
                   key={painting.id}
-                  onPress={() => { handleCardPress(painting.id); }}
                   painting={painting}
+                  isFlipped={flippedCardId === painting.id}
+                  onPress={() => handleCardPress(painting.id)}
                 />
               );
             })}
@@ -124,11 +128,7 @@ export function Palette() {
 
           {/* Instructions */}
           <View style={styles.instructions}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.sectionTitle}>HOW IT WORKS</Text>
-              <View style={styles.dividerLine} />
-            </View>
+            <SectionHeader title="HOW IT WORKS" />
 
             <Text style={styles.instructionText}>
               Tap a card to flip and preview details.
@@ -141,9 +141,9 @@ export function Palette() {
             </Text>
           </View>
 
-          <View style={{ height: 40 }} />
+          <View style={{ height: SPACING.xxl }} />
         </ScrollView>
       </View>
-    </>
+    </SafeAreaView>
   );
 }

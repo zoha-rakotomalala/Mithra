@@ -1,0 +1,1 @@
+export { MuseumCollection } from './MuseumCollection';

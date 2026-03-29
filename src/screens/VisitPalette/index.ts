@@ -1,0 +1,1 @@
+export { VisitPalette } from './VisitPalette';

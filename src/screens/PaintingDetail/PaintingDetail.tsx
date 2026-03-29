@@ -7,7 +7,6 @@ import {
   Alert,
   ScrollView,
   StatusBar,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -16,6 +15,8 @@ import FastImage from 'react-native-fast-image';
 
 import { Paths } from '@/navigation/paths';
 
+import { BackButton } from '@/components/atoms';
+import { SectionHeader } from '@/components/molecules';
 import { usePaintings } from '@/contexts/PaintingsContext';
 import { paintingDetailStyles as styles } from './PaintingDetail.styles';
 
@@ -109,9 +110,7 @@ export function PaintingDetail() {
       <View style={styles.container}>
         {/* Art Deco Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => { navigation.goBack(); }} style={styles.backButton}>
-            <Text style={styles.backText}>←</Text>
-          </TouchableOpacity>
+          <BackButton onPress={() => { navigation.goBack(); }} style={styles.backButton} textStyle={styles.backText} />
 
           {inCollection ? <View style={styles.headerActions}>
               <TouchableOpacity
@@ -170,7 +169,6 @@ export function PaintingDetail() {
                     setImageError(true);
                   }}
                   onLoadEnd={() => { setImageLoading(false); }}
-                  onLoadStart={() => { setImageLoading(true); }}
                   resizeMode={FastImage.resizeMode.contain}
                   source={{
                     cache: FastImage.cacheControl.immutable,
@@ -201,11 +199,7 @@ export function PaintingDetail() {
           {/* Quick Add Section - Art Deco Style */}
           {!inCollection && (
             <View style={styles.quickAddSection}>
-              <View style={styles.quickAddDivider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>ADD TO COLLECTION</Text>
-                <View style={styles.dividerLine} />
-              </View>
+              <SectionHeader title="ADD TO COLLECTION" />
 
               <View style={styles.quickAddRow}>
                 <TouchableOpacity
@@ -260,11 +254,7 @@ export function PaintingDetail() {
 
           {/* Details Section */}
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.sectionTitle}>DETAILS</Text>
-              <View style={styles.dividerLine} />
-            </View>
+            <SectionHeader title="DETAILS" />
 
             {currentPainting.medium ? <View style={styles.detailRow}>
                 <Text style={styles.label}>Medium</Text>
@@ -282,11 +272,7 @@ export function PaintingDetail() {
 
           {/* Location Section */}
           {currentPainting.museum ? <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.sectionTitle}>LOCATION</Text>
-                <View style={styles.dividerLine} />
-              </View>
+              <SectionHeader title="LOCATION" />
 
               <Text style={styles.museum}>{currentPainting.museum}</Text>
               {currentPainting.location ? <Text style={styles.location}>{currentPainting.location}</Text> : null}

@@ -1,0 +1,1 @@
+export { CanonPalette } from './CanonPalette';

@@ -1,4 +1,5 @@
 import type { Painting } from '@/types/painting';
+import {  } from '@/utils/colorGenerator';
 
 const CMA_API_BASE = 'https://openaccess-api.clevelandart.org/api/artworks';
 
@@ -155,3 +156,18 @@ function generateColorFromString(string_: string): string {
   }
   return colors[Math.abs(hash) % colors.length];
 }
+
+import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import { registerAdapter } from './museumAdapterRegistry';
+
+export const clevelandAdapter: MuseumServiceAdapter = {
+  museumId: 'CLEVELAND',
+  async search(params: MuseumSearchParams): Promise<MuseumSearchResult> {
+    return searchCleveland({
+      query: params.query,
+      limit: params.maxResults,
+    });
+  },
+};
+
+registerAdapter(clevelandAdapter);

@@ -15,6 +15,7 @@ import {
 
 import { Paths } from '@/navigation/paths';
 
+import { EmptyState, SectionHeader } from '@/components/molecules';
 import { usePaintings } from '@/contexts/PaintingsContext';
 import { artistProfileStyles as styles } from './ArtistProfile.styles';
 
@@ -174,11 +175,7 @@ export function ArtistProfile() {
           {/* Museums with Art Deco styling */}
           {stats.museums.size > 0 && (
             <View style={styles.museumsSection}>
-              <View style={styles.sectionDivider}>
-                <View style={styles.sectionDividerLine} />
-                <Text style={styles.museumsSectionTitle}>MUSEUMS</Text>
-                <View style={styles.sectionDividerLine} />
-              </View>
+              <SectionHeader title="MUSEUMS" titleStyle={styles.museumsSectionTitle} />
               {[...stats.museums.entries()].map(([museum, count]) => (
                 <View key={museum} style={styles.museumRow}>
                   <Text numberOfLines={1} style={styles.museumName}>
@@ -211,13 +208,11 @@ export function ArtistProfile() {
           data={artistPaintings}
           keyExtractor={item => `artist-painting-${item.id}`}
           ListEmptyComponent={() => (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>🎨</Text>
-              <Text style={styles.emptyTitle}>No Paintings Yet</Text>
-              <Text style={styles.emptyText}>
-                Add paintings by {artistName} to your collection
-              </Text>
-            </View>
+            <EmptyState
+              icon="🎨"
+              title="No Paintings Yet"
+              subtitle={`Add paintings by ${artistName} to your collection`}
+            />
           )}
           numColumns={3}
           renderItem={renderPainting}

@@ -1,4 +1,5 @@
 import type { Painting } from '@/types/painting';
+import {  } from '@/utils/colorGenerator';
 
 const VA_API_BASE = 'https://api.vam.ac.uk/v2/objects/search';
 
@@ -146,3 +147,18 @@ function generateColorFromString(string_: string): string {
   }
   return colors[Math.abs(hash) % colors.length];
 }
+
+import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import { registerAdapter } from './museumAdapterRegistry';
+
+export const vaAdapter: MuseumServiceAdapter = {
+  museumId: 'VA',
+  async search(params: MuseumSearchParams): Promise<MuseumSearchResult> {
+    return searchVA({
+      query: params.query,
+      pageSize: params.maxResults,
+    });
+  },
+};
+
+registerAdapter(vaAdapter);

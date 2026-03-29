@@ -1,4 +1,5 @@
 import type { Painting } from '@/types/painting';
+import {  } from '@/utils/colorGenerator';
 
 import Config from 'react-native-config';
 
@@ -208,3 +209,18 @@ function generateColorFromString(string_: string): string {
   }
   return colors[Math.abs(hash) % colors.length];
 }
+
+import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import { registerAdapter } from './museumAdapterRegistry';
+
+export const parisMuseumsAdapter: MuseumServiceAdapter = {
+  museumId: 'PARIS',
+  async search(params: MuseumSearchParams): Promise<MuseumSearchResult> {
+    return searchParisMuseums({
+      query: params.query,
+      limit: params.maxResults,
+    });
+  },
+};
+
+registerAdapter(parisMuseumsAdapter);

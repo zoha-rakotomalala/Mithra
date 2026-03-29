@@ -1,13 +1,18 @@
 import type { Painting } from '@/types/painting';
+import type { UserCollectionEntry } from '@/types/database';
 import type { MMKV } from 'react-native-mmkv';
 
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { mockPaintings } from '@/data/mockPaintings';
+import { createSyncService } from '@/services/syncService';
+import { useAuth } from '@/contexts/AuthContext';
 
 type PaintingsContextType = {
   paintings: Painting[];
   palettePaintingIds: number[];
+  syncing: boolean;
+  syncError: string | null;
 
   // Collection management
   addToCollection: (painting: Painting) => void;
@@ -42,9 +47,17 @@ type PaintingsProviderProps = {
 };
 
 export function PaintingsProvider({ children, storage }: PaintingsProviderProps) {
+  const { user } = useAuth();
   const [paintings, setPaintings] = useState<Painting[]>([]);
   const [palettePaintingIds, setPalettePaintingIds] = useState<number[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+
+  const syncService = useMemo(() => createSyncService(storage), [storage]);
+  // Keep a ref to paintings for use in async callbacks without stale closures
+  const paintingsRef = useRef<Painting[]>(paintings);
+  paintingsRef.current = paintings;
 
   // Load data from storage on mount
   useEffect(() => {
@@ -97,6 +110,63 @@ export function PaintingsProvider({ children, storage }: PaintingsProviderProps)
     }
   }, []);
 
+  // Trigger sync-on-launch when user is authenticated
+  useEffect(() => {
+    if (!user?.id || !isLoaded) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const runSync = async () => {
+      setSyncing(true);
+      setSyncError(null);
+
+      try {
+        await syncService.syncOnLaunch(user.id);
+
+        if (!cancelled) {
+          // Reload data from MMKV after sync has merged remote + local
+          // Only update state if data actually changed to avoid unnecessary re-renders
+          const syncedPaintings = storage.getString(STORAGE_KEYS.PAINTINGS);
+          const syncedPaletteIds = storage.getString(STORAGE_KEYS.PALETTE_IDS);
+
+          if (syncedPaintings) {
+            const parsed = JSON.parse(syncedPaintings);
+            setPaintings((prev: any) => {
+              const prevJson = JSON.stringify(prev);
+              const newJson = JSON.stringify(parsed);
+              return prevJson === newJson ? prev : parsed;
+            });
+          }
+
+          if (syncedPaletteIds) {
+            const parsed = JSON.parse(syncedPaletteIds);
+            setPalettePaintingIds((prev: any) => {
+              const prevJson = JSON.stringify(prev);
+              const newJson = JSON.stringify(parsed);
+              return prevJson === newJson ? prev : parsed;
+            });
+          }
+
+          setSyncing(false);
+        }
+      } catch (error: any) {
+        if (!cancelled) {
+          setSyncing(false);
+          setSyncError(error?.message || 'Failed to sync on launch');
+        }
+      }
+    };
+
+    runSync();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, isLoaded, syncService, loadFromStorage]);
+
+
   const saveToStorage = useCallback(() => {
     try {
       storage.set(STORAGE_KEYS.PAINTINGS, JSON.stringify(paintings));
@@ -129,16 +199,43 @@ export function PaintingsProvider({ children, storage }: PaintingsProviderProps)
         wantToVisit: painting.wantToVisit === undefined ? true : painting.wantToVisit,
       };
 
+      // Sync to remote if user is authenticated
+      if (user?.id) {
+        const now = new Date().toISOString();
+        const entry: UserCollectionEntry = {
+          id: '',
+          user_id: user.id,
+          painting_id: String(newPainting.id),
+          is_seen: newPainting.isSeen || false,
+          want_to_visit: newPainting.wantToVisit || false,
+          seen_date: newPainting.seenDate || null,
+          date_added: newPainting.dateAdded || now,
+          notes: newPainting.notes || null,
+          created_at: now,
+          updated_at: now,
+        };
+        syncService.upsertCollectionEntry(user.id, entry).catch(err => {
+          setSyncError(err?.message || 'Failed to sync collection entry');
+        });
+      }
+
       return [...previous, newPainting];
     });
-  }, []);
+  }, [user, syncService]);
 
   // Remove painting from collection
   const removeFromCollection = useCallback((paintingId: number) => {
     setPaintings(previous => previous.filter(p => p.id !== paintingId));
     // Also remove from palette if present
     setPalettePaintingIds(previous => previous.filter(id => id !== paintingId));
-  }, []);
+
+    // Sync deletion to remote
+    if (user?.id) {
+      syncService.deleteCollectionEntry(user.id, String(paintingId)).catch(err => {
+        setSyncError(err?.message || 'Failed to sync collection removal');
+      });
+    }
+  }, [user, syncService]);
 
   // Check if painting is in collection
   const isInCollection = useCallback((paintingId: number): boolean => {
@@ -148,8 +245,8 @@ export function PaintingsProvider({ children, storage }: PaintingsProviderProps)
   // Toggle painting as seen/unseen
   // Mutually exclusive with wantToVisit
   const toggleSeen = useCallback((paintingId: number) => {
-    setPaintings(previous =>
-      previous.map(painting =>
+    setPaintings(previous => {
+      const updated = previous.map(painting =>
         painting.id === paintingId
           ? {
               ...painting,
@@ -158,15 +255,40 @@ export function PaintingsProvider({ children, storage }: PaintingsProviderProps)
               wantToVisit: painting.isSeen ? false : false, // If marking as seen, remove want to visit
             }
           : painting
-      )
-    );
-  }, []);
+      );
+
+      // Sync the updated entry to remote
+      if (user?.id) {
+        const updatedPainting = updated.find(p => p.id === paintingId);
+        if (updatedPainting) {
+          const now = new Date().toISOString();
+          const entry: UserCollectionEntry = {
+            id: '',
+            user_id: user.id,
+            painting_id: String(paintingId),
+            is_seen: updatedPainting.isSeen || false,
+            want_to_visit: updatedPainting.isSeen ? false : (updatedPainting.wantToVisit || false),
+            seen_date: updatedPainting.isSeen ? (updatedPainting.seenDate || now) : null,
+            date_added: updatedPainting.dateAdded || now,
+            notes: updatedPainting.notes || null,
+            created_at: now,
+            updated_at: now,
+          };
+          syncService.upsertCollectionEntry(user.id, entry).catch(err => {
+            setSyncError(err?.message || 'Failed to sync seen status');
+          });
+        }
+      }
+
+      return updated;
+    });
+  }, [user, syncService]);
 
   // Toggle want to visit
   // Mutually exclusive with isSeen
   const toggleWantToVisit = useCallback((paintingId: number) => {
-    setPaintings(previous =>
-      previous.map(painting =>
+    setPaintings(previous => {
+      const updated = previous.map(painting =>
         painting.id === paintingId
           ? {
               ...painting,
@@ -174,9 +296,34 @@ export function PaintingsProvider({ children, storage }: PaintingsProviderProps)
               wantToVisit: !painting.wantToVisit,
             }
           : painting
-      )
-    );
-  }, []);
+      );
+
+      // Sync the updated entry to remote
+      if (user?.id) {
+        const updatedPainting = updated.find(p => p.id === paintingId);
+        if (updatedPainting) {
+          const now = new Date().toISOString();
+          const entry: UserCollectionEntry = {
+            id: '',
+            user_id: user.id,
+            painting_id: String(paintingId),
+            is_seen: updatedPainting.wantToVisit ? false : (updatedPainting.isSeen || false),
+            want_to_visit: updatedPainting.wantToVisit || false,
+            seen_date: updatedPainting.wantToVisit ? null : (updatedPainting.seenDate || null),
+            date_added: updatedPainting.dateAdded || now,
+            notes: updatedPainting.notes || null,
+            created_at: now,
+            updated_at: now,
+          };
+          syncService.upsertCollectionEntry(user.id, entry).catch(err => {
+            setSyncError(err?.message || 'Failed to sync want-to-visit status');
+          });
+        }
+      }
+
+      return updated;
+    });
+  }, [user, syncService]);
 
   // Add painting to palette (max 8)
   const addToPalette = useCallback((paintingId: number): boolean => {
@@ -188,14 +335,31 @@ export function PaintingsProvider({ children, storage }: PaintingsProviderProps)
       return false;
     }
 
-    setPalettePaintingIds(previous => [...previous, paintingId]);
+    const newIds = [...palettePaintingIds, paintingId];
+    setPalettePaintingIds(newIds);
+
+    // Sync palette to remote
+    if (user?.id) {
+      syncService.upsertPalette(user.id, newIds.map(String)).catch(err => {
+        setSyncError(err?.message || 'Failed to sync palette');
+      });
+    }
+
     return true;
-  }, [palettePaintingIds]);
+  }, [palettePaintingIds, user, syncService]);
 
   // Remove painting from palette
   const removeFromPalette = useCallback((paintingId: number) => {
-    setPalettePaintingIds(previous => previous.filter(id => id !== paintingId));
-  }, []);
+    const newIds = palettePaintingIds.filter(id => id !== paintingId);
+    setPalettePaintingIds(newIds);
+
+    // Sync palette to remote
+    if (user?.id) {
+      syncService.upsertPalette(user.id, newIds.map(String)).catch(err => {
+        setSyncError(err?.message || 'Failed to sync palette');
+      });
+    }
+  }, [palettePaintingIds, user, syncService]);
 
   // Check if painting is in palette
   const isPaintingInPalette = useCallback((paintingId: number): boolean => {
@@ -255,6 +419,8 @@ export function PaintingsProvider({ children, storage }: PaintingsProviderProps)
         palettePaintingIds,
         removeFromCollection,
         removeFromPalette,
+        syncing,
+        syncError,
         toggleSeen,
         toggleWantToVisit,
       }}

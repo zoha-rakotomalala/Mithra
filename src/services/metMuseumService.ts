@@ -1,4 +1,5 @@
 import type { Painting } from '@/types/painting';
+import {  } from '@/utils/colorGenerator';
 
 const MET_API_BASE = 'https://collectionapi.metmuseum.org/public/collection/v1';
 const objectCache = new Map<string, any>();
@@ -169,7 +170,7 @@ function parseMetObject(data: any, objectID: number): null | Painting {
       color: generateColorFromString(title),
       description,
       dimensions,
-      id: objectID,
+      id: `met-${objectID}`,
       imageUrl: images.full,        // Full resolution for detail view
       isSeen: false,
       location: 'New York City, USA',
@@ -332,3 +333,22 @@ export function getPopularMetArtists(): string[] {
     'Jean-Baptiste-Camille Corot',
   ];
 }
+
+import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import { registerAdapter } from './museumAdapterRegistry';
+
+export const metMuseumAdapter: MuseumServiceAdapter = {
+  museumId: 'MET',
+  async search(params: MuseumSearchParams): Promise<MuseumSearchResult> {
+    const result = await searchMetMuseum({
+      query: params.query,
+      hasImages: true,
+    });
+    return {
+      paintings: result.paintings.slice(0, params.maxResults),
+      totalResults: result.totalResults,
+    };
+  },
+};
+
+registerAdapter(metMuseumAdapter);

@@ -1,20 +1,19 @@
 import type { Painting } from '@/types/painting';
-
+import { cleanArtistName } from './utils/searchHelpers';
+import {  } from '@/utils/colorGenerator';
 import Config from 'react-native-config';
-
-import { cleanArtistName } from './searchHelpers';
 
 const HARVARD_API_BASE = 'https://api.harvardartmuseums.org/v1';
 // Get free API key from: https://harvardartmuseums.org/collections/api
 const API_KEY = Config.HARVARD_API_KEY; // TODO: Move to config/env
 
-type HarvardSearchParameters = {
-  page?: number;
+interface HarvardSearchParams {
   query: string;
+  page?: number;
   size?: number;
 }
 
-type HarvardSearchResult = {
+interface HarvardSearchResult {
   paintings: Painting[];
   totalResults: number;
 }
@@ -23,26 +22,26 @@ type HarvardSearchResult = {
  * Search Harvard Art Museums collection
  */
 export async function searchHarvard(
-  parameters: HarvardSearchParameters
+  params: HarvardSearchParams
 ): Promise<HarvardSearchResult> {
   try {
-    const { page = 1, query, size = 20 } = parameters;
+    const { query, page = 1, size = 20 } = params;
 
     if (!query || query.trim().length === 0) {
       return { paintings: [], totalResults: 0 };
     }
 
     // Use the correct endpoint: /object (not /v1/object)
-    const queryParameters = new URLSearchParams({
-      apikey: API_KEY,
+    const queryParams = new URLSearchParams({
+      apikey: API_KEY || "",
+      q: query.trim(),
       classification: 'Paintings',
       hasimage: '1',
       page: page.toString(),
-      q: query.trim(),
       size: size.toString(),
     });
 
-    const url = `${HARVARD_API_BASE}/object?${queryParameters.toString()}`;
+    const url = `${HARVARD_API_BASE}/object?${queryParams.toString()}`;
     console.log('🏛️ Searching Harvard Art Museums:', url);
 
     const response = await fetch(url);
@@ -63,8 +62,8 @@ export async function searchHarvard(
     const info = data.info || {};
 
     const paintings = records
-      .map((object: any) => parseHarvardObject(object))
-      .filter((p: null | Painting) => p !== null) as Painting[];
+      .map((obj: any) => parseHarvardObject(obj))
+      .filter((p: Painting | null) => p !== null) as Painting[];
 
     return {
       paintings,
@@ -80,18 +79,18 @@ export async function searchHarvard(
 /**
  * Parse Harvard object into Painting format
  */
-function parseHarvardObject(object: any): null | Painting {
+function parseHarvardObject(obj: any): Painting | null {
   try {
-    const title = object.title || 'Untitled';
+    const title = obj.title || 'Untitled';
 
     // Extract and clean artist
-    const artistDisplay = object.people?.[0]?.name ||
-                          object.culture ||
+    const artistDisplay = obj.people?.[0]?.name ||
+                          obj.culture ||
                           'Unknown Artist';
     const artist = cleanArtistName(artistDisplay);
 
     // Image URLs
-    const imageId = object.primaryimageurl;
+    const imageId = obj.primaryimageurl;
     if (!imageId) return null;
 
     const imageUrl = imageId;
@@ -101,37 +100,37 @@ function parseHarvardObject(object: any): null | Painting {
 
     // Extract year
     let year: number | undefined;
-    if (object.dated) {
-      const match = object.dated.match(/\d{4}/);
-      if (match) year = Number.parseInt(match[0]);
+    if (obj.dated) {
+      const match = obj.dated.match(/\d{4}/);
+      if (match) year = parseInt(match[0]);
     }
 
     // Build description
     const descParts: string[] = [];
-    if (object.culture) descParts.push(object.culture);
-    if (object.period) descParts.push(object.period);
-    if (object.technique) descParts.push(object.technique);
+    if (obj.culture) descParts.push(obj.culture);
+    if (obj.period) descParts.push(obj.period);
+    if (obj.technique) descParts.push(obj.technique);
 
     // Extract color
-    const color = object.colors && object.colors.length > 0
-      ? `#${object.colors[0].color}`
+    const color = obj.colors && obj.colors.length > 0
+      ? `#${obj.colors[0].color}`
       : generateColorFromString(title);
 
     return {
-      artist,
-      color,
-      description: descParts.length > 0 ? descParts.join('. ') : undefined,
-      dimensions: object.dimensions || undefined,
-      id: `harvard-${object.id}`,
-      imageUrl,
-      isSeen: false,
-      location: 'Cambridge, Massachusetts, USA',
-      medium: object.medium || undefined,
-      museum: 'Harvard Art Museums',
-      thumbnailUrl,
+      id: `harvard-${obj.id}`,
       title,
-      wantToVisit: false,
+      artist,
       year,
+      medium: obj.medium || undefined,
+      dimensions: obj.dimensions || undefined,
+      museum: 'Harvard Art Museums',
+      location: 'Cambridge, Massachusetts, USA',
+      description: descParts.length > 0 ? descParts.join('. ') : undefined,
+      imageUrl,
+      thumbnailUrl,
+      color,
+      isSeen: false,
+      wantToVisit: false,
     };
   } catch (error) {
     console.error('Error parsing Harvard object:', error);
@@ -153,14 +152,29 @@ export function getPopularHarvardArtists(): string[] {
   ];
 }
 
-function generateColorFromString(string_: string): string {
+function generateColorFromString(str: string): string {
   const colors = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
     '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
   ];
   let hash = 0;
-  for (let index = 0; index < string_.length; index++) {
-    hash = string_.charCodeAt(index) + ((hash << 5) - hash);
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
   }
   return colors[Math.abs(hash) % colors.length];
 }
+
+import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import { registerAdapter } from './museumAdapterRegistry';
+
+export const harvardAdapter: MuseumServiceAdapter = {
+  museumId: 'HARVARD',
+  async search(params: MuseumSearchParams): Promise<MuseumSearchResult> {
+    return searchHarvard({
+      query: params.query,
+      size: params.maxResults,
+    });
+  },
+};
+
+registerAdapter(harvardAdapter);

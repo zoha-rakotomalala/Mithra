@@ -1,16 +1,20 @@
 export type Painting = {
   artist: string;
   color: string;
+  culture?: string;
+  department?: string;
   description?: string;
   dimensions?: string;
-  id: number;
+  id: string;
   imageUrl?: string;          // Full size image for detail view
   location?: string;
   medium?: string;
   museum?: string;
+  objectURL?: string;
+  period?: string;
   thumbnailUrl?: string;      // Small thumbnail for lists/grids
   title: string;
-  year?: number;
+  year?: number | string;
 
   // User interaction metadata
   dateAdded?: string;         // ISO date string when added to collection

@@ -1,15 +1,16 @@
 import type { Painting } from '@/types/painting';
-
-import { cleanArtistName } from './searchHelpers';
+import { cleanArtistName } from './utils/searchHelpers';
+import {  } from '@/utils/colorGenerator';
 
 const RIJKS_SEARCH_API = 'https://data.rijksmuseum.nl/search/collection';
 
-type RijksSearchParameters = {
-  limit?: number;
+interface RijksSearchParams {
   query: string;
+  searchType: 'artist' | 'title';
+  limit?: number;
 }
 
-type RijksSearchResult = {
+interface RijksSearchResult {
   paintings: Painting[];
   totalResults: number;
 }
@@ -18,25 +19,40 @@ type RijksSearchResult = {
  * Search Rijksmuseum collection using Linked Art API
  */
 export async function searchRijksmuseum(
-  parameters: RijksSearchParameters
+  params: RijksSearchParams
 ): Promise<RijksSearchResult> {
   try {
-    const { limit = 30, query } = parameters;
+    const { query, limit = 30 } = params;
 
     if (!query || query.trim().length === 0) {
       return { paintings: [], totalResults: 0 };
     }
 
     // Build search URL - use description for broad search
-    const searchParameters = new URLSearchParams({
-      description: query.trim(),
+    const searchParams = new URLSearchParams({
       imageAvailable: 'true',
     });
 
-    const searchUrl = `${RIJKS_SEARCH_API}?${searchParameters.toString()}`;
+    if (params.searchType === 'artist') {
+      // Partial matching already handled by Rijks
+      searchParams.set('creator', query.trim());
+    } else {
+      // Title search + smart fallback
+      searchParams.set('title', query.trim());
+      searchParams.set('description', query.trim());
+    }
+
+    const searchUrl = `${RIJKS_SEARCH_API}?${searchParams.toString()}`;
     console.log('🇳🇱 Searching Rijksmuseum:', searchUrl);
 
     const response = await fetch(searchUrl);
+
+    console.log('🧪 Rijks raw object:', {
+      id: data.id,
+      type: data.type,
+      label: data._label,
+      hasRepresentation: !!data.representation,
+    });
 
     if (!response.ok) {
       console.warn(`Rijksmuseum search error: ${response.status}`);
@@ -52,9 +68,21 @@ export async function searchRijksmuseum(
     }
 
     // Fetch full objects (first N results)
-    const objectIds = orderedItems.slice(0, limit).map((item: any) => item.id);
-    const paintings = await resolveObjects(objectIds);
+    const rawItems = Array.isArray(data.orderedItems)
+      ? data.orderedItems
+      : [];
 
+    const validItems = rawItems.filter(
+      (item: any) => item && typeof item.id === 'string'
+    );
+
+    const objectIds = validItems
+      .slice(0, limit)
+      .map((item: any) => item.id);
+
+    console.log(
+      `🇳🇱 Rijks search: ${rawItems.length} raw items → ${validItems.length} valid IDs`
+    );
     console.log(`🇳🇱 Rijksmuseum: ${paintings.length} paintings resolved`);
 
     return {
@@ -79,16 +107,19 @@ async function resolveObjects(objectIds: string[]): Promise<Painting[]> {
 /**
  * Resolve a single object ID to painting data
  */
-async function resolveObject(objectId: string): Promise<null | Painting> {
+async function resolveObject(objectId: string): Promise<Painting | null> {
   try {
+    console.log('🧩 Resolving Rijks object:', objectId);
+
     const response = await fetch(objectId, {
       headers: {
-        'Accept': 'application/ld+json',
+        // Request Linked Art JSON-LD explicitly
+        Accept: 'application/ld+json'
       },
     });
 
     if (!response.ok) {
-      console.warn(`Failed to resolve Rijks object: ${objectId}`);
+      console.warn(`Failed to resolve Rijks object: ${objectId} (${response.status})`);
       return null;
     }
 
@@ -103,10 +134,18 @@ async function resolveObject(objectId: string): Promise<null | Painting> {
 /**
  * Parse Linked Art object into Painting format
  */
-function parseLinkedArtObject(data: any): null | Painting {
+function parseLinkedArtObject(data: any): Painting | null {
   try {
     // Must be a HumanMadeObject
-    if (data.type !== 'HumanMadeObject') return null;
+    const isHumanMadeObject =
+      data.type === 'HumanMadeObject' ||
+      Array.isArray(data.type) && data.type.includes('HumanMadeObject') ||
+      data.classified_as?.some((c: any) =>
+        c._label?.toLowerCase().includes('object')
+      );
+
+    const types = Array.isArray(data.type) ? data.type : [data.type];
+    if (!types.includes('HumanMadeObject')) return null;
 
     // Extract title
     const title = extractTitle(data);
@@ -116,12 +155,7 @@ function parseLinkedArtObject(data: any): null | Painting {
     const artistDisplay = extractArtist(data);
     const artist = cleanArtistName(artistDisplay);
 
-    // Extract image - THIS IS THE KEY FIX
-    const imageUrl = extractImage(data);
-    if (!imageUrl) {
-      console.log(`❌ No image for: ${title}`);
-      return null;
-    }
+    const imageUrl = extractImage(data) ?? undefined;
 
     // Extract year
     const year = extractYear(data);
@@ -133,20 +167,20 @@ function parseLinkedArtObject(data: any): null | Painting {
     const medium = extractMedium(data);
 
     return {
-      artist,
-      color: generateColorFromString(title),
-      description: undefined,
-      dimensions,
       id: `rijks-${generateIdFromUrl(data.id)}`,
-      imageUrl,
-      isSeen: false,
-      location: 'Amsterdam, Netherlands',
-      medium,
-      museum: 'Rijksmuseum',
-      thumbnailUrl: imageUrl,
       title,
-      wantToVisit: false,
+      artist,
       year,
+      medium,
+      dimensions,
+      museum: 'Rijksmuseum',
+      location: 'Amsterdam, Netherlands',
+      description: undefined,
+      imageUrl,
+      thumbnailUrl: imageUrl,
+      color: generateColorFromString(title),
+      isSeen: false,
+      wantToVisit: false,
     };
   } catch (error) {
     console.error('Error parsing Rijks Linked Art object:', error);
@@ -189,7 +223,7 @@ function extractArtist(data: any): string {
 /**
  * Extract image URL - FIXED to handle both patterns
  */
-function extractImage(data: any): null | string {
+function extractImage(data: any): string | null {
   // Pattern 1: representation (standard Linked Art)
   if (data.representation) {
     const reps = Array.isArray(data.representation)
@@ -245,7 +279,7 @@ function extractYear(data: any): number | undefined {
   // Try begin_of_the_begin first
   if (timespan.begin_of_the_begin) {
     const match = timespan.begin_of_the_begin.match(/\d{4}/);
-    if (match) return Number.parseInt(match[0]);
+    if (match) return parseInt(match[0]);
   }
 
   // Try identified_by
@@ -253,7 +287,7 @@ function extractYear(data: any): number | undefined {
     const dateLabel = timespan.identified_by.find((id: any) => id.type === 'Name');
     if (dateLabel?.content) {
       const match = dateLabel.content.match(/\d{4}/);
-      if (match) return Number.parseInt(match[0]);
+      if (match) return parseInt(match[0]);
     }
   }
 
@@ -307,7 +341,7 @@ function extractMedium(data: any): string | undefined {
  * Generate numeric ID from URL
  */
 function generateIdFromUrl(url: string): string {
-  const match = /([^/]+)$/.exec(url);
+  const match = url.match(/([^\/]+)$/);
   return match ? match[1] : Date.now().toString();
 }
 
@@ -324,14 +358,30 @@ export function getPopularRijksmuseumArtists(): string[] {
   ];
 }
 
-function generateColorFromString(string_: string): string {
+function generateColorFromString(str: string): string {
   const colors = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
     '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
   ];
   let hash = 0;
-  for (let index = 0; index < string_.length; index++) {
-    hash = string_.charCodeAt(index) + ((hash << 5) - hash);
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
   }
   return colors[Math.abs(hash) % colors.length];
 }
+
+import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import { registerAdapter } from './museumAdapterRegistry';
+
+export const rijksmuseumAdapter: MuseumServiceAdapter = {
+  museumId: 'RIJKS',
+  async search(params: MuseumSearchParams): Promise<MuseumSearchResult> {
+    return searchRijksmuseum({
+      query: params.query,
+      searchType: params.searchType,
+      limit: params.maxResults,
+    });
+  },
+};
+
+registerAdapter(rijksmuseumAdapter);

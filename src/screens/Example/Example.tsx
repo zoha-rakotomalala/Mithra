@@ -10,7 +10,7 @@ import { SafeScreen } from '@/components/templates';
 
 const MAX_RANDOM_ID = 9;
 
-function Example() {
+export function Example() {
   const { t } = useTranslation();
   const { useFetchOneQuery } = useUser();
   const { toggleLanguage } = useI18n();
@@ -133,4 +133,3 @@ function Example() {
   );
 }
 
-export default Example;

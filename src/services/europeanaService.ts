@@ -1,17 +1,17 @@
 import type { Painting } from '@/types/painting';
-
+import {  } from '@/utils/colorGenerator';
 import Config from 'react-native-config';
 
 const EUROPEANA_API_BASE = 'https://api.europeana.eu/record/v2';
 const API_KEY = Config.EUROPEANA_API_KEY;
 
-type EuropeanaSearchParameters = {
-  page?: number;
+interface EuropeanaSearchParams {
   query: string;
+  page?: number;
   rows?: number;
 }
 
-type EuropeanaSearchResult = {
+interface EuropeanaSearchResult {
   paintings: Painting[];
   totalResults: number;
 }
@@ -20,28 +20,28 @@ type EuropeanaSearchResult = {
  * Search Europeana collection (50M+ objects from European cultural institutions)
  */
 export async function searchEuropeana(
-  parameters: EuropeanaSearchParameters
+  params: EuropeanaSearchParams
 ): Promise<EuropeanaSearchResult> {
   try {
-    const { page = 1, query, rows = 30 } = parameters;
+    const { query, page = 1, rows = 30 } = params;
 
     if (!query || query.trim().length === 0) {
       return { paintings: [], totalResults: 0 };
     }
 
-    const queryParameters = new URLSearchParams({
-      media: 'true', // Must have media
-      profile: 'rich', // Get full metadata
-      qf: 'TYPE:IMAGE', // Filter for images
+    const queryParams = new URLSearchParams({
+      wskey: API_KEY || "",
       query: query.trim(),
-      reusability: 'open', // Only openly licensed content
-      rows: rows.toString(),
-      start: ((page - 1) * rows + 1).toString(),
+      qf: 'TYPE:IMAGE', // Filter for images
       theme: 'art', // Focus on art theme
-      wskey: API_KEY,
+      reusability: 'open', // Only openly licensed content
+      media: 'true', // Must have media
+      start: ((page - 1) * rows + 1).toString(),
+      rows: rows.toString(),
+      profile: 'rich', // Get full metadata
     });
 
-    const url = `${EUROPEANA_API_BASE}/search.json?${queryParameters.toString()}`;
+    const url = `${EUROPEANA_API_BASE}/search.json?${queryParams.toString()}`;
     console.log('🇪🇺 Searching Europeana:', url);
 
     const response = await fetch(url);
@@ -64,7 +64,7 @@ export async function searchEuropeana(
 
     const paintings = items
       .map((item: any) => parseEuropeanaObject(item))
-      .filter((p: null | Painting) => p !== null) as Painting[];
+      .filter((p: Painting | null) => p !== null) as Painting[];
 
     return {
       paintings,
@@ -79,7 +79,7 @@ export async function searchEuropeana(
 /**
  * Parse Europeana object into Painting format
  */
-function parseEuropeanaObject(item: any): null | Painting {
+function parseEuropeanaObject(item: any): Painting | null {
   try {
     // Extract title (can be array or string)
     const titleRaw = item.title || item.dcTitle;
@@ -110,9 +110,9 @@ function parseEuropeanaObject(item: any): null | Painting {
     let year: number | undefined;
     const yearRaw = item.year || item.edmTimespanLabel;
     if (yearRaw) {
-      const yearString = Array.isArray(yearRaw) ? yearRaw[0] : yearRaw;
-      const match = yearString.toString().match(/\d{4}/);
-      if (match) year = Number.parseInt(match[0]);
+      const yearStr = Array.isArray(yearRaw) ? yearRaw[0] : yearRaw;
+      const match = yearStr.toString().match(/\d{4}/);
+      if (match) year = parseInt(match[0]);
     }
 
     // Extract contributing institution
@@ -139,20 +139,20 @@ function parseEuropeanaObject(item: any): null | Painting {
       : item.country || 'Europe';
 
     return {
-      artist: cleanText(artist),
-      color: generateColorFromString(title),
-      description: descParts.length > 0 ? cleanText(descParts.join('. ')) : undefined,
-      dimensions: undefined,
       id: `europeana-${item.id}`,
-      imageUrl,
-      isSeen: false,
-      location: country,
-      medium: item.dcFormat ? extractMedium(item.dcFormat) : undefined,
-      museum: dataProvider,
-      thumbnailUrl,
       title: cleanText(title),
-      wantToVisit: false,
+      artist: cleanText(artist),
       year,
+      medium: item.dcFormat ? extractMedium(item.dcFormat) : undefined,
+      dimensions: undefined,
+      museum: dataProvider,
+      location: country,
+      description: descParts.length > 0 ? cleanText(descParts.join('. ')) : undefined,
+      imageUrl,
+      thumbnailUrl,
+      color: generateColorFromString(title),
+      isSeen: false,
+      wantToVisit: false,
     };
   } catch (error) {
     console.error('Error parsing Europeana object:', error);
@@ -164,8 +164,8 @@ function parseEuropeanaObject(item: any): null | Painting {
  * Extract medium from format field (can be array)
  */
 function extractMedium(format: any): string | undefined {
-  const mediumString = Array.isArray(format) ? format[0] : format;
-  return mediumString ? cleanText(mediumString) : undefined;
+  const mediumStr = Array.isArray(format) ? format[0] : format;
+  return mediumStr ? cleanText(mediumStr) : undefined;
 }
 
 /**
@@ -173,8 +173,8 @@ function extractMedium(format: any): string | undefined {
  */
 function cleanText(text: string): string {
   return text
-    .replaceAll(/<[^>]*>/g, '') // Remove HTML tags
-    .replaceAll(/\s+/g, ' ') // Normalize whitespace
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .replace(/\s+/g, ' ') // Normalize whitespace
     .trim();
 }
 
@@ -194,14 +194,29 @@ export function getPopularEuropeanaSearches(): string[] {
   ];
 }
 
-function generateColorFromString(string_: string): string {
+function generateColorFromString(str: string): string {
   const colors = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
     '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
   ];
   let hash = 0;
-  for (let index = 0; index < string_.length; index++) {
-    hash = string_.charCodeAt(index) + ((hash << 5) - hash);
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
   }
   return colors[Math.abs(hash) % colors.length];
 }
+
+import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import { registerAdapter } from './museumAdapterRegistry';
+
+export const europeanaAdapter: MuseumServiceAdapter = {
+  museumId: 'EUROPEANA',
+  async search(params: MuseumSearchParams): Promise<MuseumSearchResult> {
+    return searchEuropeana({
+      query: params.query,
+      rows: params.maxResults,
+    });
+  },
+};
+
+registerAdapter(europeanaAdapter);

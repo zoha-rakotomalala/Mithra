@@ -1,124 +1,114 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { COLORS, SPACING, CARD } from '@/constants';
 
-/**
- * Palette Screen Styles
- * Art Deco styling for the palette grid layout
- */
+const PALETTE_CARD_SIZE = (CARD.gridWidth * 3 + SPACING.md * 2) / 3;
 
 export const paletteStyles = StyleSheet.create({
-  container: {
-    backgroundColor: COLORS.cream,
+  /* Safe Area - Matches Search */
+  safeArea: {
     flex: 1,
+    backgroundColor: COLORS.black,
+    paddingTop: Platform.OS === 'android' ? 25 : 0, // Fix Android notch overlap
   },
 
-  /* Header */
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.cream,
+  },
+
+  /* Header - Compact like Search */
   header: {
-    alignItems: 'center',
     backgroundColor: COLORS.black,
     borderBottomColor: COLORS.gold,
     borderBottomWidth: 2,
-    paddingBottom: SPACING.md + 4,
-    paddingTop: 60,
+    paddingBottom: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.md,
   },
   headerTitle: {
-    color: COLORS.gold,
-    fontSize: 32,
-    fontWeight: '300',
-    letterSpacing: 4,
-    marginBottom: SPACING.sm + 4,
-  },
-  headerDivider: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    width: '60%',
-  },
-  dividerLine: {
-    backgroundColor: COLORS.gold,
-    flex: 1,
-    height: 1,
-    opacity: 0.5,
-  },
-  dividerOrnament: {
-    color: COLORS.gold,
-    fontSize: 12,
-    marginHorizontal: SPACING.sm + 4,
-  },
-
-  /* Stats */
-  statsBar: {
-    backgroundColor: COLORS.black,
-    borderBottomColor: COLORS.gold,
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: SPACING.md,
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statNumber: {
-    color: COLORS.gold,
     fontSize: 28,
     fontWeight: '300',
+    letterSpacing: 4,
+    color: COLORS.gold,
+    textTransform: 'uppercase',
+  },
+
+  /* Compact Stats - Inline */
+  statsRow: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.black,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(212, 175, 55, 0.3)',
+  },
+  statCompact: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
+  },
+  statNumber: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.gold,
   },
   statLabel: {
-    color: COLORS.gold,
     fontSize: 10,
-    letterSpacing: 2,
-    marginTop: 4,
-    opacity: 0.7,
+    color: 'rgba(212, 175, 55, 0.5)',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   statDivider: {
-    justifyContent: 'center',
-  },
-  statDividerText: {
-    color: COLORS.gold,
-    fontSize: 24,
-    opacity: 0.3,
+    fontSize: 14,
+    color: 'rgba(212, 175, 55, 0.3)',
   },
 
   /* Info */
   infoSection: {
-    borderBottomColor: COLORS.gray200,
+    padding: SPACING.lg,
     borderBottomWidth: 1,
-    padding: SPACING.md + 4,
+    borderBottomColor: COLORS.border,
   },
   infoText: {
-    color: COLORS.text,
-    fontSize: 14,
-    letterSpacing: 1,
     textAlign: 'center',
+    color: COLORS.text,
+    letterSpacing: 1,
   },
 
-  /* Grid */
+  /* Grid - 3x3 layout */
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'center',
     paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.md + 4,
+    paddingTop: SPACING.lg,
   },
   emptySlot: {
-    margin: 4,
-    width: CARD.gridWidth,
+    width: PALETTE_CARD_SIZE,
+    height: PALETTE_CARD_SIZE * 1.3,
+    padding: 4,
   },
   emptyFrame: {
-    alignItems: 'center',
     aspectRatio: 0.75,
-    borderColor: COLORS.gold,
     borderWidth: 2,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+    borderRadius: 2,
     justifyContent: 'center',
-    opacity: 0.3,
+    alignItems: 'center',
   },
   emptyIcon: {
-    color: COLORS.gray500,
     fontSize: 32,
+    color: COLORS.gray400,
   },
   emptyText: {
-    color: COLORS.gray500,
     fontSize: 10,
+    color: COLORS.gray400,
+    marginTop: SPACING.xs,
     letterSpacing: 1,
-    marginTop: 4,
+    textTransform: 'uppercase',
   },
 
   /* Instructions */
@@ -126,22 +116,15 @@ export const paletteStyles = StyleSheet.create({
     padding: SPACING.lg,
   },
   sectionHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
     marginBottom: SPACING.md,
   },
   sectionTitle: {
     color: COLORS.text,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 2,
     marginHorizontal: SPACING.md,
   },
   instructionText: {
-    color: COLORS.textLight,
-    fontSize: 14,
-    lineHeight: 22,
-    marginBottom: SPACING.sm,
     textAlign: 'center',
+    marginBottom: SPACING.sm,
+    lineHeight: 22,
   },
 });

@@ -3,17 +3,22 @@ import {
   Alert,
   ScrollView,
   StatusBar,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-
+import { useNavigation } from '@react-navigation/native';
+import { Paths } from '@/navigation/paths';
+import { useAuth } from '@/contexts/AuthContext';
 import { storage } from '@/App';
 import { usePaintings } from '@/contexts/PaintingsContext';
+import { shared, typography, buttons } from '@/styles';
+import { COLORS, SPACING } from '@/constants';
 
 export function Settings() {
   const { paintings, palettePaintingIds } = usePaintings();
+  const navigation = useNavigation();
+  const { user, signOut } = useAuth();
 
   const handleClearStorage = () => {
     Alert.alert(
@@ -43,117 +48,108 @@ export function Settings() {
     );
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      Alert.alert('Signed Out', 'You have successfully signed out.');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to sign out');
+    }
+  };
+
   return (
     <>
-      <StatusBar backgroundColor="#1a1a1a" barStyle="light-content" />
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>ARCHIVE</Text>
+      <StatusBar backgroundColor={COLORS.black} barStyle="light-content" />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={[shared.container, { backgroundColor: COLORS.black }]}
+        contentContainerStyle={{ padding: SPACING.xl }}
+      >
+        <Text style={[typography.h1, { color: COLORS.gold, textAlign: 'center', marginBottom: SPACING.lg }]}>
+          SETTINGS
+        </Text>
+        <View style={shared.artDecoDivider} />
 
-          <TouchableOpacity onPress={handleShowStorageInfo} style={styles.row}>
-            <Text style={styles.label}>Archive Status</Text>
-            <Text style={styles.value}>›</Text>
+        <View style={{ marginBottom: SPACING.xl }}>
+          <Text style={[typography.label, { color: COLORS.gold + 'CC', marginBottom: SPACING.md }]}>
+            ACCOUNT
+          </Text>
+
+          {user ? (
+            <>
+              <View style={[shared.row, shared.rowBetween, { paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.gold + '40' }]}>
+                <Text style={[typography.body, { color: COLORS.cream }]}>Logged in as</Text>
+                <Text style={[typography.bodySmall, { color: COLORS.cream + 'AA' }]}>
+                  {user.email || `User ${user.id.substring(0, 8)}`}
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                onPress={handleSignOut}
+                style={[shared.row, shared.rowBetween, { paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: '#e63946' + '40' }]}
+              >
+                <Text style={[typography.body, { color: '#e63946' }]}>Sign Out</Text>
+                <Text style={{ color: '#e63946' }}>→</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity
+              onPress={() => navigation.navigate(Paths.Auth as never)}
+              style={[shared.row, shared.rowBetween, { paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.gold + '40' }]}
+            >
+              <Text style={[typography.body, { color: COLORS.cream }]}>Sign In / Sign Up</Text>
+              <Text style={[typography.body, { color: COLORS.gold }]}>›</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <View style={{ marginBottom: SPACING.xl }}>
+          <Text style={[typography.label, { color: COLORS.gold + 'CC', marginBottom: SPACING.md }]}>
+            ARCHIVE
+          </Text>
+
+          <TouchableOpacity
+            onPress={handleShowStorageInfo}
+            style={[shared.row, shared.rowBetween, { paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.gold + '40' }]}
+          >
+            <Text style={[typography.body, { color: COLORS.cream }]}>Archive Status</Text>
+            <Text style={[typography.body, { color: COLORS.gold }]}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleClearStorage} style={[styles.row, styles.danger]}>
-            <Text style={[styles.label, styles.dangerText]}>
-              Clear Archive
-            </Text>
-            <Text style={styles.dangerText}>×</Text>
+          <TouchableOpacity
+            onPress={handleClearStorage}
+            style={[shared.row, shared.rowBetween, { paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: '#e63946' + '40' }]}
+          >
+            <Text style={[typography.body, { color: '#e63946' }]}>Clear Archive</Text>
+            <Text style={{ color: '#e63946' }}>×</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>SYSTEM</Text>
+        <View style={{ marginBottom: SPACING.xl }}>
+          <Text style={[typography.label, { color: COLORS.gold + 'CC', marginBottom: SPACING.md }]}>
+            SYSTEM
+          </Text>
 
-          <View style={styles.row}>
-            <Text style={styles.label}>Version</Text>
-            <Text style={styles.value}>1.0.0</Text>
+          <View style={[shared.row, shared.rowBetween, { paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.gold + '40' }]}>
+            <Text style={[typography.body, { color: COLORS.cream }]}>Version</Text>
+            <Text style={[typography.bodySmall, { color: COLORS.cream + 'AA' }]}>1.0.0</Text>
           </View>
 
-          <View style={styles.row}>
-            <Text style={styles.label}>Data Version</Text>
-            <Text style={styles.value}>
+          <View style={[shared.row, shared.rowBetween, { paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.gold + '40' }]}>
+            <Text style={[typography.body, { color: COLORS.cream }]}>Data Version</Text>
+            <Text style={[typography.bodySmall, { color: COLORS.cream + 'AA' }]}>
               {storage.getString('palette_data_version') || '—'}
             </Text>
           </View>
         </View>
 
-        <View style={styles.note}>
-          <Text style={styles.noteText}>
-            All changes are saved locally on this device.
+        <View style={{ marginTop: SPACING.lg, padding: SPACING.md, backgroundColor: COLORS.gold + '10', borderRadius: 8 }}>
+          <Text style={[typography.caption, { color: COLORS.cream + 'AA', textAlign: 'center', lineHeight: 18 }]}>
+            All changes are saved locally on this device.{'\n'}
             Your collection persists automatically.
           </Text>
         </View>
-
-        <View style={{ height: 40 }} />
       </ScrollView>
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#1a1a1a',
-    flex: 1,
-    paddingTop: 48, // ← breathing room
-  },
-
-  danger: {
-    borderBottomColor: 'rgba(230,57,70,0.4)',
-  },
-
-  dangerText: {
-    color: '#e63946',
-    fontWeight: '600',
-  },
-
-  label: {
-    color: '#f5f3ed',
-    fontSize: 15,
-  },
-
-  note: {
-    marginTop: 24,
-    paddingHorizontal: 24,
-  },
-
-  noteText: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 12,
-    lineHeight: 18,
-  },
-
-  row: {
-    alignItems: 'center',
-    borderBottomColor: 'rgba(212,175,55,0.2)',
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-  },
-
-  section: {
-    marginBottom: 40, // ← more air
-    paddingHorizontal: 28,
-  },
-
-  sectionTitle: {
-    color: 'rgba(212,175,55,0.7)',
-    fontSize: 10,
-    letterSpacing: 2,
-    marginBottom: 12,
-  },
-
-  sectionTitle: {
-    color: 'rgba(212,175,55,0.7)',
-    fontSize: 11,
-    letterSpacing: 2.5,
-    marginBottom: 16,
-  },
-
-  value: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 15,
-  },
-});

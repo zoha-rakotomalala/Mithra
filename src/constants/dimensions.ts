@@ -68,3 +68,15 @@ export const PROPORTIONS = {
   golden: 1.618,
   artDeco: 1.3, // Typical Art Deco height ratio
 } as const;
+
+/**
+ * Tab bar dimensions
+ */
+export const TAB_BAR = {
+  height: 64,
+  minPaddingBottom: 12,
+  labelFontSize: 10,
+  labelLetterSpacing: 2,
+  labelMarginTop: 4,
+  iconFontSize: 16,
+} as const;

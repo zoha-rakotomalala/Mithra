@@ -11,6 +11,7 @@ import { ThemeProvider } from '@/theme';
 import '@/translations';
 
 import { PaintingsProvider } from '@/contexts/PaintingsContext';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,15 +33,19 @@ function App() {
       StatusBar.setTranslucent(true);
       StatusBar.setBackgroundColor('transparent');
     }
+
+    return () => {};
   }, []);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider storage={storage}>
-          <PaintingsProvider storage={storage}>
-            <ApplicationNavigator />
-          </PaintingsProvider>
+          <AuthProvider>
+            <PaintingsProvider storage={storage}>
+              <ApplicationNavigator />
+            </PaintingsProvider>
+          </AuthProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>
