@@ -9,8 +9,13 @@ export const collectionStyles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
 
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
   backButton: {
-    marginBottom: SPACING.md,
+    marginRight: SPACING.md,
   },
 
   loading: {

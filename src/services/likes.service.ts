@@ -31,6 +31,34 @@ export async function likePainting(
     return null;
   }
 
+  // Upsert collection entry to mark painting as seen during this visit
+  // TODO: Liking a painting still DOES NOT make it appear in the Collection nor is it marked a seen when we open the Painting Deatails
+  try {
+    const { data: visit } = await supabase
+      .from('visits')
+      .select('visit_date')
+      .eq('id', visitId)
+      .single();
+
+    const { error: collectionError } = await supabase
+      .from('user_collection')
+      .upsert(
+        {
+          user_id: user.id,
+          painting_id: paintingUuid,
+          is_seen: true,
+          seen_date: visit?.visit_date ?? new Date().toISOString(),
+        },
+        { onConflict: 'user_id,painting_id' }
+      );
+
+    if (collectionError) {
+      console.error('Error upserting collection entry on like:', collectionError);
+    }
+  } catch (err) {
+    console.error('Error upserting collection entry on like:', err);
+  }
+
   return data;
 }
 

@@ -17,6 +17,7 @@ import FastImage from 'react-native-fast-image';
 import { Paths } from '@/navigation/paths';
 import { MuseumSelector } from '@/components/organisms';
 import { searchStyles as styles } from './Search.styles';
+import { shared } from '@/styles';
 import { getMuseumBadgeInfo } from '@/services/unifiedMuseumService';
 import { useMuseumSearch } from '@/hooks/domain/museum/useMuseumSearch';
 import { COLORS } from '@/constants';
@@ -195,7 +196,7 @@ export function Search() {
                 <Text style={styles.backText}>←</Text>
               </TouchableOpacity>
             )}
-            <Text style={styles.headerTitle}>SEARCH ART</Text>
+            <Text style={styles.headerTitle}>SEARCH</Text>
             {isRefreshing && (
               <ActivityIndicator size="small" color="#d4af37" style={styles.headerSpinner} />
             )}
@@ -205,6 +206,7 @@ export function Search() {
               </View>
             )}
           </View>
+          <View style={shared.artDecoDivider} />
 
           {/* Search Type Selector */}
           <View style={styles.searchTypeRow}>

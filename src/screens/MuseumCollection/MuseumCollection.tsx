@@ -47,10 +47,12 @@ export function MuseumCollection() {
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       <View style={shared.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={styles.backText}>←</Text>
-          </TouchableOpacity>
-          <Text style={typography.artDecoTitle}>{museumId} COLLECTION</Text>
+          <View style={styles.headerRow}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Text style={styles.backText}>←</Text>
+            </TouchableOpacity>
+            <Text style={typography.artDecoTitle}>{`${museumId} COLLECTION`}</Text>
+          </View>
           <View style={shared.artDecoDivider} />
         </View>
 
