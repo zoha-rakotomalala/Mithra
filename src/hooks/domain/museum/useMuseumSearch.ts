@@ -22,20 +22,18 @@ interface UseMuseumSearchOptions {
 
 export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
   const { initialMuseumId, visitId } = options;
-  const { paintings: existingPaintings } = usePaintings();
+  const { paintings: existingPaintings, addToCollection, isInCollection, toggleSeen } = usePaintings();
   const allMuseums = getAllMuseums();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState<SearchType>('artist');
   const [searchResults, setSearchResults] = useState<Painting[]>([]);
   const [isLoadingCache, setIsLoadingCache] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedMuseums, setSelectedMuseums] = useState<string[]>(
     initialMuseumId ? [initialMuseumId] : TIER_1_MUSEUMS
   );
   const [showMuseumPicker, setShowMuseumPicker] = useState(false);
-  const [cacheStats, setCacheStats] = useState({ added: 0 });
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
 
   // Load liked painting UUIDs when visitId is provided
@@ -61,8 +59,14 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
     } else {
       await likePainting(paintingId, visitId);
       setLikedIds((prev) => new Set(prev).add(paintingId));
+      // Bridge to PaintingsContext: add to collection as seen
+      if (!isInCollection(paintingId)) {
+        addToCollection({ ...painting, isSeen: true, wantToVisit: false });
+      } else {
+        toggleSeen(paintingId);
+      }
     }
-  }, [visitId, likedIds]);
+  }, [visitId, likedIds, addToCollection, isInCollection, toggleSeen]);
 
   const isLiked = useCallback((painting: Painting) => {
     return likedIds.has(painting.id);
@@ -72,12 +76,10 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
     if (update.phase === 'cache') {
       setIsLoadingCache(false);
     } else if (update.phase === 'api') {
-      setIsRefreshing(true);
+      console.log('[Search] API refresh started');
     } else if (update.phase === 'complete') {
-      setIsRefreshing(false);
       if (update.added) {
-        setCacheStats({ added: update.added });
-        setTimeout(() => setCacheStats({ added: 0 }), 3000);
+        console.log(`[Search] Cache updated: +${update.added} new results`);
       }
     }
   }, []);
@@ -91,7 +93,6 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
 
     setIsLoadingCache(true);
     setHasSearched(true);
-    setCacheStats({ added: 0 });
 
     try {
       const result = await searchAllMuseums({
@@ -121,7 +122,6 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
       console.error('Search error:', error);
     } finally {
       setIsLoadingCache(false);
-      setIsRefreshing(false);
     }
   };
 
@@ -146,7 +146,6 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
       Alert.alert('Search Error', 'Failed to search paintings by artist.');
     } finally {
       setIsLoadingCache(false);
-      setIsRefreshing(false);
     }
   };
 
@@ -177,13 +176,11 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
     setSearchType,
     searchResults,
     isLoadingCache,
-    isRefreshing,
     hasSearched,
     selectedMuseums,
     setSelectedMuseums,
     showMuseumPicker,
     setShowMuseumPicker,
-    cacheStats,
     allMuseums,
     popularArtists,
     handleSearch,

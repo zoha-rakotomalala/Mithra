@@ -6,14 +6,35 @@ const gridSize = (width - (SPACING.lg * 2) - (SPACING.sm * 2)) / 3;
 
 export const viewCanonStyles = StyleSheet.create({
   header: {
-    paddingTop: 60,
-    paddingBottom: SPACING.lg,
-    paddingHorizontal: SPACING.lg,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.black,
+    borderBottomColor: COLORS.gold,
+    borderBottomWidth: 2,
+    paddingBottom: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.md,
   },
 
   backButton: {
-    marginBottom: SPACING.md,
+    marginRight: SPACING.sm,
+  },
+
+  backText: {
+    fontSize: 24,
+    color: COLORS.gold,
+  },
+
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '300',
+    letterSpacing: 4,
+    color: COLORS.gold,
+    textTransform: 'uppercase',
+    flexShrink: 1,
   },
 
   loading: {
@@ -26,6 +47,12 @@ export const viewCanonStyles = StyleSheet.create({
   content: {
     padding: SPACING.lg,
     gap: SPACING.lg,
+  },
+
+  shareableGrid: {
+    backgroundColor: COLORS.black,
+    padding: SPACING.lg,
+    borderRadius: 8,
   },
 
   grid: {

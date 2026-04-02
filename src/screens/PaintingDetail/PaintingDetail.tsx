@@ -1,7 +1,7 @@
 import type { Painting } from '@/types/painting';
 
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -18,6 +18,8 @@ import { Paths } from '@/navigation/paths';
 import { BackButton } from '@/components/atoms';
 import { SectionHeader } from '@/components/molecules';
 import { usePaintings } from '@/contexts/PaintingsContext';
+import { getVisitsForPainting } from '@/services/likes.service';
+import { formatDate } from '@/utils';
 import { paintingDetailStyles as styles } from './PaintingDetail.styles';
 
 export function PaintingDetail() {
@@ -46,6 +48,11 @@ export function PaintingDetail() {
 
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const [visitInfo, setVisitInfo] = useState<Array<{ visit_id: string; visit_date: string; museum_name: string }>>([]);
+
+  useEffect(() => {
+    getVisitsForPainting(routePainting.id).then(setVisitInfo);
+  }, [routePainting.id]);
 
   const handleQuickAdd = (state: 'seen' | 'wantToVisit') => {
     const paintingToAdd = {
@@ -244,6 +251,20 @@ export function PaintingDetail() {
                 {isInPalette ? <View style={[styles.tag, styles.tagPalette]}>
                     <Text style={styles.tagText}>IN PALETTE</Text>
                   </View> : null}
+              </View> : null}
+
+            {/* Visit Provenance */}
+            {visitInfo.length > 0 ? <View style={styles.visitProvenance}>
+                {visitInfo.map((v) => (
+                  <TouchableOpacity
+                    key={v.visit_id}
+                    onPress={() => navigation.navigate(Paths.VisitDetail, { visitId: v.visit_id })}
+                    style={styles.visitProvenanceRow}
+                  >
+                    <Text style={styles.visitProvenanceLabel}>Seen during</Text>
+                    <Text style={styles.visitProvenanceValue}>{v.museum_name} · {formatDate(v.visit_date)}</Text>
+                  </TouchableOpacity>
+                ))}
               </View> : null}
           </View>
 

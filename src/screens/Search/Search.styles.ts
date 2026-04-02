@@ -29,8 +29,6 @@ export const searchStyles = StyleSheet.create({
   headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.md,
   },
 
   backButton: {
@@ -49,24 +47,6 @@ export const searchStyles = StyleSheet.create({
     letterSpacing: 4,
     color: COLORS.gold,
     textTransform: 'uppercase',
-  },
-
-  headerSpinner: {
-    marginLeft: 'auto',
-  },
-
-  newBadge: {
-    backgroundColor: COLORS.seen,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 3,
-    borderRadius: 10,
-    marginLeft: SPACING.sm,
-  },
-
-  newBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: COLORS.black,
   },
 
   // Search Type Row

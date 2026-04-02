@@ -12,5 +12,7 @@ export const enum Paths {
   VisitDetail = 'visitDetail',
   MuseumCollection = 'museumCollection',
   LikedPaintings = 'likedPaintings',
+  VisitPalette = 'visitPalette',
+  ViewPalette = 'viewPalette',
   Auth = 'auth'
 }

@@ -3,14 +3,35 @@ import { COLORS, SPACING, GRID } from '@/constants';
 
 export const canonPaletteStyles = StyleSheet.create({
   header: {
-    paddingTop: 60,
-    paddingBottom: SPACING.lg,
-    paddingHorizontal: SPACING.lg,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.black,
+    borderBottomColor: COLORS.gold,
+    borderBottomWidth: 2,
+    paddingBottom: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.md,
   },
 
   backButton: {
-    marginBottom: SPACING.md,
+    marginRight: SPACING.sm,
+  },
+
+  backText: {
+    fontSize: 24,
+    color: COLORS.gold,
+  },
+
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '300',
+    letterSpacing: 4,
+    color: COLORS.gold,
+    textTransform: 'uppercase',
+    flexShrink: 1,
   },
 
   subtitle: {

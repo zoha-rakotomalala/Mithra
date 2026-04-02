@@ -3,7 +3,6 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback } from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
   FlatList,
   Modal,
   SafeAreaView,
@@ -17,14 +16,8 @@ import FastImage from 'react-native-fast-image';
 import { Paths } from '@/navigation/paths';
 import { MuseumSelector } from '@/components/organisms';
 import { searchStyles as styles } from './Search.styles';
-import { shared } from '@/styles';
 import { getMuseumBadgeInfo } from '@/services/unifiedMuseumService';
 import { useMuseumSearch } from '@/hooks/domain/museum/useMuseumSearch';
-import { COLORS } from '@/constants';
-
-const { width } = Dimensions.get('window');
-const CARD_SIZE = (width - 32) / 3;
-const GRID_PADDING = 16;
 
 const GridItem = React.memo(({
   collectionStatus,
@@ -45,17 +38,6 @@ const GridItem = React.memo(({
   const [imageError, setImageError] = React.useState(false);
   const badgeInfo = getMuseumBadgeInfo(painting);
 
-  React.useEffect(() => {
-    if (typeof painting.id === 'string' && painting.id.startsWith('chicago-')) {
-      console.log('Chicago painting in grid:', {
-        id: painting.id,
-        title: painting.title,
-        imageUrl: painting.imageUrl,
-        thumbnailUrl: painting.thumbnailUrl,
-      });
-    }
-  }, [painting]);
-
   return (
     <TouchableOpacity
       activeOpacity={0.7}
@@ -71,8 +53,7 @@ const GridItem = React.memo(({
               </View>
             )}
             <FastImage
-              onError={(error) => {
-                console.log('FastImage error for:', painting.title, error);
+              onError={() => {
                 setImageLoading(false);
                 setImageError(true);
               }}
@@ -146,13 +127,11 @@ export function Search() {
     setSearchType,
     searchResults,
     isLoadingCache,
-    isRefreshing,
     hasSearched,
     selectedMuseums,
     setSelectedMuseums,
     showMuseumPicker,
     setShowMuseumPicker,
-    cacheStats,
     allMuseums,
     popularArtists,
     handleSearch,
@@ -197,16 +176,7 @@ export function Search() {
               </TouchableOpacity>
             )}
             <Text style={styles.headerTitle}>SEARCH</Text>
-            {isRefreshing && (
-              <ActivityIndicator size="small" color="#d4af37" style={styles.headerSpinner} />
-            )}
-            {cacheStats.added > 0 && (
-              <View style={styles.newBadge}>
-                <Text style={styles.newBadgeText}>+{cacheStats.added}</Text>
-              </View>
-            )}
           </View>
-          <View style={shared.artDecoDivider} />
 
           {/* Search Type Selector */}
           <View style={styles.searchTypeRow}>

@@ -53,7 +53,6 @@ export function MuseumCollection() {
             </TouchableOpacity>
             <Text style={typography.artDecoTitle}>{`${museumId} COLLECTION`}</Text>
           </View>
-          <View style={shared.artDecoDivider} />
         </View>
 
         <View style={styles.searchContainer}>

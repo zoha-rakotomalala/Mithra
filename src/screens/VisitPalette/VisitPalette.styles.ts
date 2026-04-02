@@ -1,16 +1,43 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { COLORS, SPACING } from '@/constants';
 
 export const visitPaletteStyles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.black,
+    paddingTop: Platform.OS === 'android' ? 25 : 0,
+  },
+
   header: {
-    paddingTop: 60,
-    paddingBottom: SPACING.lg,
-    paddingHorizontal: SPACING.lg,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.black,
+    borderBottomColor: COLORS.gold,
+    borderBottomWidth: 2,
+    paddingBottom: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.md,
+  },
+
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 
   backButton: {
-    marginBottom: SPACING.md,
+    marginRight: SPACING.sm,
+  },
+
+  backText: {
+    fontSize: 24,
+    color: COLORS.gold,
+  },
+
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '300',
+    letterSpacing: 4,
+    color: COLORS.gold,
+    textTransform: 'uppercase',
+    flexShrink: 1,
   },
 
   subtitle: {

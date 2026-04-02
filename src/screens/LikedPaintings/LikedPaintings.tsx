@@ -79,7 +79,6 @@ export function LikedPaintings() {
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
           <Text style={typography.artDecoTitle}>LIKED ARTWORKS</Text>
-          <View style={shared.artDecoDivider} />
         </View>
         <View style={styles.loading}>
           <ActivityIndicator size="large" color={COLORS.gold} />
@@ -98,7 +97,6 @@ export function LikedPaintings() {
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
           <Text style={typography.artDecoTitle}>LIKED ARTWORKS</Text>
-          <View style={shared.artDecoDivider} />
         </View>
 
         <View style={styles.contentArea}>

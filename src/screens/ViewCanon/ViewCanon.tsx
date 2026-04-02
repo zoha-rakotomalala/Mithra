@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StatusBar, Image } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StatusBar, Image, Share } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import ViewShot from 'react-native-view-shot';
 import { getCanonPalette, getCachedPaintings } from '@/services';
 import { EmptyState } from '@/components/molecules';
 import { shared, typography, buttons } from '@/styles';
-import { COLORS, SPACING } from '@/constants';
+import { COLORS } from '@/constants';
 import { viewCanonStyles as styles } from './ViewCanon.styles';
 import type { Painting as CachedPainting } from '@/types/database';
 
 export function ViewCanon() {
   const navigation = useNavigation();
+  const viewShotRef = useRef<ViewShot>(null);
   const [paintings, setPaintings] = useState<CachedPainting[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,6 +29,19 @@ export function ViewCanon() {
     }
     
     setLoading(false);
+  };
+
+  const handleShare = async () => {
+    try {
+      const uri = await viewShotRef.current?.capture?.();
+      if (!uri) return;
+      await Share.share({
+        title: 'My Canon Palette',
+        url: uri,
+      });
+    } catch (err) {
+      console.error('Error sharing canon:', err);
+    }
   };
 
   const renderPainting = (painting: CachedPainting, index: number) => (
@@ -47,14 +62,15 @@ export function ViewCanon() {
 
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
       <ScrollView style={shared.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={styles.backText}>←</Text>
-          </TouchableOpacity>
-          <Text style={typography.artDecoTitle}>CANON PALETTE</Text>
-          <View style={shared.artDecoDivider} />
+          <View style={styles.headerRow}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Text style={styles.backText}>←</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>CANON PALETTE</Text>
+          </View>
         </View>
 
         {loading ? (
@@ -63,15 +79,26 @@ export function ViewCanon() {
           </View>
         ) : paintings.length === 8 ? (
           <View style={styles.content}>
-            <View style={styles.grid}>
-              {paintings.slice(0, 3).map((p, i) => renderPainting(p, i))}
-              {paintings.slice(3, 4).map((p, i) => renderPainting(p, i + 3))}
-              {renderCenter()}
-              {paintings.slice(4, 5).map((p, i) => renderPainting(p, i + 4))}
-              {paintings.slice(5, 8).map((p, i) => renderPainting(p, i + 5))}
-            </View>
+            <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1 }}>
+              <View style={styles.shareableGrid}>
+                <View style={styles.grid}>
+                  {paintings.slice(0, 3).map((p, i) => renderPainting(p, i))}
+                  {paintings.slice(3, 4).map((p, i) => renderPainting(p, i + 3))}
+                  {renderCenter()}
+                  {paintings.slice(4, 5).map((p, i) => renderPainting(p, i + 4))}
+                  {paintings.slice(5, 8).map((p, i) => renderPainting(p, i + 5))}
+                </View>
+              </View>
+            </ViewShot>
 
             <View style={styles.actions}>
+              <TouchableOpacity
+                style={buttons.primary}
+                onPress={handleShare}
+              >
+                <Text style={buttons.primaryText}>Share Canon</Text>
+              </TouchableOpacity>
+
               <TouchableOpacity 
                 style={buttons.secondary}
                 onPress={() => navigation.navigate('canonPalette' as never)}

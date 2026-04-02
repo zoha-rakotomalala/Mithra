@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StatusBar, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StatusBar, Alert, SafeAreaView } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { getLikedPaintingsForVisit, getCachedPaintings, saveVisitPalette, getVisitPalette } from '@/services';
 import { GridPaintingCard, EmptyState } from '@/components/molecules';
-import { shared, typography, buttons } from '@/styles';
-import { COLORS, SPACING, GRID } from '@/constants';
+import { buttons } from '@/styles';
+import { COLORS, GRID } from '@/constants';
 import { visitPaletteStyles as styles } from './VisitPalette.styles';
 import type { Painting as CachedPainting } from '@/types/database';
 import type { Painting } from '@/types/painting';
@@ -16,19 +16,16 @@ export function VisitPalette() {
 
   const [paintings, setPaintings] = useState<CachedPainting[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadPalette();
   }, [visitId]);
 
   const loadPalette = async () => {
-    setLoading(true);
-    
     // Get existing palette
     const existingPalette = await getVisitPalette(visitId);
     if (existingPalette) {
-      setSelected(new Set(existingPalette.painting_ids));
+      setSelected(new Set(existingPalette.paintings.map(p => p.painting_id)));
     }
 
     // Get liked paintings
@@ -39,8 +36,6 @@ export function VisitPalette() {
       const cached = await getCachedPaintings(paintingIds);
       setPaintings(cached);
     }
-    
-    setLoading(false);
   };
 
   const toggleSelect = (paintingId: string) => {
@@ -94,47 +89,47 @@ export function VisitPalette() {
   };
 
   return (
-    <>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
-      <View style={shared.container}>
-        <View style={styles.header}>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
+      <View style={styles.header}>
+        <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
-          <Text style={typography.artDecoTitle}>CREATE PALETTE</Text>
-          <Text style={styles.subtitle}>Select 8 artworks ({selected.size}/8)</Text>
-          <View style={shared.artDecoDivider} />
+          <Text style={styles.headerTitle}>CREATE PALETTE</Text>
         </View>
-
-        {paintings.length === 0 ? (
-          <EmptyState
-            icon="��"
-            title="No Liked Artworks"
-            subtitle="Like artworks first to create a palette"
-          />
-        ) : (
-          <>
-            <FlatList
-              data={paintings}
-              renderItem={renderPainting}
-              keyExtractor={(item) => item.id}
-              numColumns={GRID.columns}
-              columnWrapperStyle={{ gap: GRID.gutter }}
-              contentContainerStyle={{ padding: GRID.margin, gap: GRID.gutter }}
-            />
-
-            <View style={styles.footer}>
-              <TouchableOpacity
-                style={[buttons.primary, selected.size !== 8 && styles.buttonDisabled]}
-                onPress={handleSave}
-                disabled={selected.size !== 8}
-              >
-                <Text style={buttons.primaryText}>Save Palette</Text>
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
+        <Text style={styles.subtitle}>Select 8 artworks ({selected.size}/8)</Text>
       </View>
-    </>
+
+      {paintings.length === 0 ? (
+        <EmptyState
+          icon="🎨"
+          title="No Liked Artworks"
+          subtitle="Like artworks first to create a palette"
+        />
+      ) : (
+        <>
+          <FlatList
+            data={paintings}
+            renderItem={renderPainting}
+            keyExtractor={(item) => item.id}
+            numColumns={GRID.columns}
+            columnWrapperStyle={{ gap: GRID.gutter }}
+            contentContainerStyle={{ padding: GRID.margin, gap: GRID.gutter }}
+            style={{ backgroundColor: COLORS.cream }}
+          />
+
+          <View style={styles.footer}>
+            <TouchableOpacity
+              style={[buttons.primary, selected.size !== 8 && styles.buttonDisabled]}
+              onPress={handleSave}
+              disabled={selected.size !== 8}
+            >
+              <Text style={buttons.primaryText}>Save Palette</Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
+    </SafeAreaView>
   );
 }

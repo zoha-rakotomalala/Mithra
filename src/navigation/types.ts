@@ -20,6 +20,8 @@ export type RootStackParamList = {
   [Paths.VisitDetail]: { visitId: string };
   [Paths.MuseumCollection]: { visitId: string; museumId: string };
   [Paths.LikedPaintings]: { visitId: string };
+  [Paths.VisitPalette]: { visitId: string };
+  [Paths.ViewPalette]: { visitId: string };
   [Paths.Auth]: undefined;
   Main: undefined;
 };

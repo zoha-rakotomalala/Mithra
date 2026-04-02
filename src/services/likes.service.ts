@@ -32,7 +32,6 @@ export async function likePainting(
   }
 
   // Upsert collection entry to mark painting as seen during this visit
-  // TODO: Liking a painting still DOES NOT make it appear in the Collection nor is it marked a seen when we open the Painting Deatails
   try {
     const { data: visit } = await supabase
       .from('visits')
@@ -117,6 +116,31 @@ export async function isPaintingLiked(
     .single();
 
   return !error && !!data;
+}
+
+/**
+ * Get the visit(s) during which a painting was liked.
+ * Returns visit info joined from the visits table.
+ */
+export async function getVisitsForPainting(
+  paintingUuid: string
+): Promise<Array<{ visit_id: string; visit_date: string; museum_name: string }>> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from('user_painting_likes')
+    .select('visit_id, visits(visit_date, museums(name))')
+    .eq('user_id', user.id)
+    .eq('painting_id', paintingUuid);
+
+  if (error || !data) return [];
+
+  return data.map((row: any) => ({
+    visit_id: row.visit_id,
+    visit_date: row.visits?.visit_date ?? '',
+    museum_name: row.visits?.museums?.name ?? '',
+  }));
 }
 
 /**

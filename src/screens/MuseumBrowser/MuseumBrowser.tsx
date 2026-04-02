@@ -68,7 +68,6 @@ export function MuseumBrowser() {
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
           <Text style={[typography.artDecoTitle, { color: COLORS.gold }]}>CHOOSE MUSEUM</Text>
-          <View style={shared.artDecoDivider} />
         </View>
 
         <FlatList

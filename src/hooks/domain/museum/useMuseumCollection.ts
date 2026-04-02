@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { searchAllMuseums } from '@/services/unifiedMuseumService';
 import { likePainting, unlikePainting, getLikedUuidsForVisit } from '@/services';
+import { usePaintings } from '@/contexts/PaintingsContext';
 import type { Painting } from '@/types/painting';
 
 export function useMuseumCollection(museumId: string, visitId: string) {
+  const { addToCollection, isInCollection, toggleSeen } = usePaintings();
   const [paintings, setPaintings] = useState<Painting[]>([]);
   const [loading, setLoading] = useState(false);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
@@ -64,6 +66,12 @@ export function useMuseumCollection(museumId: string, visitId: string) {
     } else {
       await likePainting(painting.id, visitId);
       setLikedIds(prev => new Set(prev).add(painting.id));
+      // Bridge to PaintingsContext: add to collection as seen
+      if (!isInCollection(painting.id)) {
+        addToCollection({ ...painting, isSeen: true, wantToVisit: false });
+      } else {
+        toggleSeen(painting.id);
+      }
     }
   };
 

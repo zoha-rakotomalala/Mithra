@@ -326,4 +326,31 @@ export const paintingDetailStyles = StyleSheet.create({
     color: COLORS.textLight,
     fontSize: 14,
   },
+
+  visitProvenance: {
+    marginTop: SPACING.md,
+    gap: SPACING.xs,
+  },
+
+  visitProvenanceRow: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.gold,
+    borderRadius: 8,
+    padding: SPACING.sm,
+  },
+
+  visitProvenanceLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 2,
+    color: COLORS.gold,
+    textTransform: 'uppercase',
+  },
+
+  visitProvenanceValue: {
+    fontSize: 14,
+    color: COLORS.text,
+    marginTop: 2,
+  },
 });

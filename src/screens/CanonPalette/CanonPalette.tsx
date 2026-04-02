@@ -3,7 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, StatusBar, Alert } from 'react-
 import { useNavigation } from '@react-navigation/native';
 import { getVisits, getVisitPalette, getCachedPaintings, saveCanonPalette, getCanonPalette } from '@/services';
 import { GridPaintingCard, EmptyState } from '@/components/molecules';
-import { shared, typography, buttons } from '@/styles';
+import { shared, buttons } from '@/styles';
 import { COLORS, SPACING, GRID } from '@/constants';
 import { canonPaletteStyles as styles } from './CanonPalette.styles';
 import type { Painting as CachedPainting } from '@/types/database';
@@ -101,15 +101,16 @@ export function CanonPalette() {
 
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
       <View style={shared.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={styles.backText}>←</Text>
-          </TouchableOpacity>
-          <Text style={typography.artDecoTitle}>CANON PALETTE</Text>
+          <View style={styles.headerRow}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Text style={styles.backText}>←</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>CANON PALETTE</Text>
+          </View>
           <Text style={styles.subtitle}>Select your ultimate 8 ({selected.size}/8)</Text>
-          <View style={shared.artDecoDivider} />
         </View>
 
         {paintings.length === 0 ? (

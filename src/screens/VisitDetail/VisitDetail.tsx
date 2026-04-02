@@ -19,8 +19,8 @@ export function VisitDetail() {
     visit,
     loading,
     likedCount,
-    museumShortName,
     museumRegistryId,
+    hasPalette,
     showEditModal,
     setShowEditModal,
     editForm,
@@ -88,6 +88,20 @@ export function VisitDetail() {
                 onPress={() => navigation.navigate(Paths.LikedPaintings, { visitId })}
               >
                 <Text style={buttons.secondaryText}>View Liked Artworks ({likedCount})</Text>
+              </TouchableOpacity>
+            )}
+
+            {likedCount >= 8 && (
+              <TouchableOpacity
+                style={buttons.secondary}
+                onPress={() => navigation.navigate(
+                  hasPalette ? Paths.ViewPalette : Paths.VisitPalette,
+                  { visitId }
+                )}
+              >
+                <Text style={buttons.secondaryText}>
+                  {hasPalette ? 'View Palette' : 'Create Palette'}
+                </Text>
               </TouchableOpacity>
             )}
 
