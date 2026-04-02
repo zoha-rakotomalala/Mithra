@@ -74,7 +74,7 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
 
   const handleProgressUpdate = useCallback((update: ProgressUpdate) => {
     if (update.phase === 'cache') {
-      setIsLoadingCache(false);
+      console.log('[Search] Cache phase complete');
     } else if (update.phase === 'api') {
       console.log('[Search] API refresh started');
     } else if (update.phase === 'complete') {

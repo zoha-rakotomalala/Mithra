@@ -75,16 +75,14 @@ export function VisitPalette() {
     };
 
     return (
-      <TouchableOpacity onPress={() => toggleSelect(item.id)}>
-        <View style={[styles.cardWrapper, isSelected && styles.cardSelected]}>
-          <GridPaintingCard variant="minimal" painting={painting} onPress={() => {}} />
+      <View style={[styles.cardWrapper, isSelected && styles.cardSelected]}>
+        <GridPaintingCard variant="minimal" painting={painting} onPress={() => toggleSelect(item.id)} />
           {isSelected && (
             <View style={styles.checkmark}>
               <Text style={styles.checkmarkText}>✓</Text>
             </View>
           )}
-        </View>
-      </TouchableOpacity>
+      </View>
     );
   };
 

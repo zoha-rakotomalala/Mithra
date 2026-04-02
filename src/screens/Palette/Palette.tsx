@@ -1,31 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StatusBar, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
-import { useIsFocused, useNavigation } from '@react-navigation/native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, ScrollView, StatusBar, TouchableOpacity, SafeAreaView, ActivityIndicator, Share } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
+import ViewShot from 'react-native-view-shot';
 import { PaintingCard } from '@/components/molecules/PaintingCard/PaintingCard';
 import { ProfileCard } from '@/components/molecules/ProfileCard/ProfileCard';
 import { SectionHeader, SyncErrorBanner } from '@/components/molecules';
 import { usePaintings } from '@/contexts/PaintingsContext';
-import { shared, buttons } from '@/styles';
+import { useAuth } from '@/contexts/AuthContext';
+import { storage } from '@/App';
+import { buttons } from '@/styles';
 import { COLORS, SPACING } from '@/constants';
 import { paletteStyles as styles } from './Palette.styles';
 import type { UserProfile } from '@/types/painting';
 
 export function Palette() {
   const isFocused = useIsFocused();
-  const navigation = useNavigation();
   const { getPalettePaintings, paintings, syncing, syncError } = usePaintings();
+  const { user } = useAuth();
+  const viewShotRef = useRef<ViewShot>(null);
 
   const [flippedCardId, setFlippedCardId] = useState<number | string | 'profile' | null>(null);
 
   const palettePaintings = getPalettePaintings();
 
+  const username = storage.getString('curator_name') || user?.email?.split('@')[0] || 'curator';
+
   const userProfile: UserProfile = {
-    username: 'zoha',
+    username,
     profileColor: '#004d40',
     stats: {
       paintings: paintings.length,
-      followers: '1.2k',
-      following: 342,
     },
   };
 
@@ -80,15 +84,26 @@ export function Palette() {
                 ? `${8 - palettePaintings.length} open spots remain in your palette.`
                 : 'Your palette is complete.'}
             </Text>
-            <TouchableOpacity
-              style={[buttons.primary, { marginTop: SPACING.md }]}
-              onPress={() => navigation.navigate('viewCanon' as never)}
-            >
-              <Text style={buttons.primaryText}>View Canon Palette</Text>
-            </TouchableOpacity>
+            {palettePaintings.length === 8 && (
+              <TouchableOpacity
+                style={[buttons.primary, { marginTop: SPACING.md }]}
+                onPress={async () => {
+                  try {
+                    const uri = await viewShotRef.current?.capture?.();
+                    if (!uri) return;
+                    await Share.share({ title: 'My Palette', url: uri });
+                  } catch (err) {
+                    console.error('Error sharing palette:', err);
+                  }
+                }}
+              >
+                <Text style={buttons.primaryText}>Share Palette</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Gallery Grid - 3x3 with profile in center */}
+          <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1 }}>
           <View style={styles.grid}>
             {gridPositions.map((position, index) => {
               if (position === 'profile') {
@@ -125,6 +140,7 @@ export function Palette() {
               );
             })}
           </View>
+          </ViewShot>
 
           {/* Instructions */}
           <View style={styles.instructions}>

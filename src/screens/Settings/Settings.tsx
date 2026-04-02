@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Alert,
   ScrollView,
   StatusBar,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -12,13 +13,26 @@ import { Paths } from '@/navigation/paths';
 import { useAuth } from '@/contexts/AuthContext';
 import { storage } from '@/App';
 import { usePaintings } from '@/contexts/PaintingsContext';
-import { shared, typography, buttons } from '@/styles';
+import { shared, typography } from '@/styles';
 import { COLORS, SPACING } from '@/constants';
 
 export function Settings() {
   const { paintings, palettePaintingIds } = usePaintings();
   const navigation = useNavigation();
   const { user, signOut } = useAuth();
+
+  const [curatorName, setCuratorName] = useState(
+    storage.getString('curator_name') ?? ''
+  );
+
+  const saveCuratorName = (name: string) => {
+    setCuratorName(name);
+    if (name.trim()) {
+      storage.set('curator_name', name.trim());
+    } else {
+      storage.delete('curator_name');
+    }
+  };
 
   const handleClearStorage = () => {
     Alert.alert(
@@ -82,6 +96,19 @@ export function Settings() {
                 <Text style={[typography.bodySmall, { color: COLORS.cream + 'AA' }]}>
                   {user.email || `User ${user.id.substring(0, 8)}`}
                 </Text>
+              </View>
+
+              <View style={{ paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.gold + '40' }}>
+                <Text style={[typography.body, { color: COLORS.cream, marginBottom: SPACING.xs }]}>Curator Name</Text>
+                <TextInput
+                  style={{ color: COLORS.cream, fontSize: 15, backgroundColor: COLORS.gold + '15', borderRadius: 4, paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs, borderWidth: 1, borderColor: COLORS.gold + '40' }}
+                  value={curatorName}
+                  onChangeText={saveCuratorName}
+                  placeholder={user.email?.split('@')[0] ?? 'Curator'}
+                  placeholderTextColor={COLORS.cream + '55'}
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                />
               </View>
 
               <TouchableOpacity

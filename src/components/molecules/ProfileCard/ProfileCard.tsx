@@ -103,11 +103,6 @@ export function ProfileCard({ isFlipped, onPress, profile }: ProfileCardProps) {
               <Text style={styles.statNumber}>{profile.stats.paintings}</Text>
               <Text style={styles.statLabel}>PAINTINGS</Text>
             </View>
-
-            <View style={styles.statBlock}>
-              <Text style={styles.statNumber}>{profile.stats.followers}</Text>
-              <Text style={styles.statLabel}>FOLLOWERS</Text>
-            </View>
           </View>
         </Animated.View>
       </View>

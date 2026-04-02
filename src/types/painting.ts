@@ -31,8 +31,6 @@ export type Painting = {
 export type UserProfile = {
   profileColor: string;
   stats: {
-    followers: string;
-    following: number;
     paintings: number;
   };
   username: string;
