@@ -1,10 +1,12 @@
 import type { RootScreenProps } from '@/navigation/types';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Text, View } from 'react-native';
 import { Paths } from '@/navigation/paths';
-import { shared, typography } from '@/styles';
+import { shared } from '@/styles';
 import { COLORS } from '@/constants';
+
+const logo = require('@/theme/assets/images/logo.png');
 
 export function Startup({ navigation }: RootScreenProps<Paths.Startup>) {
   const { isError, isFetching, isSuccess } = useQuery({
@@ -23,10 +25,11 @@ export function Startup({ navigation }: RootScreenProps<Paths.Startup>) {
 
   return (
     <View style={[shared.container, shared.centered, { backgroundColor: COLORS.black }]}>
-      <Text style={[typography.h1, { color: COLORS.gold, marginBottom: 32 }]}>
-        PALETTE
-      </Text>
-      <View style={shared.artDecoDivider} />
+      <Image
+        source={logo}
+        style={{ width: 240, height: 240, marginBottom: 32 }}
+        resizeMode="contain"
+      />
 
       {isFetching && (
         <ActivityIndicator
@@ -37,11 +40,10 @@ export function Startup({ navigation }: RootScreenProps<Paths.Startup>) {
       )}
 
       {isError && (
-        <Text style={[typography.body, { color: '#e63946', marginTop: 32 }]}>
+        <Text style={{ color: '#e63946', marginTop: 32, fontSize: 16 }}>
           Loading error occurred
         </Text>
       )}
     </View>
   );
 }
-

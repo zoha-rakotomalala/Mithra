@@ -3,8 +3,6 @@ import type { Painting, UserProfile } from '@/types/painting';
 export const mockUserProfile: UserProfile = {
   profileColor: '#95E1D3',
   stats: {
-    followers: '1.2K',
-    following: 567,
     paintings: 8,
   },
   username: 'zoharak',

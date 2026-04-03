@@ -44,7 +44,7 @@ export function LikedPaintings() {
       const entry: UserCollectionEntry = {
         id: '',
         user_id: user.id,
-        painting_id: String(item.id),
+        painting_id: item.id,
         is_seen: true,
         want_to_visit: false,
         seen_date: visitDate || null,
@@ -116,7 +116,7 @@ export function LikedPaintings() {
               <FlatList
                 data={uiPaintings}
                 renderItem={renderPainting}
-                keyExtractor={(item) => String(item.id)}
+                keyExtractor={(item) => item.id}
                 numColumns={GRID.columns}
                 columnWrapperStyle={{
                   justifyContent: 'flex-start',

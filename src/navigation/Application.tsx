@@ -1,7 +1,7 @@
 import type { RootStackParamList } from '@/navigation/types';
 
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createStackNavigator, CardStyleInterpolators } from '@react-navigation/stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { TabNavigator } from '@/navigation/TabNavigator';
@@ -25,7 +25,7 @@ function ApplicationNavigator() {
   return (
     <SafeAreaProvider>
       <NavigationContainer theme={navigationTheme}>
-        <Stack.Navigator key={variant} screenOptions={{ headerShown: false }}>
+        <Stack.Navigator key={variant} screenOptions={{ headerShown: false, cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS }}>
           {user ? (
             // Authenticated screens
             <>

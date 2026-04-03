@@ -103,7 +103,7 @@ export function MuseumCollection() {
             <FlatList
               data={paintings}
               renderItem={renderPainting}
-              keyExtractor={(item) => String(item.id)}
+              keyExtractor={(item) => item.id}
               numColumns={GRID.columns}
               columnWrapperStyle={{
                 justifyContent: 'space-between',

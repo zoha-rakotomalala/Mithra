@@ -51,7 +51,7 @@ export function Palette() {
 
   const handlePaintingPress = (painting: any) => {
     if (editing) {
-      removeFromPalette(painting.id as any);
+      removeFromPalette(painting.id);
     } else {
       navigation.navigate(Paths.PaintingDetail, { painting });
     }
