@@ -14,6 +14,7 @@ import {
 import FastImage from 'react-native-fast-image';
 
 import { COLORS } from '@/constants';
+import { museumImageSource } from '@/utils/imageSource';
 
 import { EmptyState, SyncErrorBanner } from '@/components/molecules';
 import { useCollectionFilter } from '@/hooks/domain/collection/useCollectionFilter';
@@ -36,11 +37,7 @@ const PaintingCard = React.memo(({
       {painting.imageUrl ? (
         <FastImage
           resizeMode={FastImage.resizeMode.cover}
-          source={{
-            cache: FastImage.cacheControl.immutable,
-            priority: FastImage.priority.normal,
-            uri: painting.thumbnailUrl || painting.imageUrl,
-          }}
+          source={museumImageSource(painting.thumbnailUrl || painting.imageUrl)}
           style={styles.paintingImage}
         />
       ) : (

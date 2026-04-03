@@ -17,6 +17,7 @@ import { searchStyles as styles } from './Search.styles';
 import { COLORS } from '@/constants/colors';
 import { getMuseumBadgeInfo } from '@/services/unifiedMuseumService';
 import { useSearch } from '@/hooks/domain/museum/useSearch';
+import { museumImageSource } from '@/utils/imageSource';
 
 const GridItem = React.memo(({
   collectionStatus,
@@ -59,11 +60,7 @@ const GridItem = React.memo(({
               onLoadEnd={() => setImageLoading(false)}
               onLoadStart={() => setImageLoading(true)}
               resizeMode={FastImage.resizeMode.cover}
-              source={{
-                cache: FastImage.cacheControl.immutable,
-                priority: FastImage.priority.normal,
-                uri: painting.thumbnailUrl || painting.imageUrl || '',
-              }}
+              source={museumImageSource(painting.thumbnailUrl || painting.imageUrl)}
               style={styles.resultImage}
             />
           </>

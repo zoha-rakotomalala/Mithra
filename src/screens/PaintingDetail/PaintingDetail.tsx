@@ -13,6 +13,7 @@ import { BackButton } from '@/components/atoms';
 import { SectionHeader } from '@/components/molecules';
 import { usePaintingDetail } from '@/hooks/domain/collection/usePaintingDetail';
 import { formatDate } from '@/utils';
+import { museumImageSource } from '@/utils/imageSource';
 import { paintingDetailStyles as styles } from './PaintingDetail.styles';
 
 export function PaintingDetail() {
@@ -103,11 +104,7 @@ export function PaintingDetail() {
                   }}
                   onLoadEnd={() => { setImageLoading(false); }}
                   resizeMode={FastImage.resizeMode.contain}
-                  source={{
-                    cache: FastImage.cacheControl.immutable,
-                    priority: FastImage.priority.high,
-                    uri: imageUrl,
-                  }}
+                  source={museumImageSource(imageUrl, FastImage.priority.high)}
                   style={styles.image}
                 />
                 {imageError ? <View style={styles.errorContainer}>

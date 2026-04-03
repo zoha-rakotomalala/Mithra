@@ -20,17 +20,31 @@ import type { Painting as CachedPainting } from '@/types/database';
  */
 
 function dbToUIPainting(db: CachedPainting): Painting {
+  const m = (db as any).metadata || {};
+  let imageUrl = db.image_url;
+  let thumbnailUrl = db.thumbnail_url;
+  // AIC stores image_id in metadata; construct IIIF URLs when image_url is missing
+  if (!imageUrl && m.image_id && db.legacy_id?.startsWith('chicago-')) {
+    imageUrl = `https://www.artic.edu/iiif/2/${m.image_id}/full/843,/0/default.jpg`;
+    thumbnailUrl = `https://www.artic.edu/iiif/2/${m.image_id}/full/200,/0/default.jpg`;
+  }
   return {
     id: db.id,
     title: db.title,
     artist: db.artist,
     year: db.year,
-    imageUrl: db.image_url,
-    thumbnailUrl: db.thumbnail_url,
+    imageUrl,
+    thumbnailUrl,
     color: db.color || '#1a1a1a',
-    museum: db.museum_id,
-    medium: db.medium,
-    dimensions: db.dimensions,
+    museum: m.museum || db.museum_id,
+    description: m.description,
+    medium: m.medium || db.medium,
+    dimensions: m.dimensions || db.dimensions,
+    location: m.location,
+    objectURL: m.objectURL,
+    period: m.period,
+    culture: m.culture,
+    department: m.department,
   };
 }
 
