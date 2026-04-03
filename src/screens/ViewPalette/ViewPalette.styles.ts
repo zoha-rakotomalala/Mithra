@@ -2,9 +2,7 @@ import { StyleSheet, Dimensions, Platform } from 'react-native';
 import { COLORS, SPACING } from '@/constants';
 
 const { width } = Dimensions.get('window');
-// Grid is inside: content(padding:lg) > shareableGrid(padding:lg) > grid(gap:sm between items)
-const gridContainerWidth = width - (SPACING.lg * 4); // 2x content padding + 2x shareableGrid padding
-const gridItemSize = (gridContainerWidth - (SPACING.sm * 2)) / 3; // 3 columns, 2 gaps
+const tileSize = (width - 64) / 3;
 
 export const viewPaletteStyles = StyleSheet.create({
   safeArea: {
@@ -63,73 +61,37 @@ export const viewPaletteStyles = StyleSheet.create({
   },
 
   content: {
-    padding: SPACING.lg,
+    flex: 1,
+    justifyContent: 'center',
+    paddingVertical: SPACING.xl,
   },
 
   shareableGrid: {
     backgroundColor: COLORS.black,
-    padding: SPACING.lg,
-    borderRadius: 8,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xl,
   },
 
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: SPACING.sm,
-  },
-
-  gridItem: {
-    width: gridItemSize,
-    height: gridItemSize,
-    borderRadius: 8,
-    overflow: 'hidden',
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.gold,
-  },
-
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-
-  overlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    padding: SPACING.xs,
-  },
-
-  artist: {
-    fontSize: 10,
-    color: COLORS.ivory,
-    fontWeight: '600',
+    justifyContent: 'center',
   },
 
   centerItem: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: tileSize,
+    height: tileSize * 1.3,
+    borderWidth: 1,
+    borderColor: COLORS.gold,
     backgroundColor: COLORS.gold,
-    padding: SPACING.sm,
-  },
-
-  emptyItem: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderStyle: 'dashed',
-  },
-
-  emptyIcon: {
-    fontSize: 24,
-    color: COLORS.gold,
-    opacity: 0.4,
+    padding: SPACING.sm,
+    margin: 4,
   },
 
   centerTitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '700',
     color: COLORS.black,
     textAlign: 'center',
@@ -138,7 +100,7 @@ export const viewPaletteStyles = StyleSheet.create({
   },
 
   centerDate: {
-    fontSize: 11,
+    fontSize: 10,
     color: COLORS.black,
     textAlign: 'center',
   },

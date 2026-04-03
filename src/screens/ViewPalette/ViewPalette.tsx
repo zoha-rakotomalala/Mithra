@@ -1,16 +1,21 @@
 import type { RootScreenProps } from '@/navigation/types';
 import { Paths } from '@/navigation/paths';
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StatusBar, Image, SafeAreaView, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StatusBar, SafeAreaView, Platform, Dimensions } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ViewShot from 'react-native-view-shot';
 import RNShare from 'react-native-share';
 import { getVisitPalette, getCachedPaintings, getVisitById } from '@/services';
+import { PaletteTile, EmptyPaletteTile } from '@/components/molecules/PaletteTile';
 import { EmptyState } from '@/components/molecules';
 import { typography } from '@/styles';
 import { COLORS } from '@/constants';
 import { viewPaletteStyles as styles } from './ViewPalette.styles';
 import type { Painting as CachedPainting, Visit } from '@/types/database';
+import type { Painting } from '@/types/painting';
+
+const { width } = Dimensions.get('window');
+const TILE_SIZE = (width - 64) / 3;
 
 export function ViewPalette() {
   const navigation = useNavigation<RootScreenProps['navigation']>();
@@ -57,39 +62,18 @@ export function ViewPalette() {
     }
   };
 
-  // Always 9 positions: 8 painting slots + center info tile
-  const gridPositions = [0, 1, 2, 3, 'center', 4, 5, 6, 7];
+  const toUIPainting = (db: CachedPainting): Painting => ({
+    id: db.id,
+    title: db.title,
+    artist: db.artist,
+    year: db.year,
+    imageUrl: db.image_url,
+    thumbnailUrl: db.thumbnail_url,
+    color: db.color || '#1a1a1a',
+    museum: db.museum_id,
+  });
 
-  const renderGrid = () => (
-    <View style={styles.grid}>
-      {gridPositions.map((pos, idx) => {
-        if (pos === 'center') {
-          return (
-            <View key="center" style={[styles.gridItem, styles.centerItem]}>
-              <Text style={styles.centerTitle}>{visit?.museum?.name}</Text>
-              <Text style={styles.centerDate}>{visit?.visit_date}</Text>
-            </View>
-          );
-        }
-        const painting = paintings[pos as number];
-        if (!painting) {
-          return (
-            <View key={`empty-${idx}`} style={[styles.gridItem, styles.emptyItem]}>
-              <Text style={styles.emptyIcon}>+</Text>
-            </View>
-          );
-        }
-        return (
-          <View key={painting.id} style={styles.gridItem}>
-            <Image source={{ uri: painting.image_url }} style={styles.image} />
-            <View style={styles.overlay}>
-              <Text style={styles.artist} numberOfLines={1}>{painting.artist}</Text>
-            </View>
-          </View>
-        );
-      })}
-    </View>
-  );
+  const gridPositions = [0, 1, 2, 3, 'center', 4, 5, 6, 7];
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -124,7 +108,32 @@ export function ViewPalette() {
           <View style={styles.content}>
             <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1 }}>
               <View style={styles.shareableGrid}>
-                {renderGrid()}
+                <View style={styles.grid}>
+                  {gridPositions.map((pos, idx) => {
+                    if (pos === 'center') {
+                      return (
+                        <View key="center" style={styles.centerItem}>
+                          <Text style={styles.centerTitle}>{visit?.museum?.name}</Text>
+                          <Text style={styles.centerDate}>{visit?.visit_date}</Text>
+                        </View>
+                      );
+                    }
+                    const painting = paintings[pos as number];
+                    if (!painting) {
+                      return <EmptyPaletteTile key={`empty-${idx}`} size={TILE_SIZE} />;
+                    }
+                    return (
+                      <PaletteTile
+                        key={painting.id}
+                        imageUrl={painting.image_url}
+                        title={painting.title}
+                        artist={painting.artist}
+                        onPress={() => navigation.navigate(Paths.PaintingDetail, { painting: toUIPainting(painting) })}
+                        size={TILE_SIZE}
+                      />
+                    );
+                  })}
+                </View>
               </View>
             </ViewShot>
           </View>

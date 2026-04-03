@@ -6,3 +6,4 @@ export * from './PaintingCard/PaintingCard';
 export * from './ProfileCard/ProfileCard';
 export { SectionHeader } from './SectionHeader/SectionHeader';
 export { SyncErrorBanner } from './SyncErrorBanner/SyncErrorBanner';
+export * from './PaletteTile';

@@ -32,7 +32,7 @@ export function useVisitDetail(visitId: string) {
       setLikedPaintings(likes);
 
       const palette = await getVisitPalette(visitId);
-      setHasPalette(palette !== null && palette.paintings.length === 8);
+      setHasPalette(palette !== null && palette.paintings.length > 0);
     }
     setLoading(false);
   };

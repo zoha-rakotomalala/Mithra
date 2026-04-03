@@ -1,5 +1,5 @@
 import { StyleSheet, Platform } from 'react-native';
-import { COLORS, SPACING, CARD } from '@/constants';
+import { COLORS, SPACING } from '@/constants';
 
 export const visitPaletteStyles = StyleSheet.create({
   safeArea: {
@@ -48,49 +48,57 @@ export const visitPaletteStyles = StyleSheet.create({
     letterSpacing: 1,
   },
 
-  empty: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: SPACING.md,
+  // Selection card
+  selectCard: {
+    marginBottom: SPACING.xs,
   },
 
-  emptyIcon: {
-    fontSize: 64,
-  },
-
-  cardWrapper: {
+  selectImageWrap: {
+    aspectRatio: 1 / 1.3,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'transparent',
     position: 'relative',
   },
 
-  cardImageHighlight: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: CARD.gridWidth,
-    height: CARD.gridHeight,
-    borderWidth: 3,
+  selectImageSelected: {
     borderColor: COLORS.goldLight,
-    borderRadius: CARD.borderRadius,
-    zIndex: 1,
+  },
+
+  selectImage: {
+    width: '100%',
+    height: '100%',
   },
 
   checkmark: {
     position: 'absolute',
     top: SPACING.xs,
     right: SPACING.xs,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: COLORS.gold,
     justifyContent: 'center',
     alignItems: 'center',
   },
 
   checkmarkText: {
-    fontSize: 18,
+    fontSize: 16,
     color: COLORS.black,
     fontWeight: '700',
+  },
+
+  selectTitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginTop: 4,
+  },
+
+  selectArtist: {
+    fontSize: 10,
+    color: COLORS.textLight,
+    fontStyle: 'italic',
   },
 
   footer: {

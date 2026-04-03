@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StatusBar, Alert, SafeAreaView } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StatusBar, Alert, SafeAreaView, Image, Dimensions } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Paths } from '@/navigation/paths';
 import { getLikedPaintingsForVisit, getCachedPaintings, saveVisitPalette, getVisitPalette } from '@/services';
-import { GridPaintingCard, EmptyState } from '@/components/molecules';
+import { EmptyState } from '@/components/molecules';
 import { buttons } from '@/styles';
-import { COLORS, GRID } from '@/constants';
+import { COLORS, SPACING } from '@/constants';
 import { visitPaletteStyles as styles } from './VisitPalette.styles';
 import type { Painting as CachedPainting } from '@/types/database';
-import type { Painting } from '@/types/painting';
+
+const { width } = Dimensions.get('window');
+const CARD_SIZE = (width - SPACING.md * 2 - SPACING.sm * 2) / 3;
 
 export function VisitPalette() {
   const navigation = useNavigation();
@@ -23,16 +25,13 @@ export function VisitPalette() {
   }, [visitId]);
 
   const loadPalette = async () => {
-    // Get existing palette
     const existingPalette = await getVisitPalette(visitId);
     if (existingPalette) {
       setSelected(new Set(existingPalette.paintings.map(p => p.painting_id)));
     }
 
-    // Get liked paintings
     const likes = await getLikedPaintingsForVisit(visitId);
     const paintingIds = likes.map(like => like.painting_id);
-    
     if (paintingIds.length > 0) {
       const cached = await getCachedPaintings(paintingIds);
       setPaintings(cached);
@@ -56,33 +55,34 @@ export function VisitPalette() {
       Alert.alert('Select Artworks', 'Please select at least one artwork for your palette.');
       return;
     }
-
     await saveVisitPalette(visitId, Array.from(selected));
     navigation.navigate(Paths.ViewPalette, { visitId });
   };
 
   const renderPainting = ({ item }: { item: CachedPainting }) => {
     const isSelected = selected.has(item.id);
-    const painting: Painting = {
-      id: item.id,
-      title: item.title,
-      artist: item.artist,
-      year: item.year ? parseInt(item.year) : undefined,
-      imageUrl: item.image_url,
-      museum: item.museum_id,
-      color: '#1a1a1a',
-    };
 
     return (
-      <View style={styles.cardWrapper}>
-        {isSelected && <View style={styles.cardImageHighlight} />}
-        <GridPaintingCard variant="minimal" painting={painting} onPress={() => toggleSelect(item.id)} />
-        {isSelected && (
-          <View style={styles.checkmark}>
-            <Text style={styles.checkmarkText}>✓</Text>
-          </View>
-        )}
-      </View>
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => toggleSelect(item.id)}
+        style={[styles.selectCard, { width: CARD_SIZE }]}
+      >
+        <View style={[styles.selectImageWrap, isSelected && styles.selectImageSelected]}>
+          <Image
+            source={{ uri: item.thumbnail_url || item.image_url }}
+            style={styles.selectImage}
+            resizeMode="cover"
+          />
+          {isSelected && (
+            <View style={styles.checkmark}>
+              <Text style={styles.checkmarkText}>✓</Text>
+            </View>
+          )}
+        </View>
+        <Text style={styles.selectTitle} numberOfLines={1}>{item.title}</Text>
+        <Text style={styles.selectArtist} numberOfLines={1}>{item.artist}</Text>
+      </TouchableOpacity>
     );
   };
 
@@ -109,11 +109,12 @@ export function VisitPalette() {
         <>
           <FlatList
             data={paintings}
+            extraData={Array.from(selected).join(',')}
             renderItem={renderPainting}
             keyExtractor={(item) => item.id}
-            numColumns={GRID.columns}
-            columnWrapperStyle={{ gap: GRID.gutter }}
-            contentContainerStyle={{ padding: GRID.margin, gap: GRID.gutter }}
+            numColumns={3}
+            columnWrapperStyle={{ gap: SPACING.sm, paddingHorizontal: SPACING.md }}
+            contentContainerStyle={{ paddingTop: SPACING.md, paddingBottom: SPACING.md, gap: SPACING.sm }}
             style={{ backgroundColor: COLORS.cream }}
           />
 

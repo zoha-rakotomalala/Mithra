@@ -43,7 +43,7 @@ export function TabNavigator() {
         options={{
           tabBarLabel: 'VISITS',
           tabBarIcon: ({ color }) => (
-            <Text style={{ color, fontSize: TAB_BAR.iconFontSize }}>🏛</Text>
+            <Text style={{ color, fontSize: TAB_BAR.iconFontSize }}>⛩</Text>
           ),
         }}
       />
