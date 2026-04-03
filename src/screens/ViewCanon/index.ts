@@ -1,1 +1,0 @@
-export { ViewCanon } from './ViewCanon';

@@ -31,6 +31,13 @@ export function ViewPalette() {
     loadPalette();
   }, [visitId]);
 
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadPalette();
+    });
+    return unsubscribe;
+  }, [navigation, visitId]);
+
   const loadPalette = async () => {
     setLoading(true);
     const [paletteData, visitData] = await Promise.all([
@@ -78,7 +85,7 @@ export function ViewPalette() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
-      <ScrollView style={{ flex: 1, backgroundColor: COLORS.cream }}>
+      <ScrollView style={{ flex: 1, backgroundColor: COLORS.black }} contentContainerStyle={{ flexGrow: 1 }}>
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
@@ -105,6 +112,7 @@ export function ViewPalette() {
             <Text style={typography.body}>Loading palette...</Text>
           </View>
         ) : paintings.length > 0 ? (
+          <View style={{ flex: 1, justifyContent: 'center' }}>
           <View style={styles.content}>
             <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1 }}>
               <View style={styles.shareableGrid}>
@@ -136,6 +144,7 @@ export function ViewPalette() {
                 </View>
               </View>
             </ViewShot>
+          </View>
           </View>
         ) : (
           <EmptyState

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StatusBar, Alert, SafeAreaView, Image, Dimensions } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { Paths } from '@/navigation/paths';
 import { getLikedPaintingsForVisit, getCachedPaintings, saveVisitPalette, getVisitPalette } from '@/services';
 import { EmptyState } from '@/components/molecules';
 import { buttons } from '@/styles';
@@ -56,7 +55,7 @@ export function VisitPalette() {
       return;
     }
     await saveVisitPalette(visitId, Array.from(selected));
-    navigation.navigate(Paths.ViewPalette, { visitId });
+    navigation.goBack();
   };
 
   const renderPainting = ({ item }: { item: CachedPainting }) => {

@@ -12,6 +12,7 @@ type PaletteTileProps = {
   readonly title?: string;
   readonly onPress?: () => void;
   readonly size?: number;
+  readonly badge?: string;
 };
 
 export function PaletteTile({
@@ -20,6 +21,7 @@ export function PaletteTile({
   title,
   onPress,
   size = DEFAULT_SIZE,
+  badge,
 }: PaletteTileProps) {
   return (
     <TouchableOpacity
@@ -38,6 +40,11 @@ export function PaletteTile({
         <View style={styles.overlay}>
           {title && <Text style={styles.title} numberOfLines={1}>{title}</Text>}
           {artist && <Text style={styles.artist} numberOfLines={1}>{artist}</Text>}
+        </View>
+      )}
+      {badge && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{badge}</Text>
         </View>
       )}
     </TouchableOpacity>
@@ -91,6 +98,22 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: COLORS.gold,
     fontStyle: 'italic',
+  },
+  badge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(230, 57, 70, 0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
   },
   emptyContainer: {
     borderWidth: 2,

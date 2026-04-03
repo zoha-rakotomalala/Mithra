@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { VisitPalette, VisitPalettePainting, CanonPalette } from '@/types/database';
+import type { VisitPalette, VisitPalettePainting } from '@/types/database';
 
 export interface VisitPaletteWithPaintings {
   palette: VisitPalette;
@@ -106,55 +106,4 @@ export async function deleteVisitPalette(visitId: string): Promise<boolean> {
   }
 
   return true;
-}
-
-/**
- * Create or update the canon palette (8 paintings from across all visits).
- * @param paintingUuids - Array of 8 painting UUIDs
- */
-export async function saveCanonPalette(paintingUuids: string[]): Promise<CanonPalette | null> {
-  if (paintingUuids.length !== 8) {
-    console.error('Canon palette must have exactly 8 artworks');
-    return null;
-  }
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    console.error('Error saving canon palette: User is not logged in.');
-    return null;
-  }
-
-  const { data, error } = await supabase
-    .from('canon_palettes')
-    .upsert(
-      { user_id: user.id, painting_ids: paintingUuids },
-      { onConflict: 'user_id' }
-    )
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error saving canon palette:', error);
-    return null;
-  }
-
-  return data;
-}
-
-/**
- * Get the current user's canon palette.
- */
-export async function getCanonPalette(): Promise<CanonPalette | null> {
-  const { data, error } = await supabase
-    .from('canon_palettes')
-    .select('*')
-    .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') return null; // Not found
-    console.error('Error fetching canon palette:', error);
-    return null;
-  }
-
-  return data;
 }
