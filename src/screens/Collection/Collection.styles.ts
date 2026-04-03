@@ -1,5 +1,5 @@
-import { Dimensions, StyleSheet, Platform } from 'react-native';
-import { COLORS, SPACING } from '@/constants';
+import { Dimensions, StyleSheet } from 'react-native';
+import { COLORS, SPACING, ANDROID_STATUS_BAR_PADDING, FONT_SIZE, BORDER_RADIUS, ICON_SIZE } from '@/constants';
 
 const { width } = Dimensions.get('window');
 const CARD_SIZE = (width - 64) / 3;
@@ -14,7 +14,7 @@ export const collectionStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: COLORS.black,
-    paddingTop: Platform.OS === 'android' ? 25 : 0, // Fix Android notch overlap
+    paddingTop: ANDROID_STATUS_BAR_PADDING,
   },
 
   container: {
@@ -32,7 +32,7 @@ export const collectionStyles = StyleSheet.create({
     paddingTop: SPACING.md,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: FONT_SIZE['5xl'],
     fontWeight: '300',
     letterSpacing: 4,
     color: COLORS.gold,
@@ -54,27 +54,27 @@ export const collectionStyles = StyleSheet.create({
   statCompact: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 4,
+    gap: SPACING.xs,
   },
   statNumber: {
-    fontSize: 16,
+    fontSize: FONT_SIZE['2xl'],
     fontWeight: '600',
     color: COLORS.gold,
   },
   seenNumber: {
-    color: '#e63946',
+    color: COLORS.danger,
   },
   wantNumber: {
-    color: '#f59e0b',
+    color: COLORS.amber,
   },
   statLabel: {
-    fontSize: 10,
+    fontSize: FONT_SIZE.xs,
     color: 'rgba(212, 175, 55, 0.5)',
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
   statDivider: {
-    fontSize: 14,
+    fontSize: FONT_SIZE.lg,
     color: 'rgba(212, 175, 55, 0.3)',
   },
 
@@ -103,13 +103,13 @@ export const collectionStyles = StyleSheet.create({
     borderColor: COLORS.gold,
   },
   filterChipText: {
-    fontSize: 11,
+    fontSize: FONT_SIZE.sm,
     color: 'rgba(212, 175, 55, 0.7)',
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
   filterChipTextActive: {
-    fontSize: 11,
+    fontSize: FONT_SIZE.sm,
     fontWeight: '700',
     color: COLORS.black,
     letterSpacing: 1,
@@ -139,13 +139,13 @@ export const collectionStyles = StyleSheet.create({
     borderBottomColor: COLORS.gold,
   },
   sortOptionText: {
-    fontSize: 11,
+    fontSize: FONT_SIZE.sm,
     color: COLORS.textLight,
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
   sortOptionTextActive: {
-    fontSize: 11,
+    fontSize: FONT_SIZE.sm,
     color: COLORS.text,
     fontWeight: '700',
     letterSpacing: 1,
@@ -159,21 +159,21 @@ export const collectionStyles = StyleSheet.create({
     paddingVertical: 80,
   },
   emptyIcon: {
-    fontSize: 64,
+    fontSize: FONT_SIZE.display,
     marginBottom: SPACING.md,
     opacity: 0.5,
   },
   emptyTitle: {
-    fontSize: 20,
+    fontSize: FONT_SIZE['3xl'],
     fontWeight: '600',
     color: COLORS.text,
     letterSpacing: 1,
     marginBottom: SPACING.sm,
   },
   emptyText: {
-    fontSize: 13,
+    fontSize: FONT_SIZE.body,
     color: COLORS.textLight,
-    lineHeight: 20,
+    lineHeight: FONT_SIZE['3xl'],
     textAlign: 'center',
     letterSpacing: 0.5,
   },
@@ -187,7 +187,7 @@ export const collectionStyles = StyleSheet.create({
   },
   gridItem: {
     marginBottom: SPACING.md,
-    marginHorizontal: 4,
+    marginHorizontal: SPACING.xs,
     width: CARD_SIZE,
   },
 
@@ -206,13 +206,13 @@ export const collectionStyles = StyleSheet.create({
     paddingVertical: SPACING.sm,
   },
   groupTitle: {
-    fontSize: 16,
+    fontSize: FONT_SIZE['2xl'],
     fontWeight: '600',
     color: COLORS.text,
     letterSpacing: 0.5,
   },
   groupCount: {
-    fontSize: 12,
+    fontSize: FONT_SIZE.md,
     color: COLORS.textLight,
     letterSpacing: 1,
   },
@@ -256,24 +256,24 @@ export const collectionStyles = StyleSheet.create({
     width: '80%',
   },
   paintingIcon: {
-    fontSize: 40,
+    fontSize: ICON_SIZE['3xl'],
     opacity: 0.9,
   },
   paintingTitle: {
-    fontSize: 12,
+    fontSize: FONT_SIZE.md,
     fontWeight: '600',
     color: COLORS.text,
-    lineHeight: 16,
+    lineHeight: FONT_SIZE['2xl'],
     marginTop: SPACING.sm,
   },
   paintingArtist: {
-    fontSize: 10,
+    fontSize: FONT_SIZE.xs,
     fontStyle: 'italic',
     color: COLORS.textLight,
     marginTop: 2,
   },
   paintingYear: {
-    fontSize: 9,
+    fontSize: FONT_SIZE.xxs,
     color: COLORS.textLight,
     letterSpacing: 0.5,
     marginTop: 2,
@@ -283,40 +283,40 @@ export const collectionStyles = StyleSheet.create({
   seenBadge: {
     alignItems: 'center',
     backgroundColor: 'rgba(230, 57, 70, 0.95)',
-    borderRadius: 4,
+    borderRadius: BORDER_RADIUS.sm,
     elevation: 4,
-    height: 20,
+    height: ICON_SIZE.md,
     justifyContent: 'center',
     position: 'absolute',
-    right: 6,
+    right: SPACING.sm - 2,
     shadowColor: COLORS.black,
     shadowOffset: { height: 2, width: 0 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
-    top: 6,
-    width: 20,
+    top: SPACING.sm - 2,
+    width: ICON_SIZE.md,
   },
   wantToVisitBadge: {
     alignItems: 'center',
     backgroundColor: 'rgba(245, 158, 11, 0.95)',
-    borderRadius: 4,
+    borderRadius: BORDER_RADIUS.sm,
     elevation: 4,
-    height: 20,
+    height: ICON_SIZE.md,
     justifyContent: 'center',
     position: 'absolute',
-    right: 6,
+    right: SPACING.sm - 2,
     shadowColor: COLORS.black,
     shadowOffset: { height: 2, width: 0 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
-    top: 6,
-    width: 20,
+    top: SPACING.sm - 2,
+    width: ICON_SIZE.md,
   },
   badgeIcon: {
-    fontSize: 10,
+    fontSize: FONT_SIZE.xs,
     fontWeight: '700',
     color: COLORS.textInverse,
-    lineHeight: 10,
+    lineHeight: FONT_SIZE.xs,
     textAlign: 'center',
   },
 });

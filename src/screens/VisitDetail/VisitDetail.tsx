@@ -44,7 +44,7 @@ export function VisitDetail() {
     <>
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
-        <ScrollView style={{ flex: 1, backgroundColor: COLORS.cream }}>
+        <ScrollView style={styles.scrollView}>
           <View style={styles.header}>
             <View style={styles.headerRow}>
               <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
@@ -129,8 +129,8 @@ export function VisitDetail() {
             title="Edit Visit"
             onClose={() => setShowEditModal(false)}
             titleStyle={typography.h2}
-            style={{ backgroundColor: undefined, borderBottomWidth: 1 }}
-            closeButtonStyle={{ fontSize: 32, color: COLORS.text }}
+            style={styles.modalHeaderStyle}
+            closeButtonStyle={styles.modalCloseButton}
           />
 
           <View style={styles.modalContent}>

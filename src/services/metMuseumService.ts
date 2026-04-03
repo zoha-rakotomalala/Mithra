@@ -1,5 +1,6 @@
 import type { Painting } from '@/types/painting';
-import {  } from '@/utils/colorGenerator';
+import { generateColorFromString } from '@/utils/colorGenerator';
+import { museumApi } from './museumApiClient';
 
 const MET_API_BASE = 'https://collectionapi.metmuseum.org/public/collection/v1';
 const objectCache = new Map<string, any>();
@@ -35,13 +36,7 @@ export async function searchMetMuseum(
     const searchUrl = `${MET_API_BASE}/search?${queryParameters.toString()}`;
     console.log('🏛️ Searching Met Museum:', searchUrl);
 
-    const response = await fetch(searchUrl);
-
-    if (!response.ok) {
-      throw new Error(`Met Museum API error: ${response.status}`);
-    }
-
-    const data = await response.json();
+    const data = await museumApi.get(searchUrl).json<any>();
     const objectIDs = data.objectIDs || [];
     const total = data.total || 0;
 
@@ -109,14 +104,7 @@ async function fetchObjectDetail(objectID: number): Promise<null | Painting> {
     }
 
     const url = `${MET_API_BASE}/objects/${objectID}`;
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      console.warn(`Failed to fetch Met object ${objectID}`);
-      return null;
-    }
-
-    const data = await response.json();
+    const data = await museumApi.get(url).json<any>();
     objectCache.set(cacheKey, data);
 
     return parseMetObject(data, objectID);
@@ -293,23 +281,7 @@ function extractDescription(data: any): string | undefined {
   return parts.length > 0 ? parts.join('. ') : undefined;
 }
 
-/**
- * Generate consistent color from string
- */
-function generateColorFromString(string_: string): string {
-  const colors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
-    '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
-    '#F4976C', '#4A5F7A', '#2C3639', '#D4AF37', '#7FB3D5',
-  ];
 
-  let hash = 0;
-  for (let index = 0; index < string_.length; index++) {
-    hash = string_.charCodeAt(index) + ((hash << 5) - hash);
-  }
-
-  return colors[Math.abs(hash) % colors.length];
-}
 
 /**
  * Get popular artists for quick search

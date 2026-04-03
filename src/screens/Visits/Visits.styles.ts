@@ -1,12 +1,12 @@
 import { StyleSheet, Platform } from 'react-native';
-import { COLORS, SPACING } from '@/constants';
+import { COLORS, SPACING, ANDROID_STATUS_BAR_PADDING, FONT_SIZE, ICON_SIZE, TOUCHABLE_HEIGHT } from '@/constants';
 
 export const visitsStyles = StyleSheet.create({
   // Safe Area - Matches Collection/Search
   safeArea: {
     flex: 1,
     backgroundColor: COLORS.black,
-    paddingTop: Platform.OS === 'android' ? 25 : 0,
+    paddingTop: ANDROID_STATUS_BAR_PADDING,
   },
 
   // Header - Art Deco Black & Gold (matches Collection)
@@ -20,7 +20,7 @@ export const visitsStyles = StyleSheet.create({
   },
 
   headerTitle: {
-    fontSize: 28,
+    fontSize: FONT_SIZE['5xl'],
     fontWeight: '300',
     letterSpacing: 4,
     color: COLORS.gold,
@@ -42,15 +42,15 @@ export const visitsStyles = StyleSheet.create({
   statCompact: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 4,
+    gap: SPACING.xs,
   },
   statNumber: {
-    fontSize: 16,
+    fontSize: FONT_SIZE['2xl'],
     fontWeight: '600',
     color: COLORS.gold,
   },
   statLabel: {
-    fontSize: 10,
+    fontSize: FONT_SIZE.xs,
     color: 'rgba(212, 175, 55, 0.5)',
     letterSpacing: 1,
     textTransform: 'uppercase',
@@ -86,7 +86,7 @@ export const visitsStyles = StyleSheet.create({
     marginTop: SPACING.xs,
     color: COLORS.black + 'AA',
     fontStyle: 'italic',
-    fontSize: 13,
+    fontSize: FONT_SIZE.body,
     lineHeight: 18,
   },
 
@@ -100,7 +100,7 @@ export const visitsStyles = StyleSheet.create({
   },
 
   emptyIcon: {
-    fontSize: 64,
+    fontSize: FONT_SIZE.display,
     marginBottom: SPACING.lg,
     opacity: 0.5,
   },
@@ -109,7 +109,7 @@ export const visitsStyles = StyleSheet.create({
     textAlign: 'center',
     color: COLORS.textLight,
     marginTop: SPACING.sm,
-    fontSize: 13,
+    fontSize: FONT_SIZE.body,
     letterSpacing: 0.5,
   },
 
@@ -118,8 +118,8 @@ export const visitsStyles = StyleSheet.create({
     position: 'absolute',
     right: SPACING.lg,
     bottom: SPACING.lg,
-    width: 56,
-    height: 56,
+    width: TOUCHABLE_HEIGHT.xl,
+    height: TOUCHABLE_HEIGHT.xl,
     borderRadius: 2, // Sharp corners
     backgroundColor: COLORS.gold,
     justifyContent: 'center',
@@ -134,10 +134,10 @@ export const visitsStyles = StyleSheet.create({
   },
 
   fabText: {
-    fontSize: 32,
+    fontSize: FONT_SIZE['6xl'],
     color: COLORS.black,
     fontWeight: '300',
-    lineHeight: 32,
+    lineHeight: FONT_SIZE['6xl'],
   },
 
   // Modal Header - Matches Search modal
@@ -154,10 +154,10 @@ export const visitsStyles = StyleSheet.create({
   },
 
   closeButton: {
-    fontSize: 28,
+    fontSize: FONT_SIZE['5xl'],
     color: COLORS.gold,
     fontWeight: '300',
-    lineHeight: 28,
+    lineHeight: FONT_SIZE['5xl'],
   },
 
   // Modal Content
@@ -175,18 +175,18 @@ export const visitsStyles = StyleSheet.create({
     borderColor: 'rgba(212, 175, 55, 0.3)',
     borderRadius: 2, // Sharp corners
     padding: SPACING.md,
-    fontSize: 15,
+    fontSize: FONT_SIZE.xl,
     color: COLORS.black,
   },
 
   inputText: {
     color: COLORS.black,
-    fontSize: 15,
+    fontSize: FONT_SIZE.xl,
   },
 
   inputPlaceholder: {
     color: COLORS.black + '60',
-    fontSize: 15,
+    fontSize: FONT_SIZE.xl,
   },
 
   textArea: {
@@ -217,9 +217,9 @@ export const visitsStyles = StyleSheet.create({
   },
 
   colorBadge: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: ICON_SIZE.xs,
+    height: ICON_SIZE.xs,
+    borderRadius: ICON_SIZE.xs / 2,
     marginRight: SPACING.md,
   },
 
@@ -242,7 +242,7 @@ export const visitsStyles = StyleSheet.create({
   },
 
   chevronIcon: {
-    fontSize: 12,
+    fontSize: FONT_SIZE.md,
     color: COLORS.gold,
     marginLeft: SPACING.sm,
   },
@@ -268,7 +268,7 @@ export const visitsStyles = StyleSheet.create({
 
   validationText: {
     color: '#A4161A',
-    fontSize: 12,
+    fontSize: FONT_SIZE.md,
     marginTop: -SPACING.xs,
   },
 });

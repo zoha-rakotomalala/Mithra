@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { emptyStateStyles as styles } from './EmptyState.styles';
 
-type EmptyStateProps = {
+export type EmptyStateProps = {
   readonly icon: string;
   readonly title: string;
   readonly subtitle?: string;

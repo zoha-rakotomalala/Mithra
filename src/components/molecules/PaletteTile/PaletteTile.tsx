@@ -6,7 +6,7 @@ const { width } = Dimensions.get('window');
 // Match ProfileCard: (width - 64) / 3 with margin: 4
 const DEFAULT_SIZE = (width - 64) / 3;
 
-type PaletteTileProps = {
+export type PaletteTileProps = {
   readonly imageUrl?: string | null;
   readonly artist?: string;
   readonly title?: string;
@@ -51,7 +51,11 @@ export function PaletteTile({
   );
 }
 
-export function EmptyPaletteTile({ size = DEFAULT_SIZE }: { readonly size?: number }) {
+export type EmptyPaletteTileProps = {
+  readonly size?: number;
+};
+
+export function EmptyPaletteTile({ size = DEFAULT_SIZE }: EmptyPaletteTileProps) {
   return (
     <View style={[styles.emptyContainer, { width: size, height: size * 1.3 }]}>
       <Text style={styles.emptyIcon}>+</Text>

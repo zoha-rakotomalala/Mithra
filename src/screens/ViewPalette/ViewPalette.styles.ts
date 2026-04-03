@@ -1,5 +1,5 @@
-import { StyleSheet, Dimensions, Platform } from 'react-native';
-import { COLORS, SPACING } from '@/constants';
+import { StyleSheet, Dimensions } from 'react-native';
+import { COLORS, SPACING, ANDROID_STATUS_BAR_PADDING } from '@/constants';
 
 const { width } = Dimensions.get('window');
 const tileSize = (width - 64) / 3;
@@ -8,7 +8,7 @@ export const viewPaletteStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: COLORS.black,
-    paddingTop: Platform.OS === 'android' ? 25 : 0,
+    paddingTop: ANDROID_STATUS_BAR_PADDING,
   },
 
   header: {
@@ -103,5 +103,23 @@ export const viewPaletteStyles = StyleSheet.create({
     fontSize: 10,
     color: COLORS.black,
     textAlign: 'center',
+  },
+
+  scrollView: {
+    flex: 1,
+    backgroundColor: COLORS.black,
+  },
+
+  scrollContent: {
+    flexGrow: 1,
+  },
+
+  headerSpacer: {
+    flex: 1,
+  },
+
+  gridWrapper: {
+    flex: 1,
+    justifyContent: 'center',
   },
 });

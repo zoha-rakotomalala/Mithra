@@ -18,6 +18,12 @@ export const collectionStyles = StyleSheet.create({
     marginRight: SPACING.md,
   },
 
+  backText: {
+    fontSize: 28,
+    color: COLORS.gold,
+    fontWeight: '300',
+  },
+
   loading: {
     flex: 1,
     justifyContent: 'center',

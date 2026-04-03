@@ -1,6 +1,7 @@
 import type { Painting } from '@/types/painting';
 import { cleanArtistName } from './utils/searchHelpers';
-import {  } from '@/utils/colorGenerator';
+import { generateColorFromString } from '@/utils/colorGenerator';
+import { museumApi } from './museumApiClient';
 
 const RIJKS_SEARCH_API = 'https://data.rijksmuseum.nl/search/collection';
 
@@ -45,21 +46,7 @@ export async function searchRijksmuseum(
     const searchUrl = `${RIJKS_SEARCH_API}?${searchParams.toString()}`;
     console.log('🇳🇱 Searching Rijksmuseum:', searchUrl);
 
-    const response = await fetch(searchUrl);
-
-    console.log('🧪 Rijks raw object:', {
-      id: data.id,
-      type: data.type,
-      label: data._label,
-      hasRepresentation: !!data.representation,
-    });
-
-    if (!response.ok) {
-      console.warn(`Rijksmuseum search error: ${response.status}`);
-      return { paintings: [], totalResults: 0 };
-    }
-
-    const data = await response.json();
+    const data = await museumApi.get(searchUrl).json<any>();
     const orderedItems = data.orderedItems || [];
     const totalItems = data.partOf?.totalItems || 0;
 
@@ -83,6 +70,9 @@ export async function searchRijksmuseum(
     console.log(
       `🇳🇱 Rijks search: ${rawItems.length} raw items → ${validItems.length} valid IDs`
     );
+
+    const paintings = await resolveObjects(objectIds);
+
     console.log(`🇳🇱 Rijksmuseum: ${paintings.length} paintings resolved`);
 
     return {
@@ -111,19 +101,12 @@ async function resolveObject(objectId: string): Promise<Painting | null> {
   try {
     console.log('🧩 Resolving Rijks object:', objectId);
 
-    const response = await fetch(objectId, {
+    const data = await museumApi.get(objectId, {
       headers: {
         // Request Linked Art JSON-LD explicitly
         Accept: 'application/ld+json'
       },
-    });
-
-    if (!response.ok) {
-      console.warn(`Failed to resolve Rijks object: ${objectId} (${response.status})`);
-      return null;
-    }
-
-    const data = await response.json();
+    }).json<any>();
     return parseLinkedArtObject(data);
   } catch (error) {
     console.error(`Error resolving Rijks object ${objectId}:`, error);
@@ -136,14 +119,6 @@ async function resolveObject(objectId: string): Promise<Painting | null> {
  */
 function parseLinkedArtObject(data: any): Painting | null {
   try {
-    // Must be a HumanMadeObject
-    const isHumanMadeObject =
-      data.type === 'HumanMadeObject' ||
-      Array.isArray(data.type) && data.type.includes('HumanMadeObject') ||
-      data.classified_as?.some((c: any) =>
-        c._label?.toLowerCase().includes('object')
-      );
-
     const types = Array.isArray(data.type) ? data.type : [data.type];
     if (!types.includes('HumanMadeObject')) return null;
 
@@ -358,17 +333,7 @@ export function getPopularRijksmuseumArtists(): string[] {
   ];
 }
 
-function generateColorFromString(str: string): string {
-  const colors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
-    '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
-  ];
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
-}
+
 
 import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
 import { registerAdapter } from './museumAdapterRegistry';

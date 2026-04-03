@@ -1,7 +1,8 @@
 import type { Painting } from '@/types/painting';
 import { cleanArtistName } from './utils/searchHelpers';
-import {  } from '@/utils/colorGenerator';
+import { generateColorFromString } from '@/utils/colorGenerator';
 import Config from 'react-native-config';
+import { museumApi } from './museumApiClient';
 
 const HARVARD_API_BASE = 'https://api.harvardartmuseums.org/v1';
 // Get free API key from: https://harvardartmuseums.org/collections/api
@@ -44,20 +45,7 @@ export async function searchHarvard(
     const url = `${HARVARD_API_BASE}/object?${queryParams.toString()}`;
     console.log('🏛️ Searching Harvard Art Museums:', url);
 
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('Invalid Harvard API key');
-      }
-      if (response.status === 429) {
-        console.warn('Harvard API rate limit reached');
-        return { paintings: [], totalResults: 0 };
-      }
-      throw new Error(`Harvard API error: ${response.status}`);
-    }
-
-    const data = await response.json();
+    const data = await museumApi.get(url).json<any>();
     const records = data.records || [];
     const info = data.info || {};
 
@@ -152,17 +140,7 @@ export function getPopularHarvardArtists(): string[] {
   ];
 }
 
-function generateColorFromString(str: string): string {
-  const colors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
-    '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
-  ];
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
-}
+
 
 import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
 import { registerAdapter } from './museumAdapterRegistry';

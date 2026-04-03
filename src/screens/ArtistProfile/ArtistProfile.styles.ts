@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { COLORS, SPACING } from '@/constants';
+import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS, ICON_SIZE, TOUCHABLE_HEIGHT } from '@/constants';
 
 /**
  * Artist Profile Screen Styles
@@ -22,17 +22,17 @@ export const artistProfileStyles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingBottom: SPACING.md,
     paddingHorizontal: SPACING.md + 4,
-    paddingTop: 50,
+    paddingTop: SPACING.xxl + 2,
   },
   backButton: {
     alignItems: 'center',
-    height: 44,
+    height: TOUCHABLE_HEIGHT.lg,
     justifyContent: 'center',
-    width: 44,
+    width: TOUCHABLE_HEIGHT.lg,
   },
   backIcon: {
     color: COLORS.gold,
-    fontSize: 28,
+    fontSize: FONT_SIZE['5xl'],
     fontWeight: '300',
   },
   headerCenter: {
@@ -42,7 +42,7 @@ export const artistProfileStyles = StyleSheet.create({
   },
   headerTitle: {
     color: COLORS.gold,
-    fontSize: 20,
+    fontSize: FONT_SIZE['3xl'],
     fontWeight: '300',
     letterSpacing: 2,
     marginBottom: SPACING.sm,
@@ -60,7 +60,7 @@ export const artistProfileStyles = StyleSheet.create({
   },
   dividerOrnament: {
     color: COLORS.gold,
-    fontSize: 10,
+    fontSize: FONT_SIZE.xs,
     marginHorizontal: SPACING.sm,
   },
 
@@ -83,19 +83,19 @@ export const artistProfileStyles = StyleSheet.create({
   },
   statNumber: {
     color: COLORS.gold,
-    fontSize: 28,
+    fontSize: FONT_SIZE['5xl'],
     fontWeight: '300',
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   },
   seenNumber: {
-    color: '#e63946',
+    color: COLORS.danger,
   },
   wantNumber: {
-    color: '#f59e0b',
+    color: COLORS.amber,
   },
   statLabel: {
     color: 'rgba(212, 175, 55, 0.7)',
-    fontSize: 9,
+    fontSize: FONT_SIZE.xxs,
     letterSpacing: 2,
   },
   statDivider: {
@@ -103,7 +103,7 @@ export const artistProfileStyles = StyleSheet.create({
   },
   statDividerText: {
     color: 'rgba(212, 175, 55, 0.3)',
-    fontSize: 16,
+    fontSize: FONT_SIZE['2xl'],
   },
 
   /* Museums Section */
@@ -125,7 +125,7 @@ export const artistProfileStyles = StyleSheet.create({
   },
   museumsSectionTitle: {
     color: 'rgba(212, 175, 55, 0.9)',
-    fontSize: 10,
+    fontSize: FONT_SIZE.xs,
     fontWeight: '700',
     letterSpacing: 2,
     marginHorizontal: SPACING.sm + 4,
@@ -134,13 +134,13 @@ export const artistProfileStyles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 4,
+    paddingHorizontal: SPACING.xs,
     paddingVertical: SPACING.sm,
   },
   museumName: {
     color: 'rgba(212, 175, 55, 0.8)',
     flex: 1,
-    fontSize: 12,
+    fontSize: FONT_SIZE.md,
   },
   museumCountBadge: {
     alignItems: 'center',
@@ -148,14 +148,14 @@ export const artistProfileStyles = StyleSheet.create({
     borderColor: COLORS.gold,
     borderRadius: 2,
     borderWidth: 1,
-    height: 28,
+    height: TOUCHABLE_HEIGHT.sm,
     justifyContent: 'center',
-    minWidth: 28,
+    minWidth: TOUCHABLE_HEIGHT.sm,
     paddingHorizontal: SPACING.sm,
   },
   museumCount: {
     color: COLORS.gold,
-    fontSize: 12,
+    fontSize: FONT_SIZE.md,
     fontWeight: '700',
   },
 
@@ -177,7 +177,7 @@ export const artistProfileStyles = StyleSheet.create({
   },
   actionButtonText: {
     color: COLORS.gold,
-    fontSize: 11,
+    fontSize: FONT_SIZE.sm,
     fontWeight: '700',
     letterSpacing: 2,
   },
@@ -189,7 +189,7 @@ export const artistProfileStyles = StyleSheet.create({
   },
   paintingCard: {
     flex: 1,
-    margin: 4,
+    margin: SPACING.xs,
     maxWidth: '31%',
   },
   imageContainer: {
@@ -212,25 +212,25 @@ export const artistProfileStyles = StyleSheet.create({
     width: '100%',
   },
   placeholderIcon: {
-    fontSize: 32,
+    fontSize: FONT_SIZE['6xl'],
     opacity: 0.5,
   },
   paintingTitle: {
     color: COLORS.text,
-    fontSize: 11,
+    fontSize: FONT_SIZE.sm,
     fontWeight: '600',
-    lineHeight: 14,
+    lineHeight: FONT_SIZE.lg,
     marginBottom: 2,
   },
   paintingYear: {
     color: COLORS.gray500,
-    fontSize: 9,
+    fontSize: FONT_SIZE.xxs,
     letterSpacing: 0.5,
     marginBottom: 2,
   },
   paintingMuseum: {
     color: COLORS.textLight,
-    fontSize: 9,
+    fontSize: FONT_SIZE.xxs,
     fontStyle: 'italic',
   },
 
@@ -238,28 +238,28 @@ export const artistProfileStyles = StyleSheet.create({
   seenBadge: {
     alignItems: 'center',
     backgroundColor: 'rgba(230, 57, 70, 0.95)',
-    borderRadius: 10,
-    height: 20,
+    borderRadius: BORDER_RADIUS.xl,
+    height: ICON_SIZE.md,
     justifyContent: 'center',
     position: 'absolute',
-    right: 6,
-    top: 6,
-    width: 20,
+    right: SPACING.sm - 2,
+    top: SPACING.sm - 2,
+    width: ICON_SIZE.md,
   },
   wantBadge: {
     alignItems: 'center',
     backgroundColor: 'rgba(245, 158, 11, 0.95)',
-    borderRadius: 10,
-    height: 20,
+    borderRadius: BORDER_RADIUS.xl,
+    height: ICON_SIZE.md,
     justifyContent: 'center',
     position: 'absolute',
-    right: 6,
-    top: 6,
-    width: 20,
+    right: SPACING.sm - 2,
+    top: SPACING.sm - 2,
+    width: ICON_SIZE.md,
   },
   badgeText: {
     color: COLORS.textInverse,
-    fontSize: 11,
+    fontSize: FONT_SIZE.sm,
     fontWeight: '700',
   },
 });

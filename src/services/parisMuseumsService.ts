@@ -1,5 +1,6 @@
 import type { Painting } from '@/types/painting';
-import {  } from '@/utils/colorGenerator';
+import { generateColorFromString } from '@/utils/colorGenerator';
+import { museumApi } from './museumApiClient';
 
 import Config from 'react-native-config';
 
@@ -86,27 +87,19 @@ export async function searchParisMuseums(
       }
     `;
 
-    const response = await fetch(PARIS_API_BASE, {
-      body: JSON.stringify({
+    const data = await museumApi.post(PARIS_API_BASE, {
+      json: {
         query: graphqlQuery,
         variables: {
           limit,
           offset,
           query: query.trim(),
         },
-      }),
+      },
       headers: {
         'Authorization': `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json',
       },
-      method: 'POST',
-    });
-
-    if (!response.ok) {
-      throw new Error(`Paris Museums API error: ${response.status}`);
-    }
-
-    const data = await response.json();
+    }).json<any>();
     const nodeQuery = data.data?.nodeQuery;
 
     if (!nodeQuery) {
@@ -198,17 +191,7 @@ export function getPopularParisArtists(): string[] {
   ];
 }
 
-function generateColorFromString(string_: string): string {
-  const colors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
-    '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
-  ];
-  let hash = 0;
-  for (let index = 0; index < string_.length; index++) {
-    hash = string_.charCodeAt(index) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
-}
+
 
 import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
 import { registerAdapter } from './museumAdapterRegistry';

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { usePaintings } from '@/contexts/PaintingsContext';
 import type { Painting } from '@/types/painting';
 
@@ -66,11 +66,11 @@ export function useCollection() {
         break;
       }
       case 'yearNewest': {
-        filtered.sort((a, b) => (b.year || 0) - (a.year || 0));
+        filtered.sort((a, b) => (Number(b.year) || 0) - (Number(a.year) || 0));
         break;
       }
       case 'yearOldest': {
-        filtered.sort((a, b) => (a.year || 0) - (b.year || 0));
+        filtered.sort((a, b) => (Number(a.year) || 0) - (Number(b.year) || 0));
         break;
       }
     }

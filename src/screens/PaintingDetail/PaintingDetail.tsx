@@ -1,10 +1,6 @@
-import type { Painting } from '@/types/painting';
-
-import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StatusBar,
   Text,
@@ -13,101 +9,31 @@ import {
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 
-import { Paths } from '@/navigation/paths';
-
 import { BackButton } from '@/components/atoms';
 import { SectionHeader } from '@/components/molecules';
-import { usePaintings } from '@/contexts/PaintingsContext';
-import { getVisitsForPainting } from '@/services/likes.service';
+import { usePaintingDetail } from '@/hooks/domain/collection/usePaintingDetail';
 import { formatDate } from '@/utils';
 import { paintingDetailStyles as styles } from './PaintingDetail.styles';
 
 export function PaintingDetail() {
-  const route = useRoute();
-  const navigation = useNavigation();
-  const { painting: routePainting } = route.params as { painting: Painting };
-
   const {
-    addToCollection,
-    addToPalette,
-    isInCollection,
-    isPaintingInPalette,
-    paintings,
-    removeFromCollection,
-    removeFromPalette,
-    toggleSeen,
-    toggleWantToVisit,
-  } = usePaintings();
-
-  const inCollection = isInCollection(routePainting.id);
-  const currentPainting = inCollection
-    ? paintings.find(p => p.id === routePainting.id) || routePainting
-    : routePainting;
-
-  const isInPalette = isPaintingInPalette(currentPainting.id);
-
-  const [imageLoading, setImageLoading] = useState(true);
-  const [imageError, setImageError] = useState(false);
-  const [visitInfo, setVisitInfo] = useState<Array<{ visit_id: string; visit_date: string; museum_name: string }>>([]);
-
-  useEffect(() => {
-    getVisitsForPainting(routePainting.id).then(setVisitInfo);
-  }, [routePainting.id]);
-
-  const handleQuickAdd = (state: 'seen' | 'wantToVisit') => {
-    const paintingToAdd = {
-      ...currentPainting,
-      dateAdded: new Date().toISOString(),
-      isSeen: state === 'seen',
-      seenDate: state === 'seen' ? new Date().toISOString() : undefined,
-      wantToVisit: state === 'wantToVisit',
-    };
-    addToCollection(paintingToAdd);
-  };
-
-  const handleToggleSeen = () => {
-    if (!inCollection) return;
-    toggleSeen(currentPainting.id);
-  };
-
-  const handleToggleWantToVisit = () => {
-    if (!inCollection) return;
-    toggleWantToVisit(currentPainting.id);
-  };
-
-  const handleTogglePalette = () => {
-    if (!inCollection) return;
-    if (isInPalette) {
-      removeFromPalette(currentPainting.id);
-    } else {
-      const success = addToPalette(currentPainting.id);
-      if (!success) {
-        Alert.alert('Palette Full', 'Your palette can only hold 8 paintings.', [{ text: 'OK' }]);
-      }
-    }
-  };
-
-  const handleRemoveFromCollection = () => {
-    Alert.alert(
-      'Remove from Collection',
-      `Remove "${currentPainting.title}"?`,
-      [
-        { style: 'cancel', text: 'Cancel' },
-        {
-          onPress: () => {
-            removeFromCollection(currentPainting.id);
-            navigation.goBack();
-          },
-          style: 'destructive',
-          text: 'Remove'
-        },
-      ]
-    );
-  };
-
-  const navigateToArtist = () => {
-    navigation.navigate(Paths.ArtistProfile, { artistName: currentPainting.artist });
-  };
+    currentPainting,
+    inCollection,
+    isInPalette,
+    imageLoading,
+    setImageLoading,
+    imageError,
+    setImageError,
+    visitInfo,
+    handleQuickAdd,
+    handleToggleSeen,
+    handleToggleWantToVisit,
+    handleTogglePalette,
+    handleRemoveFromCollection,
+    navigateToArtist,
+    navigateToVisit,
+    goBack,
+  } = usePaintingDetail();
 
   const imageUrl = currentPainting.imageUrl;
 
@@ -117,7 +43,7 @@ export function PaintingDetail() {
       <View style={styles.container}>
         {/* Art Deco Header */}
         <View style={styles.header}>
-          <BackButton onPress={() => { navigation.goBack(); }} style={styles.backButton} textStyle={styles.backText} />
+          <BackButton onPress={() => { goBack(); }} style={styles.backButton} textStyle={styles.backText} />
 
           {inCollection ? <View style={styles.headerActions}>
               <TouchableOpacity
@@ -258,7 +184,7 @@ export function PaintingDetail() {
                 {visitInfo.map((v) => (
                   <TouchableOpacity
                     key={v.visit_id}
-                    onPress={() => navigation.navigate(Paths.VisitDetail, { visitId: v.visit_id })}
+                    onPress={() => navigateToVisit(v.visit_id)}
                     style={styles.visitProvenanceRow}
                   >
                     <Text style={styles.visitProvenanceLabel}>Seen during</Text>

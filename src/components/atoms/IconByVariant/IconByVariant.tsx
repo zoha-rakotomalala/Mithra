@@ -7,7 +7,7 @@ import * as z from 'zod';
 import { useTheme } from '@/theme';
 import getAssetsContext from '@/theme/assets/getAssetsContext';
 
-type Properties = {
+export type IconByVariantProps = {
   readonly path: string;
 } & SvgProps;
 
@@ -20,7 +20,7 @@ function IconByVariant({
   path,
   width = SIZE,
   ...props
-}: Properties) {
+}: IconByVariantProps) {
   const { variant } = useTheme();
 
   const iconProperties = { ...props, height, width };

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Alert } from 'react-native';
 import { searchAllMuseums } from '@/services/unifiedMuseumService';
 import { likePainting, unlikePainting, getLikedUuidsForVisit } from '@/services';
 import { usePaintings } from '@/contexts/PaintingsContext';
@@ -22,7 +23,7 @@ export function useMuseumCollection(museumId: string, visitId: string) {
 
   const searchCollection = async () => {
     if (!searchQuery.trim()) {
-      alert('Please enter a search term');
+      Alert.alert('Please enter a search term');
       return;
     }
 
@@ -44,11 +45,11 @@ export function useMuseumCollection(museumId: string, visitId: string) {
       setPaintings(result.paintings);
 
       if (result.paintings.length === 0) {
-        alert('No results found. Try a different search term.');
+        Alert.alert('No results found. Try a different search term.');
       }
     } catch (error) {
       console.error('Error searching collection:', error);
-      alert('Failed to search. Please try again.');
+      Alert.alert('Failed to search. Please try again.');
     }
     setLoading(false);
   };

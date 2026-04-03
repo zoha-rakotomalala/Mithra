@@ -1,5 +1,5 @@
-import { StyleSheet, Dimensions, Platform } from 'react-native';
-import { COLORS, SPACING, CARD } from '@/constants';
+import { StyleSheet, Dimensions } from 'react-native';
+import { COLORS, SPACING, ANDROID_STATUS_BAR_PADDING, FONT_SIZE, BORDER_RADIUS, TOUCHABLE_HEIGHT } from '@/constants';
 
 const { width } = Dimensions.get('window');
 const CARD_SIZE = (width - 48) / 3; // 3 columns with proper padding
@@ -8,7 +8,7 @@ export const searchStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: COLORS.black, // Black at top for header
-    paddingTop: Platform.OS === 'android' ? 25 : 0, // Fix Android notch overlap
+    paddingTop: ANDROID_STATUS_BAR_PADDING,
   },
 
   container: {
@@ -37,12 +37,12 @@ export const searchStyles = StyleSheet.create({
   },
 
   backText: {
-    fontSize: 24,
+    fontSize: FONT_SIZE['4xl'],
     color: COLORS.gold,
   },
 
   headerTitle: {
-    fontSize: 28,
+    fontSize: FONT_SIZE['5xl'],
     fontWeight: '300',
     letterSpacing: 4,
     color: COLORS.gold,
@@ -57,7 +57,7 @@ export const searchStyles = StyleSheet.create({
   },
 
   searchTypeLabel: {
-    fontSize: 11,
+    fontSize: FONT_SIZE.sm,
     color: 'rgba(212, 175, 55, 0.7)',
     marginRight: SPACING.sm,
     letterSpacing: 1,
@@ -84,14 +84,14 @@ export const searchStyles = StyleSheet.create({
   },
 
   searchTypeButtonText: {
-    fontSize: 11,
+    fontSize: FONT_SIZE.sm,
     color: 'rgba(212, 175, 55, 0.7)',
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
 
   searchTypeButtonTextActive: {
-    fontSize: 11,
+    fontSize: FONT_SIZE.sm,
     fontWeight: '700',
     color: COLORS.black,
     letterSpacing: 1,
@@ -111,39 +111,39 @@ export const searchStyles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 2,
     paddingHorizontal: SPACING.sm,
-    height: 44,
+    height: TOUCHABLE_HEIGHT.lg,
     borderWidth: 1,
     borderColor: 'rgba(212, 175, 55, 0.3)',
   },
 
   searchIcon: {
-    fontSize: 16,
+    fontSize: FONT_SIZE['2xl'],
     marginRight: SPACING.sm,
   },
 
   searchInput: {
     flex: 1,
-    fontSize: 15,
+    fontSize: FONT_SIZE.xl,
     color: COLORS.cream,
     padding: 0,
   },
 
   clearButton: {
-    width: 28,
-    height: 28,
+    width: TOUCHABLE_HEIGHT.sm,
+    height: TOUCHABLE_HEIGHT.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   clearButtonText: {
-    fontSize: 24,
+    fontSize: FONT_SIZE['4xl'],
     color: 'rgba(212, 175, 55, 0.5)',
-    lineHeight: 28,
+    lineHeight: TOUCHABLE_HEIGHT.sm,
   },
 
   searchButton: {
-    width: 44,
-    height: 44,
+    width: TOUCHABLE_HEIGHT.lg,
+    height: TOUCHABLE_HEIGHT.lg,
     backgroundColor: COLORS.gold,
     borderRadius: 2,
     alignItems: 'center',
@@ -151,7 +151,7 @@ export const searchStyles = StyleSheet.create({
   },
 
   searchButtonText: {
-    fontSize: 24,
+    fontSize: FONT_SIZE['4xl'],
     color: COLORS.black,
     fontWeight: 'bold',
   },
@@ -178,7 +178,7 @@ export const searchStyles = StyleSheet.create({
   },
 
   museumSelectLabel: {
-    fontSize: 10,
+    fontSize: FONT_SIZE.xs,
     color: 'rgba(212, 175, 55, 0.7)',
     marginBottom: 2,
     letterSpacing: 1,
@@ -186,14 +186,14 @@ export const searchStyles = StyleSheet.create({
   },
 
   museumSelectValue: {
-    fontSize: 14,
+    fontSize: FONT_SIZE.lg,
     fontWeight: '600',
     color: COLORS.gold,
     letterSpacing: 0.5,
   },
 
   museumSelectIcon: {
-    fontSize: 12,
+    fontSize: FONT_SIZE.md,
     color: 'rgba(212, 175, 55, 0.7)',
     marginLeft: SPACING.sm,
   },
@@ -216,7 +216,7 @@ export const searchStyles = StyleSheet.create({
   },
 
   modalTitle: {
-    fontSize: 24,
+    fontSize: FONT_SIZE['4xl'],
     fontWeight: '300',
     letterSpacing: 3,
     color: COLORS.gold,
@@ -231,7 +231,7 @@ export const searchStyles = StyleSheet.create({
   },
 
   modalDoneText: {
-    fontSize: 12,
+    fontSize: FONT_SIZE.md,
     fontWeight: '700',
     color: COLORS.black,
     letterSpacing: 1,
@@ -242,7 +242,7 @@ export const searchStyles = StyleSheet.create({
   gridContainer: {
     paddingHorizontal: SPACING.md,
     paddingTop: SPACING.md,
-    paddingBottom: 20,
+    paddingBottom: SPACING.lg - SPACING.xs,
   },
 
   gridRow: {
@@ -294,7 +294,7 @@ export const searchStyles = StyleSheet.create({
   },
 
   placeholderIcon: {
-    fontSize: 32,
+    fontSize: FONT_SIZE['6xl'],
   },
 
   statusBadge: {
@@ -308,21 +308,21 @@ export const searchStyles = StyleSheet.create({
   badgeTextSeen: {
     backgroundColor: 'rgba(230, 57, 70, 0.95)',
     color: COLORS.textInverse,
-    fontSize: 10,
+    fontSize: FONT_SIZE.xs,
     fontWeight: '700',
-    paddingHorizontal: 6,
+    paddingHorizontal: SPACING.sm - 2,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: BORDER_RADIUS.sm,
   },
 
   badgeTextWant: {
     backgroundColor: 'rgba(245, 158, 11, 0.95)',
     color: COLORS.textInverse,
-    fontSize: 10,
+    fontSize: FONT_SIZE.xs,
     fontWeight: '700',
-    paddingHorizontal: 6,
+    paddingHorizontal: SPACING.sm - 2,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: BORDER_RADIUS.sm,
   },
 
   museumBadge: {
@@ -331,11 +331,11 @@ export const searchStyles = StyleSheet.create({
     right: 6,
     paddingHorizontal: 6,
     paddingVertical: 3,
-    borderRadius: 4,
+    borderRadius: BORDER_RADIUS.sm,
   },
 
   museumBadgeText: {
-    fontSize: 9,
+    fontSize: FONT_SIZE.xxs,
     fontWeight: '700',
     color: COLORS.textInverse,
     letterSpacing: 0.5,
@@ -345,37 +345,37 @@ export const searchStyles = StyleSheet.create({
     position: 'absolute',
     top: 6,
     right: 6,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: TOUCHABLE_HEIGHT.sm,
+    height: TOUCHABLE_HEIGHT.sm,
+    borderRadius: BORDER_RADIUS['2xl'],
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   likeButtonText: {
-    fontSize: 16,
+    fontSize: FONT_SIZE['2xl'],
     color: COLORS.gold,
     fontWeight: '700',
   },
 
   resultTitle: {
-    fontSize: 12,
+    fontSize: FONT_SIZE.md,
     fontWeight: '600',
     color: COLORS.text,
     marginBottom: 2,
-    lineHeight: 16,
+    lineHeight: FONT_SIZE['2xl'],
   },
 
   resultArtist: {
-    fontSize: 10,
+    fontSize: FONT_SIZE.xs,
     fontStyle: 'italic',
     color: COLORS.textLight,
     marginBottom: 2,
   },
 
   resultYear: {
-    fontSize: 9,
+    fontSize: FONT_SIZE.xxs,
     color: COLORS.textLight,
     letterSpacing: 0.5,
   },
@@ -388,7 +388,7 @@ export const searchStyles = StyleSheet.create({
   },
 
   popularTitle: {
-    fontSize: 20,
+    fontSize: FONT_SIZE['3xl'],
     fontWeight: '600',
     color: COLORS.text,
     marginBottom: SPACING.md,
@@ -413,14 +413,14 @@ export const searchStyles = StyleSheet.create({
   },
 
   artistChipText: {
-    fontSize: 12,
+    fontSize: FONT_SIZE.md,
     color: COLORS.text,
     fontWeight: '600',
     letterSpacing: 0.5,
   },
 
   emptyHint: {
-    fontSize: 12,
+    fontSize: FONT_SIZE.md,
     color: COLORS.textLight,
     textAlign: 'center',
     letterSpacing: 0.5,
@@ -432,7 +432,7 @@ export const searchStyles = StyleSheet.create({
   },
 
   loadingText: {
-    fontSize: 13,
+    fontSize: FONT_SIZE.body,
     color: COLORS.textLight,
     marginTop: SPACING.sm,
     letterSpacing: 0.5,

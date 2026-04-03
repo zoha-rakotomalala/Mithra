@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { COLORS, SPACING } from '@/constants';
+import { COLORS } from '@/constants';
 
 /**
  * Art Deco Typography Styles

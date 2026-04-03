@@ -64,4 +64,9 @@ export const buttons = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.5,
   },
+
+  // Disabled state
+  disabled: {
+    opacity: 0.5,
+  },
 });

@@ -1,6 +1,7 @@
 import type { Painting } from '@/types/painting';
 import { cleanArtistName } from './utils/searchHelpers';
-import {  } from '@/utils/colorGenerator';
+import { generateColorFromString } from '@/utils/colorGenerator';
+import { museumApi } from './museumApiClient';
 
 const NG_SEARCH_API = 'https://data.ng.ac.uk/search';
 const NG_DATA_BASE = 'https://data.ng.ac.uk';
@@ -38,14 +39,7 @@ export async function searchNationalGallery(
     const searchUrl = `${NG_SEARCH_API}?${searchParams.toString()}`;
     console.log('🇬🇧 Searching National Gallery:', searchUrl);
 
-    const response = await fetch(searchUrl);
-
-    if (!response.ok) {
-      console.warn(`National Gallery search error: ${response.status}`);
-      return { paintings: [], totalResults: 0 };
-    }
-
-    const data = await response.json();
+    const data = await museumApi.get(searchUrl).json<any>();
     const hits = data.hits?.hits || [];
     const total = data.hits?.total?.value || 0;
 
@@ -73,18 +67,11 @@ async function fetchLinkedArtObject(pid: string): Promise<Painting | null> {
     // Format: https://data.ng.ac.uk/{PID}.json
     const url = `${NG_DATA_BASE}/${pid}.json`;
 
-    const response = await fetch(url, {
+    const data = await museumApi.get(url, {
       headers: {
         'Accept': 'application/ld+json',
       },
-    });
-
-    if (!response.ok) {
-      console.warn(`Failed to fetch NG object ${pid}`);
-      return null;
-    }
-
-    const data = await response.json();
+    }).json<any>();
     return parseNGLinkedArt(data);
   } catch (error) {
     console.error(`Error fetching NG object ${pid}:`, error);
@@ -298,17 +285,7 @@ export function getPopularNGArtists(): string[] {
   ];
 }
 
-function generateColorFromString(str: string): string {
-  const colors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
-    '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
-  ];
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
-}
+
 
 import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
 import { registerAdapter } from './museumAdapterRegistry';

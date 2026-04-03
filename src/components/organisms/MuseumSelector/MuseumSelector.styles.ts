@@ -1,9 +1,10 @@
 import { StyleSheet } from 'react-native';
+import { COLORS } from '@/constants/colors';
 
 export const styles = StyleSheet.create({
   checkbox: {
     alignItems: 'center',
-    borderColor: '#999',
+    borderColor: COLORS.textDisabled,
     borderRadius: 4,
     borderWidth: 2,
     height: 24,
@@ -15,17 +16,17 @@ export const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   checkmark: {
-    color: '#fff',
+    color: COLORS.white,
     fontSize: 14,
     fontWeight: '700',
   },
   container: {
-    backgroundColor: '#f5f3ed',
+    backgroundColor: COLORS.backgroundCream,
     flex: 1,
   },
   museumCard: {
-    backgroundColor: '#fff',
-    borderColor: '#e0ddd5',
+    backgroundColor: COLORS.white,
+    borderColor: COLORS.borderCream,
     borderRadius: 4,
     borderWidth: 2,
     marginBottom: 10,
@@ -41,12 +42,12 @@ export const styles = StyleSheet.create({
     borderWidth: 2,
   },
   museumCountry: {
-    color: '#999',
+    color: COLORS.textDisabled,
     fontSize: 10,
     letterSpacing: 0.5,
   },
   museumDescription: {
-    color: '#666',
+    color: COLORS.textMuted,
     fontSize: 11,
     lineHeight: 16,
   },
@@ -54,16 +55,16 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   museumName: {
-    color: '#2c2c2c',
+    color: COLORS.nearBlack,
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 2,
   },
   museumNameSelected: {
-    color: '#004d40',
+    color: COLORS.teal,
   },
   quickActions: {
-    borderBottomColor: '#e0ddd5',
+    borderBottomColor: COLORS.borderCream,
     borderBottomWidth: 1,
     flexDirection: 'row',
     gap: 8,
@@ -71,8 +72,8 @@ export const styles = StyleSheet.create({
   },
   quickButton: {
     alignItems: 'center',
-    backgroundColor: '#004d40',
-    borderColor: '#d4af37',
+    backgroundColor: COLORS.teal,
+    borderColor: COLORS.gold,
     borderRadius: 4,
     borderWidth: 1,
     flex: 1,
@@ -81,13 +82,13 @@ export const styles = StyleSheet.create({
   },
   quickButtonClear: {
     backgroundColor: 'transparent',
-    borderColor: '#999',
+    borderColor: COLORS.textDisabled,
   },
   quickButtonClearText: {
-    color: '#666',
+    color: COLORS.textMuted,
   },
   quickButtonText: {
-    color: '#d4af37',
+    color: COLORS.gold,
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
@@ -99,28 +100,28 @@ export const styles = StyleSheet.create({
     padding: 16,
   },
   sectionSubtitle: {
-    color: '#666',
+    color: COLORS.textMuted,
     fontSize: 11,
     fontStyle: 'italic',
     marginBottom: 12,
     textAlign: 'center',
   },
   sectionTitle: {
-    color: '#004d40',
+    color: COLORS.teal,
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 2,
     marginHorizontal: 12,
   },
   selectedInfo: {
-    backgroundColor: '#fff',
-    borderBottomColor: '#e0ddd5',
+    backgroundColor: COLORS.white,
+    borderBottomColor: COLORS.borderCream,
     borderBottomWidth: 1,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
   selectedText: {
-    color: '#004d40',
+    color: COLORS.teal,
     fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',

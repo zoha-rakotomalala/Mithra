@@ -1,5 +1,6 @@
 import type { Painting } from '@/types/painting';
-import {  } from '@/utils/colorGenerator';
+import { generateColorFromString } from '@/utils/colorGenerator';
+import { museumApi } from './museumApiClient';
 
 const WIKIDATA_ENDPOINT = 'https://query.wikidata.org/sparql';
 
@@ -34,20 +35,13 @@ export async function searchPaintings(
   const sparqlQuery = buildSearchQuery(query, limit);
 
   try {
-    const response = await fetch(WIKIDATA_ENDPOINT, {
+    const data = await museumApi.post(WIKIDATA_ENDPOINT, {
       body: `query=${encodeURIComponent(sparqlQuery)}`,
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      method: 'POST',
-    });
-
-    if (!response.ok) {
-      throw new Error(`Wikidata API error: ${response.status}`);
-    }
-
-    const data = await response.json();
+    }).json<any>();
     const paintings = parsePaintings(data);
 
     return {
@@ -100,20 +94,13 @@ export async function searchByArtist(
   `;
 
   try {
-    const response = await fetch(WIKIDATA_ENDPOINT, {
+    const data = await museumApi.post(WIKIDATA_ENDPOINT, {
       body: `query=${encodeURIComponent(sparqlQuery)}`,
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      method: 'POST',
-    });
-
-    if (!response.ok) {
-      throw new Error(`Wikidata API error: ${response.status}`);
-    }
-
-    const data = await response.json();
+    }).json<any>();
     const paintings = parsePaintings(data);
 
     return {
@@ -287,24 +274,7 @@ function inferLocationFromMuseum(museum: string): string | undefined {
   return undefined;
 }
 
-/**
- * Generate a consistent color from a string (for placeholders)
- */
-function generateColorFromString(string_: string): string {
-  const colors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
-    '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
-    '#F4976C', '#4A5F7A', '#2C3639', '#D4AF37', '#7FB3D5',
-  ];
 
-  // Simple hash function
-  let hash = 0;
-  for (let index = 0; index < string_.length; index++) {
-    hash = string_.charCodeAt(index) + ((hash << 5) - hash);
-  }
-
-  return colors[Math.abs(hash) % colors.length];
-}
 
 /**
  * Get suggestions for popular artists (for autocomplete)

@@ -7,7 +7,7 @@ import { DefaultError } from '@/components/molecules';
 
 type Optional<T, K extends keyof T> = Omit<T, K> & Pick<Partial<T>, K>;
 
-type Properties = {
+export type ErrorBoundaryProps = {
   readonly onReset?: () => void;
 } & Optional<ErrorBoundaryPropsWithFallback, 'fallback'>;
 
@@ -16,7 +16,7 @@ function ErrorBoundary({
   onError,
   onReset = undefined,
   ...props
-}: Properties) {
+}: ErrorBoundaryProps) {
   const onErrorReport = (error: Error, info: ErrorInfo) => {
     // use any crash reporting tool here
     return onError?.(error, info);

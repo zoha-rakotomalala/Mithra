@@ -12,7 +12,6 @@ import { typography } from '@/styles';
 import { COLORS } from '@/constants';
 import { viewPaletteStyles as styles } from './ViewPalette.styles';
 import type { Painting as CachedPainting, Visit } from '@/types/database';
-import type { Painting } from '@/types/painting';
 
 const { width } = Dimensions.get('window');
 const TILE_SIZE = (width - 64) / 3;
@@ -69,30 +68,19 @@ export function ViewPalette() {
     }
   };
 
-  const toUIPainting = (db: CachedPainting): Painting => ({
-    id: db.id,
-    title: db.title,
-    artist: db.artist,
-    year: db.year,
-    imageUrl: db.image_url,
-    thumbnailUrl: db.thumbnail_url,
-    color: db.color || '#1a1a1a',
-    museum: db.museum_id,
-  });
-
   const gridPositions = [0, 1, 2, 3, 'center', 4, 5, 6, 7];
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
-      <ScrollView style={{ flex: 1, backgroundColor: COLORS.black }} contentContainerStyle={{ flexGrow: 1 }}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
               <Text style={styles.backText}>←</Text>
             </TouchableOpacity>
             <Text style={styles.headerTitle}>VISIT PALETTE</Text>
-            <View style={{ flex: 1 }} />
+            <View style={styles.headerSpacer} />
             {paintings.length > 0 && (
               <TouchableOpacity onPress={handleShare} style={styles.headerAction}>
                 <Text style={styles.headerActionIcon}>⎘</Text>
@@ -112,7 +100,7 @@ export function ViewPalette() {
             <Text style={typography.body}>Loading palette...</Text>
           </View>
         ) : paintings.length > 0 ? (
-          <View style={{ flex: 1, justifyContent: 'center' }}>
+          <View style={styles.gridWrapper}>
           <View style={styles.content}>
             <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1 }}>
               <View style={styles.shareableGrid}>
@@ -136,7 +124,7 @@ export function ViewPalette() {
                         imageUrl={painting.image_url}
                         title={painting.title}
                         artist={painting.artist}
-                        onPress={() => navigation.navigate(Paths.PaintingDetail, { painting: toUIPainting(painting) })}
+                        onPress={() => navigation.navigate(Paths.PaintingDetail, { paintingId: painting.id })}
                         size={TILE_SIZE}
                       />
                     );

@@ -1,5 +1,5 @@
-import { StyleSheet, Platform } from 'react-native';
-import { COLORS, SPACING, CARD } from '@/constants';
+import { StyleSheet } from 'react-native';
+import { COLORS, SPACING, CARD, ANDROID_STATUS_BAR_PADDING } from '@/constants';
 
 const PALETTE_CARD_SIZE = (CARD.gridWidth * 3 + SPACING.md * 2) / 3;
 
@@ -8,7 +8,7 @@ export const paletteStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: COLORS.black,
-    paddingTop: Platform.OS === 'android' ? 25 : 0, // Fix Android notch overlap
+    paddingTop: ANDROID_STATUS_BAR_PADDING,
   },
 
   container: {
@@ -110,6 +110,39 @@ export const paletteStyles = StyleSheet.create({
     marginTop: SPACING.xs,
     letterSpacing: 1,
     textTransform: 'uppercase',
+  },
+
+  /* Extracted inline styles */
+  scrollContent: {
+    flexGrow: 1,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerSpacer: {
+    flex: 1,
+  },
+  headerActionButton: {
+    padding: SPACING.xs,
+  },
+  shareIcon: {
+    fontSize: 22,
+    color: COLORS.gold,
+  },
+  syncingContainer: {
+    alignItems: 'center',
+    paddingVertical: SPACING.sm,
+  },
+  syncingText: {
+    color: COLORS.ivory,
+    fontSize: 12,
+    marginTop: 4,
+    opacity: 0.7,
+  },
+  gridWrapper: {
+    flex: 1,
+    justifyContent: 'center',
   },
 
   /* Instructions */

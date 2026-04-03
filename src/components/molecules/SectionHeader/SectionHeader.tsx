@@ -3,7 +3,7 @@ import { View, Text } from 'react-native';
 import type { StyleProp, TextStyle } from 'react-native';
 import { sectionHeaderStyles as styles } from './SectionHeader.styles';
 
-type SectionHeaderProps = {
+export type SectionHeaderProps = {
   readonly title: string;
   readonly icon?: string;
   readonly titleStyle?: StyleProp<TextStyle>;

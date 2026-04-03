@@ -7,14 +7,14 @@ import * as z from 'zod';
 import { useTheme } from '@/theme';
 import getAssetsContext from '@/theme/assets/getAssetsContext';
 
-type Properties = {
+export type AssetByVariantProps = {
   readonly extension?: string;
   readonly path: string;
 } & Omit<ImageProps, 'source'>;
 
 const images = getAssetsContext('images');
 
-function AssetByVariant({ extension = 'png', path, ...props }: Properties) {
+function AssetByVariant({ extension = 'png', path, ...props }: AssetByVariantProps) {
   const { variant } = useTheme();
 
   const image = useMemo(() => {
