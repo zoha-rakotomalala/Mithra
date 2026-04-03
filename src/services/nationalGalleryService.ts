@@ -42,7 +42,7 @@ export async function searchNationalGallery(
           },
         },
         size: limit,
-        _source: ['summary', 'creation', 'identifier', 'media'],
+        _source: ['summary', 'creation', 'identifier'],
       },
       headers: { 'Content-Type': 'application/json' },
     }).json<any>();
@@ -76,19 +76,20 @@ function parseNGElasticsearchHit(hit: any): Painting | null {
 
     // Extract year from creation date
     let year: number | undefined;
-    const dateStr = src?.creation?.[0]?.date?.value;
+    const dateStr = src?.creation?.[0]?.date?.[0]?.value;
     if (dateStr) {
       const match = dateStr.match(/\d{4}/);
       if (match) year = parseInt(match[0]);
     }
 
-    // Extract image — use media field from ES response
-    const mediaItems = src?.media || [];
-    const imageMedia = mediaItems.find((m: any) => m.type === 'image' || m.format?.startsWith('image'));
-    const imageUrl = imageMedia?.url || imageMedia?.thumbnail;
-    if (!imageUrl) return null;
+    // Extract image via IIIF using the object number (e.g., NG6607)
+    const identifiers = src?.identifier || [];
+    const objNumEntry = identifiers.find((i: any) => i.type === 'object number');
+    const objectNumber = objNumEntry?.value;
+    if (!objectNumber) return null;
 
-    const thumbnailUrl = imageMedia?.thumbnail || imageUrl;
+    const imageUrl = `https://media.ng-london.org.uk/iiif/painting-${objectNumber}/full/!800,800/0/default.jpg`;
+    const thumbnailUrl = `https://media.ng-london.org.uk/iiif/painting-${objectNumber}/full/!400,400/0/default.jpg`;
 
     const medium = src?.summary?.medium;
     const dimensions = src?.summary?.dimensions;

@@ -32,11 +32,13 @@ export async function searchSmithsonian(
 
     const queryParams = new URLSearchParams({
       q: query.trim(),
-      api_key: API_KEY || '',
+      api_key: API_KEY || 'DEMO_KEY',
       rows: limit.toString(),
       start: '0',
-      fq: 'object_type:"Paintings"',
     });
+    // Multiple fq params for filtering
+    queryParams.append('fq', 'online_media_type:"Images"');
+    queryParams.append('fq', 'type:"edanmdm"');
 
     const url = `${SMITHSONIAN_API_BASE}?${queryParams.toString()}`;
     console.log('🇺🇸 Searching Smithsonian:', url);
@@ -66,7 +68,9 @@ function parseSmithsonianObject(row: any): Painting | null {
 
     // freetext.name entries have { label: 'Artist' | 'Sitter' | ..., content: 'Name' }
     const freetextNames = content?.freetext?.name || [];
-    const artistEntry = freetextNames.find((n: any) => n.label === 'Artist');
+    const artistEntry = freetextNames.find((n: any) =>
+      n.label === 'Artist' || n.label === 'Maker' || n.label === 'Creator'
+    ) || freetextNames.find((n: any) => n.label === 'Author');
     const artistRaw = artistEntry?.content
       || (Array.isArray(content?.indexedStructured?.name) ? content.indexedStructured.name[0] : content?.indexedStructured?.name)
       || 'Unknown Artist';

@@ -173,11 +173,11 @@ export async function searchAllMuseums(
         updateStats.added += updateResult.added;
         updateStats.updated += updateResult.updated;
 
-        // Replace legacy IDs with database UUIDs on in-memory paintings
+        // Store database UUID mapping but keep legacy ID for badge display
         for (const painting of freshPaintings) {
           const uuid = updateResult.legacyToUuid[painting.id];
           if (uuid) {
-            (painting as any).id = uuid;
+            (painting as any).dbId = uuid;
           }
         }
       }

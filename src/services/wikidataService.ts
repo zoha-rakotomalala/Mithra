@@ -134,20 +134,25 @@ export async function searchByArtist(
 function buildSearchQuery(query: string, limit: number): string {
   const searchTerm = query.trim().replace(/"/g, '\\"');
 
-  // Use MediaWiki API search service (mwapi) — much faster than CONTAINS(LCASE(...))
+  // Use MediaWiki API Generator service — "Search" mode is invalid on www.wikidata.org
   return `
     SELECT DISTINCT ?painting ?paintingLabel ?artistLabel ?image ?year
            ?museumLabel ?locationLabel ?height ?width ?mediumLabel ?description
     WHERE {
-      SERVICE wikibase:mwapi {
-        bd:serviceParam wikibase:endpoint "www.wikidata.org";
-        bd:serviceParam wikibase:api "Search";
-        bd:serviceParam mwapi:srsearch "${searchTerm} haswbstatement:P31=Q3305213";
-        bd:serviceParam mwapi:srlimit "${limit}".
-        ?painting wikibase:apiOutputItem mwapi:title.
+      {
+        SELECT ?painting WHERE {
+          SERVICE wikibase:mwapi {
+            bd:serviceParam wikibase:endpoint "www.wikidata.org";
+                            wikibase:api "Generator";
+                            mwapi:generator "search";
+                            mwapi:gsrsearch "${searchTerm} haswbstatement:P31=Q3305213";
+                            mwapi:gsrlimit "${limit}".
+            ?title wikibase:apiOutput mwapi:title.
+          }
+          BIND(IRI(CONCAT("http://www.wikidata.org/entity/", ?title)) AS ?painting)
+        } LIMIT ${limit}
       }
-
-      ?painting wdt:P31 wd:Q3305213.
+      hint:Prior hint:runFirst "true".
       OPTIONAL { ?painting wdt:P170 ?artist. }
       OPTIONAL { ?painting wdt:P18 ?image. }
       OPTIONAL { ?painting wdt:P571 ?yearDate. BIND(YEAR(?yearDate) as ?year) }
@@ -160,7 +165,6 @@ function buildSearchQuery(query: string, limit: number): string {
         ?painting schema:description ?description.
         FILTER(LANG(?description) = "en")
       }
-
       SERVICE wikibase:label {
         bd:serviceParam wikibase:language "en".
       }

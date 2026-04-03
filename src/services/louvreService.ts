@@ -47,16 +47,23 @@ export async function searchLouvre(
 
     const searchTerm = query.trim().replace(/"/g, '\\"');
 
-    // Use mwapi:Search for fast full-text search, then filter to Louvre paintings
+    // Use mwapi:Generator for full-text search — "Search" mode is invalid on www.wikidata.org
     const sparqlQuery = `
       SELECT ?painting ?paintingLabel ?artistLabel ?image ?louvreId ?year ?mediumLabel WHERE {
-        SERVICE wikibase:mwapi {
-          bd:serviceParam wikibase:endpoint "www.wikidata.org";
-          bd:serviceParam wikibase:api "Search";
-          bd:serviceParam mwapi:srsearch "${searchTerm} haswbstatement:P31=Q3305213 haswbstatement:P276=Q19675";
-          bd:serviceParam mwapi:srlimit "${limit}".
-          ?painting wikibase:apiOutputItem mwapi:title.
+        {
+          SELECT ?painting WHERE {
+            SERVICE wikibase:mwapi {
+              bd:serviceParam wikibase:endpoint "www.wikidata.org";
+                              wikibase:api "Generator";
+                              mwapi:generator "search";
+                              mwapi:gsrsearch "${searchTerm} haswbstatement:P31=Q3305213 haswbstatement:P276=Q19675";
+                              mwapi:gsrlimit "${limit}".
+              ?title wikibase:apiOutput mwapi:title.
+            }
+            BIND(IRI(CONCAT("http://www.wikidata.org/entity/", ?title)) AS ?painting)
+          } LIMIT ${limit}
         }
+        hint:Prior hint:runFirst "true".
         ?painting wdt:P31 wd:Q3305213;
                   wdt:P276 wd:Q19675.
         OPTIONAL { ?painting wdt:P170 ?artist. }

@@ -77,17 +77,10 @@ function parseHarvardObject(obj: any): Painting | null {
                           'Unknown Artist';
     const artist = cleanArtistName(artistDisplay);
 
-    // Image URLs — use IIIF endpoint via idsid for better reliability (avoids nrs.harvard.edu redirect + rate limiting)
-    const idsid = obj.images?.[0]?.idsid;
-    const primaryUrl = obj.primaryimageurl;
-    if (!idsid && !primaryUrl) return null;
-
-    const imageUrl = idsid
-      ? `https://ids.lib.harvard.edu/ids/iiif/${idsid}/full/full/0/default.jpg`
-      : primaryUrl;
-    const thumbnailUrl = idsid
-      ? `https://ids.lib.harvard.edu/ids/iiif/${idsid}/full/!400,400/0/default.jpg`
-      : (primaryUrl.includes('?') ? `${primaryUrl}&height=400` : `${primaryUrl}?height=400`);
+    // Image URLs — use primaryimageurl directly (nrs.harvard.edu); ids.lib.harvard.edu aggressively rate-limits (429)
+    const imageUrl = obj.primaryimageurl;
+    if (!imageUrl) return null;
+    const thumbnailUrl = imageUrl + (imageUrl.includes('?') ? '&' : '?') + 'height=400&width=400';
 
     // Extract year
     let year: number | undefined;
