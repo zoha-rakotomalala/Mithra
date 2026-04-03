@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, StatusBar, TouchableOpacity, SafeAreaView, ActivityIndicator, Share } from 'react-native';
+import { View, Text, ScrollView, StatusBar, TouchableOpacity, SafeAreaView, ActivityIndicator, Platform } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
 import ViewShot from 'react-native-view-shot';
+import RNShare from 'react-native-share';
 import { PaintingCard } from '@/components/molecules/PaintingCard/PaintingCard';
 import { ProfileCard } from '@/components/molecules/ProfileCard/ProfileCard';
 import { SectionHeader, SyncErrorBanner } from '@/components/molecules';
 import { usePaintings } from '@/contexts/PaintingsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { storage } from '@/App';
-import { buttons } from '@/styles';
 import { COLORS, SPACING } from '@/constants';
 import { paletteStyles as styles } from './Palette.styles';
 import type { UserProfile } from '@/types/painting';
@@ -50,7 +50,32 @@ export function Palette() {
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Compact Header - Like Search */}
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>PALETTE</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={styles.headerTitle}>PALETTE</Text>
+              <View style={{ flex: 1 }} />
+              {palettePaintings.length > 0 && (
+                <TouchableOpacity
+                  style={{ padding: SPACING.xs }}
+                  onPress={async () => {
+                    try {
+                      const uri = await viewShotRef.current?.capture?.();
+                      if (!uri) return;
+                      await RNShare.open({
+                        title: 'My Palette',
+                        url: Platform.OS === 'ios' ? uri : `file://${uri}`,
+                        type: 'image/png',
+                      });
+                    } catch (err: any) {
+                      if (err?.message !== 'User did not share') {
+                        console.error('Error sharing palette:', err);
+                      }
+                    }
+                  }}
+                >
+                  <Text style={{ fontSize: 24, color: COLORS.gold }}>⎘</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
           {syncing && (
@@ -76,31 +101,13 @@ export function Palette() {
           </View>
 
           {/* Info */}
-          <View style={styles.infoSection}>
-            <Text style={styles.infoText}>
-              {palettePaintings.length === 0
-                ? 'Your palette is empty. Add paintings from your collection.'
-                : palettePaintings.length < 8
-                ? `${8 - palettePaintings.length} open spots remain in your palette.`
-                : 'Your palette is complete.'}
-            </Text>
-            {palettePaintings.length === 8 && (
-              <TouchableOpacity
-                style={[buttons.primary, { marginTop: SPACING.md }]}
-                onPress={async () => {
-                  try {
-                    const uri = await viewShotRef.current?.capture?.();
-                    if (!uri) return;
-                    await Share.share({ title: 'My Palette', url: uri });
-                  } catch (err) {
-                    console.error('Error sharing palette:', err);
-                  }
-                }}
-              >
-                <Text style={buttons.primaryText}>Share Palette</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          {palettePaintings.length === 0 && (
+            <View style={styles.infoSection}>
+              <Text style={styles.infoText}>
+                Your palette is empty. Add paintings from your collection.
+              </Text>
+            </View>
+          )}
 
           {/* Gallery Grid - 3x3 with profile in center */}
           <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1 }}>

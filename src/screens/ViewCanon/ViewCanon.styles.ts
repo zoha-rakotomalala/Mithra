@@ -2,7 +2,8 @@ import { StyleSheet, Dimensions } from 'react-native';
 import { COLORS, SPACING } from '@/constants';
 
 const { width } = Dimensions.get('window');
-const gridSize = (width - (SPACING.lg * 2) - (SPACING.sm * 2)) / 3;
+const gridContainerWidth = width - (SPACING.lg * 4);
+const gridSize = (gridContainerWidth - (SPACING.sm * 2)) / 3;
 
 export const viewCanonStyles = StyleSheet.create({
   header: {

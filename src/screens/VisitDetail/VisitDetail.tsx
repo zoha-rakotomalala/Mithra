@@ -91,7 +91,7 @@ export function VisitDetail() {
               </TouchableOpacity>
             )}
 
-            {likedCount >= 8 && (
+            {likedCount > 0 && (
               <TouchableOpacity
                 style={buttons.secondary}
                 onPress={() => navigation.navigate(

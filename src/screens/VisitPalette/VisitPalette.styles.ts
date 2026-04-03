@@ -1,5 +1,5 @@
 import { StyleSheet, Platform } from 'react-native';
-import { COLORS, SPACING } from '@/constants';
+import { COLORS, SPACING, CARD } from '@/constants';
 
 export const visitPaletteStyles = StyleSheet.create({
   safeArea: {
@@ -61,13 +61,18 @@ export const visitPaletteStyles = StyleSheet.create({
 
   cardWrapper: {
     position: 'relative',
-    borderWidth: 3,
-    borderColor: 'transparent',
-    borderRadius: 8,
   },
 
-  cardSelected: {
-    borderColor: COLORS.gold,
+  cardImageHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: CARD.gridWidth,
+    height: CARD.gridHeight,
+    borderWidth: 3,
+    borderColor: COLORS.goldLight,
+    borderRadius: CARD.borderRadius,
+    zIndex: 1,
   },
 
   checkmark: {

@@ -9,14 +9,14 @@ export interface VisitPaletteWithPaintings {
 /**
  * Save (create or replace) a visit palette of exactly 8 paintings.
  * @param visitId - UUID of the visit
- * @param paintingUuids - Array of 8 painting UUIDs
+ * @param paintingUuids - Array of up to 8 painting UUIDs
  */
 export async function saveVisitPalette(
   visitId: string,
   paintingUuids: string[]
 ): Promise<VisitPalette | null> {
-  if (paintingUuids.length !== 8) {
-    console.error('Visit palette must have exactly 8 artworks');
+  if (paintingUuids.length === 0 || paintingUuids.length > 8) {
+    console.error('Visit palette must have 1-8 artworks');
     return null;
   }
 

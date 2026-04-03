@@ -18,11 +18,11 @@ export async function likePainting(
 
   const { data, error } = await supabase
     .from('user_painting_likes')
-    .insert({
+    .upsert({
       user_id: user.id,
       painting_id: paintingUuid,
       visit_id: visitId,
-    })
+    }, { onConflict: 'user_id,painting_id' })
     .select()
     .single();
 

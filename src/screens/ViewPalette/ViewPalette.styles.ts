@@ -2,7 +2,9 @@ import { StyleSheet, Dimensions, Platform } from 'react-native';
 import { COLORS, SPACING } from '@/constants';
 
 const { width } = Dimensions.get('window');
-const gridSize = (width - (SPACING.lg * 2) - (SPACING.sm * 2)) / 3;
+// Grid is inside: content(padding:lg) > shareableGrid(padding:lg) > grid(gap:sm between items)
+const gridContainerWidth = width - (SPACING.lg * 4); // 2x content padding + 2x shareableGrid padding
+const gridItemSize = (gridContainerWidth - (SPACING.sm * 2)) / 3; // 3 columns, 2 gaps
 
 export const viewPaletteStyles = StyleSheet.create({
   safeArea: {
@@ -43,6 +45,16 @@ export const viewPaletteStyles = StyleSheet.create({
     flexShrink: 1,
   },
 
+  headerAction: {
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: SPACING.xs,
+  },
+
+  headerActionIcon: {
+    fontSize: 22,
+    color: COLORS.gold,
+  },
+
   loading: {
     flex: 1,
     justifyContent: 'center',
@@ -52,7 +64,6 @@ export const viewPaletteStyles = StyleSheet.create({
 
   content: {
     padding: SPACING.lg,
-    gap: SPACING.lg,
   },
 
   shareableGrid: {
@@ -68,8 +79,8 @@ export const viewPaletteStyles = StyleSheet.create({
   },
 
   gridItem: {
-    width: gridSize,
-    height: gridSize,
+    width: gridItemSize,
+    height: gridItemSize,
     borderRadius: 8,
     overflow: 'hidden',
     backgroundColor: COLORS.surface,
@@ -104,6 +115,19 @@ export const viewPaletteStyles = StyleSheet.create({
     padding: SPACING.sm,
   },
 
+  emptyItem: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderStyle: 'dashed',
+  },
+
+  emptyIcon: {
+    fontSize: 24,
+    color: COLORS.gold,
+    opacity: 0.4,
+  },
+
   centerTitle: {
     fontSize: 14,
     fontWeight: '700',
@@ -117,21 +141,5 @@ export const viewPaletteStyles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.black,
     textAlign: 'center',
-  },
-
-  actions: {
-    gap: SPACING.md,
-  },
-
-  empty: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: SPACING.xxl * 2,
-    gap: SPACING.md,
-  },
-
-  emptyIcon: {
-    fontSize: 64,
   },
 });

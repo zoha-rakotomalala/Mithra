@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StatusBar, Alert, SafeAreaView } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { Paths } from '@/navigation/paths';
 import { getLikedPaintingsForVisit, getCachedPaintings, saveVisitPalette, getVisitPalette } from '@/services';
 import { GridPaintingCard, EmptyState } from '@/components/molecules';
 import { buttons } from '@/styles';
@@ -51,15 +52,13 @@ export function VisitPalette() {
   };
 
   const handleSave = async () => {
-    if (selected.size !== 8) {
-      Alert.alert('Select 8 Artworks', 'Please select exactly 8 artworks for your palette.');
+    if (selected.size === 0) {
+      Alert.alert('Select Artworks', 'Please select at least one artwork for your palette.');
       return;
     }
 
     await saveVisitPalette(visitId, Array.from(selected));
-    Alert.alert('Palette Saved!', 'Your visit palette has been created.', [
-      { text: 'OK', onPress: () => navigation.goBack() }
-    ]);
+    navigation.navigate(Paths.ViewPalette, { visitId });
   };
 
   const renderPainting = ({ item }: { item: CachedPainting }) => {
@@ -75,13 +74,14 @@ export function VisitPalette() {
     };
 
     return (
-      <View style={[styles.cardWrapper, isSelected && styles.cardSelected]}>
+      <View style={styles.cardWrapper}>
+        {isSelected && <View style={styles.cardImageHighlight} />}
         <GridPaintingCard variant="minimal" painting={painting} onPress={() => toggleSelect(item.id)} />
-          {isSelected && (
-            <View style={styles.checkmark}>
-              <Text style={styles.checkmarkText}>✓</Text>
-            </View>
-          )}
+        {isSelected && (
+          <View style={styles.checkmark}>
+            <Text style={styles.checkmarkText}>✓</Text>
+          </View>
+        )}
       </View>
     );
   };
@@ -96,7 +96,7 @@ export function VisitPalette() {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>CREATE PALETTE</Text>
         </View>
-        <Text style={styles.subtitle}>Select 8 artworks ({selected.size}/8)</Text>
+        <Text style={styles.subtitle}>Select up to 8 artworks ({selected.size}/8)</Text>
       </View>
 
       {paintings.length === 0 ? (
@@ -119,9 +119,9 @@ export function VisitPalette() {
 
           <View style={styles.footer}>
             <TouchableOpacity
-              style={[buttons.primary, selected.size !== 8 && styles.buttonDisabled]}
+              style={[buttons.primary, selected.size === 0 && styles.buttonDisabled]}
               onPress={handleSave}
-              disabled={selected.size !== 8}
+              disabled={selected.size === 0}
             >
               <Text style={buttons.primaryText}>Save Palette</Text>
             </TouchableOpacity>

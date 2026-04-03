@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StatusBar, Image, Share } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StatusBar, Image, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import ViewShot from 'react-native-view-shot';
+import RNShare from 'react-native-share';
 import { getCanonPalette, getCachedPaintings } from '@/services';
 import { EmptyState } from '@/components/molecules';
 import { shared, typography, buttons } from '@/styles';
@@ -35,12 +36,15 @@ export function ViewCanon() {
     try {
       const uri = await viewShotRef.current?.capture?.();
       if (!uri) return;
-      await Share.share({
+      await RNShare.open({
         title: 'My Canon Palette',
-        url: uri,
+        url: Platform.OS === 'ios' ? uri : `file://${uri}`,
+        type: 'image/png',
       });
-    } catch (err) {
-      console.error('Error sharing canon:', err);
+    } catch (err: any) {
+      if (err?.message !== 'User did not share') {
+        console.error('Error sharing canon:', err);
+      }
     }
   };
 
