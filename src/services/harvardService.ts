@@ -4,7 +4,7 @@ import { generateColorFromString } from '@/utils/colorGenerator';
 import Config from 'react-native-config';
 import { museumApi } from './museumApiClient';
 
-const HARVARD_API_BASE = 'https://api.harvardartmuseums.org/v1';
+const HARVARD_API_BASE = 'https://api.harvardartmuseums.org';
 // Get free API key from: https://harvardartmuseums.org/collections/api
 const API_KEY = Config.HARVARD_API_KEY; // TODO: Move to config/env
 
@@ -77,14 +77,17 @@ function parseHarvardObject(obj: any): Painting | null {
                           'Unknown Artist';
     const artist = cleanArtistName(artistDisplay);
 
-    // Image URLs
-    const imageId = obj.primaryimageurl;
-    if (!imageId) return null;
+    // Image URLs — use IIIF endpoint via idsid for better reliability (avoids nrs.harvard.edu redirect + rate limiting)
+    const idsid = obj.images?.[0]?.idsid;
+    const primaryUrl = obj.primaryimageurl;
+    if (!idsid && !primaryUrl) return null;
 
-    const imageUrl = imageId;
-    const thumbnailUrl = imageId.includes('?')
-      ? `${imageId}&height=400`
-      : `${imageId}?height=400`;
+    const imageUrl = idsid
+      ? `https://ids.lib.harvard.edu/ids/iiif/${idsid}/full/full/0/default.jpg`
+      : primaryUrl;
+    const thumbnailUrl = idsid
+      ? `https://ids.lib.harvard.edu/ids/iiif/${idsid}/full/!400,400/0/default.jpg`
+      : (primaryUrl.includes('?') ? `${primaryUrl}&height=400` : `${primaryUrl}?height=400`);
 
     // Extract year
     let year: number | undefined;

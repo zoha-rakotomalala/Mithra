@@ -54,7 +54,7 @@ export async function searchJoconde(
     };
   } catch (error) {
     console.error('Error searching Joconde:', error);
-    throw error;
+    return { paintings: [], totalResults: 0 };
   }
 }
 
@@ -74,12 +74,9 @@ function parseJocondeObject(record: any): null | Painting {
     const imageReference = fields.ref || fields.numero_inventaire;
     if (!imageReference) return null;
 
-    // Note: Joconde images might require additional API calls or URL construction
-    // This is a limitation of the open data API
-    const imageUrl = fields.contient_image
-      ? `https://data.culture.gouv.fr/explore/dataset/base-joconde-extrait/files/${imageReference}/300/`
-      : '';
-
+    // The Joconde open data API doesn't provide direct image URLs
+    // Skip records without images
+    const imageUrl = fields.img_url || fields.image_url || undefined;
     if (!imageUrl) return null;
 
     const thumbnailUrl = imageUrl;

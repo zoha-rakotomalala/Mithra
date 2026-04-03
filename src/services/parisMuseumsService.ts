@@ -93,7 +93,7 @@ export async function searchParisMuseums(
         variables: {
           limit,
           offset,
-          query: query.trim(),
+          query: `%${query.trim()}%`,
         },
       },
       headers: {
@@ -119,7 +119,7 @@ export async function searchParisMuseums(
     };
   } catch (error) {
     console.error('Error searching Paris Museums:', error);
-    throw error;
+    return { paintings: [], totalResults: 0 };
   }
 }
 

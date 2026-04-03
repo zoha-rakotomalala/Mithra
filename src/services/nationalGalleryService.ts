@@ -3,8 +3,7 @@ import { cleanArtistName } from './utils/searchHelpers';
 import { generateColorFromString } from '@/utils/colorGenerator';
 import { museumApi } from './museumApiClient';
 
-const NG_SEARCH_API = 'https://data.ng.ac.uk/search';
-const NG_DATA_BASE = 'https://data.ng.ac.uk';
+const NG_ES_API = 'https://data.ng.ac.uk/es/public/_search';
 
 interface NGSearchParams {
   query: string;
@@ -17,7 +16,7 @@ interface NGSearchResult {
 }
 
 /**
- * Search National Gallery (UK) collection using Linked Art
+ * Search National Gallery (UK) collection via Elasticsearch API
  */
 export async function searchNationalGallery(
   params: NGSearchParams
@@ -29,29 +28,33 @@ export async function searchNationalGallery(
       return { paintings: [], totalResults: 0 };
     }
 
-    // Search via their Elasticsearch API
-    const searchParams = new URLSearchParams({
-      q: query.trim(),
-      size: limit.toString(),
-      _source: 'id,title,creator,date,image',
-    });
+    console.log('🇬🇧 Searching National Gallery:', query);
 
-    const searchUrl = `${NG_SEARCH_API}?${searchParams.toString()}`;
-    console.log('🇬🇧 Searching National Gallery:', searchUrl);
+    // POST to Elasticsearch endpoint
+    const data = await museumApi.post(NG_ES_API, {
+      json: {
+        query: {
+          bool: {
+            must: [
+              { multi_match: { query: query.trim(), fields: ['summary.title', 'creation.maker.summary.title', 'summary.description'] } },
+              { term: { '@datatype.base': 'object' } },
+            ],
+          },
+        },
+        size: limit,
+        _source: ['summary', 'creation', 'identifier', 'media'],
+      },
+      headers: { 'Content-Type': 'application/json' },
+    }).json<any>();
 
-    const data = await museumApi.get(searchUrl).json<any>();
     const hits = data.hits?.hits || [];
     const total = data.hits?.total?.value || 0;
 
-    // Fetch Linked Art data for each result
-    const paintings = await Promise.all(
-      hits.map((hit: any) => fetchLinkedArtObject(hit._source?.id || hit._id))
-    );
+    const paintings = hits
+      .map((hit: any) => parseNGElasticsearchHit(hit))
+      .filter((p: Painting | null): p is Painting => p !== null);
 
-    return {
-      paintings: paintings.filter((p): p is Painting => p !== null),
-      totalResults: total,
-    };
+    return { paintings, totalResults: total };
   } catch (error) {
     console.error('Error searching National Gallery:', error);
     return { paintings: [], totalResults: 0 };
@@ -59,55 +62,39 @@ export async function searchNationalGallery(
 }
 
 /**
- * Fetch Linked Art JSON for a specific object
+ * Parse an Elasticsearch hit into a Painting
  */
-async function fetchLinkedArtObject(pid: string): Promise<Painting | null> {
+function parseNGElasticsearchHit(hit: any): Painting | null {
   try {
-    // Fetch Linked Art representation
-    // Format: https://data.ng.ac.uk/{PID}.json
-    const url = `${NG_DATA_BASE}/${pid}.json`;
+    const src = hit._source;
+    const title = src?.summary?.title || 'Untitled';
+    if (title === 'Untitled') return null;
 
-    const data = await museumApi.get(url, {
-      headers: {
-        'Accept': 'application/ld+json',
-      },
-    }).json<any>();
-    return parseNGLinkedArt(data);
-  } catch (error) {
-    console.error(`Error fetching NG object ${pid}:`, error);
-    return null;
-  }
-}
+    const maker = src?.creation?.[0]?.maker?.[0];
+    const artistRaw = maker?.summary?.title || src?.creation?.[0]?.attribution?.[0]?.value || 'Unknown Artist';
+    const artist = cleanArtistName(artistRaw);
 
-/**
- * Parse National Gallery Linked Art format into Painting
- */
-function parseNGLinkedArt(data: any): Painting | null {
-  try {
-    // Extract title
-    const title = extractTitle(data);
-    if (!title) return null;
+    // Extract year from creation date
+    let year: number | undefined;
+    const dateStr = src?.creation?.[0]?.date?.value;
+    if (dateStr) {
+      const match = dateStr.match(/\d{4}/);
+      if (match) year = parseInt(match[0]);
+    }
 
-    // Extract artist
-    const artistDisplay = extractArtist(data);
-    const artist = cleanArtistName(artistDisplay);
-
-    // Extract image
-    const imageUrl = extractImage(data);
+    // Extract image — use media field from ES response
+    const mediaItems = src?.media || [];
+    const imageMedia = mediaItems.find((m: any) => m.type === 'image' || m.format?.startsWith('image'));
+    const imageUrl = imageMedia?.url || imageMedia?.thumbnail;
     if (!imageUrl) return null;
 
-    // Extract year
-    const year = extractYear(data);
+    const thumbnailUrl = imageMedia?.thumbnail || imageUrl;
 
-    // Extract dimensions and medium
-    const dimensions = extractDimensions(data);
-    const medium = extractMedium(data);
-
-    // Extract description
-    const description = extractDescription(data);
+    const medium = src?.summary?.medium;
+    const dimensions = src?.summary?.dimensions;
 
     return {
-      id: `ng-${extractId(data)}`,
+      id: `ng-${hit._id}`,
       title,
       artist,
       year,
@@ -115,161 +102,18 @@ function parseNGLinkedArt(data: any): Painting | null {
       dimensions,
       museum: 'National Gallery',
       location: 'London, United Kingdom',
-      description,
+      description: src?.summary?.description,
       imageUrl,
-      thumbnailUrl: imageUrl, // NG uses IIIF, can add /full/400,/ for thumbnail
+      thumbnailUrl,
       color: generateColorFromString(title),
       isSeen: false,
       wantToVisit: false,
     };
   } catch (error) {
-    console.error('Error parsing NG Linked Art:', error);
+    console.error('Error parsing NG hit:', error);
     return null;
   }
 }
-
-/**
- * Extract title from Linked Art
- */
-function extractTitle(data: any): string | undefined {
-  if (data._label) return data._label;
-
-  const names = data.identified_by || [];
-  const title = names.find((item: any) =>
-    item.type === 'Name' &&
-    (item.classified_as?.[0]?._label === 'Primary Name' || !item.classified_as)
-  );
-
-  return title?.content || 'Untitled';
-}
-
-/**
- * Extract artist from Linked Art
- */
-function extractArtist(data: any): string {
-  if (data.produced_by?.carried_out_by) {
-    const creators = Array.isArray(data.produced_by.carried_out_by)
-      ? data.produced_by.carried_out_by
-      : [data.produced_by.carried_out_by];
-
-    const artist = creators[0];
-    return artist?._label || artist?.identified_by?.[0]?.content || 'Unknown Artist';
-  }
-  return 'Unknown Artist';
-}
-
-/**
- * Extract creation year
- */
-function extractYear(data: any): number | undefined {
-  const timespan = data.produced_by?.timespan;
-  if (!timespan) return undefined;
-
-  // Try various date fields
-  if (timespan.begin_of_the_begin) {
-    const match = timespan.begin_of_the_begin.match(/\d{4}/);
-    if (match) return parseInt(match[0]);
-  }
-
-  if (timespan.identified_by) {
-    const dateLabel = timespan.identified_by.find((id: any) => id.type === 'Name');
-    if (dateLabel?.content) {
-      const match = dateLabel.content.match(/\d{4}/);
-      if (match) return parseInt(match[0]);
-    }
-  }
-
-  return undefined;
-}
-
-/**
- * Extract image URL from Linked Art
- */
-function extractImage(data: any): string | undefined {
-  if (data.representation) {
-    const reps = Array.isArray(data.representation)
-      ? data.representation
-      : [data.representation];
-
-    // Look for digital representation
-    for (const rep of reps) {
-      if (rep.access_point?.[0]?.id) {
-        return rep.access_point[0].id;
-      }
-      if (rep.digitally_shown_by?.[0]?.access_point?.[0]?.id) {
-        return rep.digitally_shown_by[0].access_point[0].id;
-      }
-    }
-  }
-  return undefined;
-}
-
-/**
- * Extract dimensions
- */
-function extractDimensions(data: any): string | undefined {
-  if (!data.dimension) return undefined;
-
-  const dims = Array.isArray(data.dimension) ? data.dimension : [data.dimension];
-  const height = dims.find((d: any) => d.classified_as?.[0]?._label?.toLowerCase().includes('height'));
-  const width = dims.find((d: any) => d.classified_as?.[0]?._label?.toLowerCase().includes('width'));
-
-  if (height?.value && width?.value) {
-    const unit = height.unit?._label || 'cm';
-    return `${height.value} × ${width.value} ${unit}`;
-  }
-
-  return undefined;
-}
-
-/**
- * Extract medium/technique
- */
-function extractMedium(data: any): string | undefined {
-  const materials: string[] = [];
-
-  if (data.made_of) {
-    const mats = Array.isArray(data.made_of) ? data.made_of : [data.made_of];
-    materials.push(...mats.map((m: any) => m._label).filter(Boolean));
-  }
-
-  if (data.produced_by?.technique) {
-    const techs = Array.isArray(data.produced_by.technique)
-      ? data.produced_by.technique
-      : [data.produced_by.technique];
-    materials.push(...techs.map((t: any) => t._label).filter(Boolean));
-  }
-
-  return materials.length > 0 ? materials.join(', ') : undefined;
-}
-
-/**
- * Extract description
- */
-function extractDescription(data: any): string | undefined {
-  if (data.referred_to_by) {
-    const refs = Array.isArray(data.referred_to_by)
-      ? data.referred_to_by
-      : [data.referred_to_by];
-
-    const desc = refs.find((ref: any) =>
-      ref.type === 'LinguisticObject' && ref.content
-    );
-
-    return desc?.content;
-  }
-  return undefined;
-}
-
-/**
- * Extract ID from Linked Art object
- */
-function extractId(data: any): string {
-  const id = data.id || data['@id'] || '';
-  const match = id.match(/([^\/]+)(?:\.json)?$/);
-  return match ? match[1] : Date.now().toString();
-}
-
 /**
  * Get popular National Gallery artists
  */

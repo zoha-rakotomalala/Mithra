@@ -93,6 +93,9 @@ export const MUSEUM_COLORS = {
   // Tier 2 museums
   harvardArt: '#a51c30',    // Harvard crimson
   va: '#8b0000',            // V&A burgundy
+  smk: '#059669',           // SMK green
+  louvre: '#7C3AED',        // Louvre purple
+  smithsonian: '#DC2626',   // Smithsonian red
   
   // Tier 3 museums
   europeana: '#0a72cc',     // EU blue

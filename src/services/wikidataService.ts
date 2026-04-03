@@ -4,9 +4,29 @@ import { museumApi } from './museumApiClient';
 
 const WIKIDATA_ENDPOINT = 'https://query.wikidata.org/sparql';
 
-// Helper to generate unique IDs
-let idCounter = 1000; // Start high to avoid collision with mock data
-const generateId = () => idCounter++;
+const SPARQL_HEADERS = {
+  'Accept': 'application/json',
+  'Content-Type': 'application/x-www-form-urlencoded',
+  'User-Agent': 'PaletteApp/1.0 (art collection mobile app)',
+};
+
+/**
+ * Extract Q-ID from a Wikidata URI
+ */
+function extractQId(uri: string): string {
+  const match = uri.match(/Q\d+$/);
+  return match ? match[0] : uri.split('/').pop() || 'unknown';
+}
+
+/**
+ * Convert a Wikimedia Commons image URL to a thumbnail URL
+ */
+function getWikimediaThumbnail(imageUrl: string, width = 400): string | undefined {
+  if (!imageUrl?.includes('upload.wikimedia.org')) return undefined;
+  const match = imageUrl.match(/\/commons\/(.+\/([^/]+))$/);
+  if (!match) return undefined;
+  return `https://upload.wikimedia.org/wikipedia/commons/thumb/${match[1]}/${width}px-${match[2]}`;
+}
 
 export type WikidataSearchParams = {
   limit?: number;
@@ -37,10 +57,8 @@ export async function searchPaintings(
   try {
     const data = await museumApi.post(WIKIDATA_ENDPOINT, {
       body: `query=${encodeURIComponent(sparqlQuery)}`,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+      headers: SPARQL_HEADERS,
+      timeout: 20000,
     }).json<any>();
     const paintings = parsePaintings(data);
 
@@ -50,7 +68,7 @@ export async function searchPaintings(
     };
   } catch (error) {
     console.error('Error searching Wikidata:', error);
-    throw new Error('Failed to search paintings. Please check your connection.');
+    return { paintings: [], totalResults: 0 };
   }
 }
 
@@ -67,7 +85,7 @@ export async function searchByArtist(
     WHERE {
       ?artist wdt:P31 wd:Q5;                    # Artist is human
               rdfs:label ?artistLabel.
-      FILTER(CONTAINS(LCASE(?artistLabel), "${artistName.toLowerCase()}"))
+      FILTER(CONTAINS(LCASE(?artistLabel), "${artistName.toLowerCase().replace(/"/g, '\\"')}"))
       FILTER(LANG(?artistLabel) = "en")
 
       ?painting wdt:P31 wd:Q3305213;            # Instance of painting
@@ -96,10 +114,7 @@ export async function searchByArtist(
   try {
     const data = await museumApi.post(WIKIDATA_ENDPOINT, {
       body: `query=${encodeURIComponent(sparqlQuery)}`,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+      headers: SPARQL_HEADERS,
     }).json<any>();
     const paintings = parsePaintings(data);
 
@@ -109,7 +124,7 @@ export async function searchByArtist(
     };
   } catch (error) {
     console.error('Error searching by artist:', error);
-    throw new Error('Failed to search paintings by artist.');
+    return { paintings: [], totalResults: 0 };
   }
 }
 
@@ -117,33 +132,34 @@ export async function searchByArtist(
  * Build SPARQL query for general search
  */
 function buildSearchQuery(query: string, limit: number): string {
-  const searchTerm = query.toLowerCase().trim();
+  const searchTerm = query.trim().replace(/"/g, '\\"');
 
+  // Use MediaWiki API search service (mwapi) — much faster than CONTAINS(LCASE(...))
   return `
     SELECT DISTINCT ?painting ?paintingLabel ?artistLabel ?image ?year
            ?museumLabel ?locationLabel ?height ?width ?mediumLabel ?description
     WHERE {
-      ?painting wdt:P31 wd:Q3305213;            # Instance of painting
-                wdt:P170 ?artist.                # Has creator
+      SERVICE wikibase:mwapi {
+        bd:serviceParam wikibase:endpoint "www.wikidata.org";
+        bd:serviceParam wikibase:api "Search";
+        bd:serviceParam mwapi:srsearch "${searchTerm} haswbstatement:P31=Q3305213";
+        bd:serviceParam mwapi:srlimit "${limit}".
+        ?painting wikibase:apiOutputItem mwapi:title.
+      }
 
-      OPTIONAL { ?painting wdt:P18 ?image. }    # Image
-      OPTIONAL { ?painting wdt:P571 ?yearDate.
-                 BIND(YEAR(?yearDate) as ?year) }
-      OPTIONAL { ?painting wdt:P195 ?museum. }  # Collection
-      OPTIONAL { ?painting wdt:P276 ?location. } # Location
-      OPTIONAL { ?painting wdt:P2048 ?height. } # Height in cm
-      OPTIONAL { ?painting wdt:P2049 ?width. }  # Width in cm
-      OPTIONAL { ?painting wdt:P186 ?medium. }  # Material/Medium
+      ?painting wdt:P31 wd:Q3305213.
+      OPTIONAL { ?painting wdt:P170 ?artist. }
+      OPTIONAL { ?painting wdt:P18 ?image. }
+      OPTIONAL { ?painting wdt:P571 ?yearDate. BIND(YEAR(?yearDate) as ?year) }
+      OPTIONAL { ?painting wdt:P195 ?museum. }
+      OPTIONAL { ?painting wdt:P276 ?location. }
+      OPTIONAL { ?painting wdt:P2048 ?height. }
+      OPTIONAL { ?painting wdt:P2049 ?width. }
+      OPTIONAL { ?painting wdt:P186 ?medium. }
       OPTIONAL {
         ?painting schema:description ?description.
         FILTER(LANG(?description) = "en")
       }
-
-      # Filter by search term (painting name or artist name)
-      FILTER(
-        CONTAINS(LCASE(?paintingLabel), "${searchTerm}") ||
-        CONTAINS(LCASE(?artistLabel), "${searchTerm}")
-      )
 
       SERVICE wikibase:label {
         bd:serviceParam wikibase:language "en".
@@ -192,14 +208,15 @@ function parsePaintings(data: any): Painting[] {
       color,
       description: item.description?.value,
       dimensions,
-      id: generateId(),
+      id: `wikidata-${extractQId(item.painting.value)}`,
       imageUrl: item.image?.value,
-      isInPalette: false,
+      thumbnailUrl: item.image?.value ? getWikimediaThumbnail(item.image.value) : undefined,
       isSeen: false,
       location,
       medium: item.mediumLabel?.value,
       museum,
       title: item.paintingLabel?.value || 'Untitled',
+      wantToVisit: false,
       year: item.year?.value ? Number.parseInt(item.year.value) : undefined,
     };
   });

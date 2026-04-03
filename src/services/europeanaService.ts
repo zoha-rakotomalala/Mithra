@@ -33,9 +33,7 @@ export async function searchEuropeana(
     const queryParams = new URLSearchParams({
       wskey: API_KEY || "",
       query: query.trim(),
-      qf: 'TYPE:IMAGE', // Filter for images
-      theme: 'art', // Focus on art theme
-      reusability: 'open', // Only openly licensed content
+      qf: 'what:painting', // Focus on paintings
       media: 'true', // Must have media
       start: ((page - 1) * rows + 1).toString(),
       rows: rows.toString(),
@@ -64,7 +62,7 @@ export async function searchEuropeana(
     };
   } catch (error) {
     console.error('Error searching Europeana:', error);
-    throw error;
+    return { paintings: [], totalResults: 0 };
   }
 }
 
