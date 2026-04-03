@@ -130,7 +130,11 @@ export async function searchAllMuseums(
     });
 
     const cacheResults = await Promise.all(cachePromises);
-    cachedPaintings = cacheResults.flatMap(r => r.paintings);
+    cachedPaintings = cacheResults.flatMap(r => {
+      // Tag cached paintings with sourceMuseumId for badge display
+      r.paintings.forEach(p => { (p as any).sourceMuseumId = r.museumId; });
+      return r.paintings;
+    });
 
     if (cachedPaintings.length > 0) {
       console.log(`💨 Showing ${cachedPaintings.length} cached results (${cacheStats.hits} hits, ${cacheStats.misses} misses, ${cacheStats.stale} stale)`);
@@ -173,11 +177,12 @@ export async function searchAllMuseums(
         updateStats.added += updateResult.added;
         updateStats.updated += updateResult.updated;
 
-        // Store database UUID mapping but keep legacy ID for badge display
+        // Replace legacy IDs with database UUIDs, tag source museum for badges
         for (const painting of freshPaintings) {
+          (painting as any).sourceMuseumId = museumId;
           const uuid = updateResult.legacyToUuid[painting.id];
           if (uuid) {
-            (painting as any).dbId = uuid;
+            (painting as any).id = uuid;
           }
         }
       }
@@ -291,47 +296,20 @@ export function getMuseumBadgeInfo(painting: Painting): {
   shortName: string;
   color: string;
 } {
-  let museumId: string | undefined;
+  // PRIMARY: Use sourceMuseumId (set during search, always correct)
+  let museumId = painting.sourceMuseumId;
 
-  // PRIMARY: Use ID prefix — always reliable, no false positives
-  if (typeof painting.id === 'string') {
-    const prefixMap: Record<string, string> = {
-      'met-': 'MET',
-      'rijks-': 'RIJKS',
-      'cleveland-': 'CLEVELAND',
-      'chicago-': 'CHICAGO',
-      'harvard-': 'HARVARD',
-      'va-': 'VA',
-      'paris-': 'PARIS',
-      'ng-': 'NG',
-      'smk-': 'SMK',
-      'smithsonian-': 'SMITHSONIAN',
-      'louvre-': 'LOUVRE',
-      'joconde-': 'JOCONDE',
-      'wikidata-': 'WIKIDATA',
-      'europeana-': 'EUROPEANA',
+  // Europeana special case: show the actual source institution name
+  if (museumId === 'EUROPEANA') {
+    const displayName = getDisplayMuseumName(painting);
+    return {
+      shortName: getShortMuseumName(displayName),
+      color: '#1E3A8A',
     };
-
-    for (const [prefix, id] of Object.entries(prefixMap)) {
-      if (painting.id.startsWith(prefix)) {
-        museumId = id;
-        break;
-      }
-    }
-
-    // Europeana special case: show the actual source institution name
-    if (museumId === 'EUROPEANA') {
-      const displayName = getDisplayMuseumName(painting);
-      return {
-        shortName: getShortMuseumName(displayName),
-        color: '#1E3A8A',
-      };
-    }
   }
 
-  // FALLBACK: UUID-based paintings from cache don't have prefixed IDs
+  // FALLBACK: paintings from Supabase cache don't have sourceMuseumId
   if (!museumId) {
-    // Use exact-ish matches to avoid false positives (e.g. "met" matching "Metropolitan Organisation")
     const exactMap: [RegExp, string][] = [
       [/^metropolitan museum of art$/i, 'MET'],
       [/\brijksmuseum\b/i, 'RIJKS'],
@@ -355,7 +333,7 @@ export function getMuseumBadgeInfo(painting: Painting): {
     }
   }
 
-  if (!museumId) museumId = 'MET'; // ultimate fallback
+  if (!museumId) museumId = 'MET';
 
   const museums = getMuseumsByIds([museumId]);
   const museum = museums[0];

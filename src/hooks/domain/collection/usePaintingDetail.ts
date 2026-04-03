@@ -45,6 +45,7 @@ function dbToUIPainting(db: CachedPainting): Painting {
     period: m.period,
     culture: m.culture,
     department: m.department,
+    sourceMuseumId: m.sourceMuseumId,
   };
 }
 
