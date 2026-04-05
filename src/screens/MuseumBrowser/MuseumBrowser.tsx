@@ -4,7 +4,7 @@ import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, StatusBar } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { shared, typography } from '@/styles';
-import { COLORS, SPACING } from '@/constants';
+import { COLORS } from '@/constants';
 import { getAllMuseums, type MuseumConfig } from '@/services/museumRegistry';
 import { museumBrowserStyles as styles } from './MuseumBrowser.styles';
 

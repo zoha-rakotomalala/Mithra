@@ -1,6 +1,7 @@
 import type { Painting } from '@/types/painting';
 import { cleanArtistName } from './utils/searchHelpers';
-import {  } from '@/utils/colorGenerator';
+import { generateColorFromString } from '@/utils/colorGenerator';
+import { museumApi } from './museumApiClient';
 
 const AIC_API_BASE = 'https://api.artic.edu/api/v1';
 const AIC_IMAGE_BASE = 'https://www.artic.edu/iiif/2';
@@ -39,13 +40,7 @@ export async function searchChicago(
     const url = `${AIC_API_BASE}/artworks/search?${queryParams.toString()}`;
     console.log('🏛️ Searching Art Institute of Chicago:', url);
 
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`Chicago API error: ${response.status}`);
-    }
-
-    const data = await response.json();
+    const data = await museumApi.get(url).json<any>();
     const artworkIds = data.data || [];
     const pagination = data.pagination || {};
 
@@ -76,14 +71,7 @@ async function fetchArtworksBatch(ids: number[]): Promise<Painting[]> {
     const idsParam = ids.slice(0, 20).join(',');
     const url = `${AIC_API_BASE}/artworks?ids=${idsParam}&fields=id,title,artist_display,date_display,medium_display,dimensions,image_id,thumbnail,color,classification_title,is_public_domain`;
 
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      console.warn(`Failed to fetch Chicago artworks batch`);
-      return [];
-    }
-
-    const data = await response.json();
+    const data = await museumApi.get(url).json<any>();
     const artworks = data.data || [];
 
     return artworks
@@ -167,17 +155,7 @@ export function getPopularChicagoArtists(): string[] {
   ];
 }
 
-function generateColorFromString(str: string): string {
-  const colors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
-    '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
-  ];
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
-}
+
 
 import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
 import { registerAdapter } from './museumAdapterRegistry';

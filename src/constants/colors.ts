@@ -41,20 +41,41 @@ export const COLORS = {
   wantToVisit: '#f4d03f', // Gold
   inPalette: '#d4af37',   // Primary gold
   
+  // App-specific greens
+  primary: '#2d6a4f',
+  primaryDark: '#1a4d3e',
+  teal: '#004d40',
+
+  // Danger / accent
+  danger: '#e63946',
+  amber: '#f59e0b',
+  bronze: '#cd7f32',
+
   // Background
   background: '#ffffff',
   backgroundDark: '#1a1a1a',
+  backgroundCream: '#f5f3ed',
+  backgroundLight: '#FAFAFA',
   surface: '#f8f8f8',
   surfaceDark: '#2d2d2d',
+  surfaceLight: '#f5f5f5',
   
   // Text
   text: '#1a1a1a',
   textLight: '#606060',
+  textMuted: '#666666',
+  textDisabled: '#999999',
   textInverse: '#ffffff',
   
   // Borders
   border: '#e0e0e0',
+  borderCream: '#e0ddd5',
   borderDark: '#404040',
+
+  // Pure values
+  white: '#ffffff',
+  pureBlack: '#000000',
+  nearBlack: '#2c2c2c',
 } as const;
 
 /**
@@ -72,6 +93,9 @@ export const MUSEUM_COLORS = {
   // Tier 2 museums
   harvardArt: '#a51c30',    // Harvard crimson
   va: '#8b0000',            // V&A burgundy
+  smk: '#059669',           // SMK green
+  louvre: '#7C3AED',        // Louvre purple
+  smithsonian: '#DC2626',   // Smithsonian red
   
   // Tier 3 museums
   europeana: '#0a72cc',     // EU blue

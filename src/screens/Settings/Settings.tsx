@@ -10,15 +10,17 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Paths } from '@/navigation/paths';
+import type { RootScreenProps } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { storage } from '@/App';
 import { usePaintings } from '@/contexts/PaintingsContext';
 import { shared, typography } from '@/styles';
-import { COLORS, SPACING } from '@/constants';
+import { COLORS } from '@/constants';
+import { settingsStyles as styles } from './Settings.styles';
 
 export function Settings() {
   const { paintings, palettePaintingIds } = usePaintings();
-  const navigation = useNavigation();
+  const navigation = useNavigation<RootScreenProps['navigation']>();
   const { user, signOut } = useAuth();
 
   const [curatorName, setCuratorName] = useState(
@@ -76,32 +78,32 @@ export function Settings() {
       <StatusBar backgroundColor={COLORS.black} barStyle="light-content" />
       <ScrollView
         showsVerticalScrollIndicator={false}
-        style={[shared.container, { backgroundColor: COLORS.black }]}
-        contentContainerStyle={{ padding: SPACING.xl }}
+        style={[shared.container, styles.scrollView]}
+        contentContainerStyle={styles.scrollContent}
       >
-        <Text style={[typography.h1, { color: COLORS.gold, textAlign: 'center', marginBottom: SPACING.lg }]}>
+        <Text style={[typography.h1, styles.title]}>
           SETTINGS
         </Text>
         <View style={shared.artDecoDivider} />
 
-        <View style={{ marginBottom: SPACING.xl }}>
-          <Text style={[typography.label, { color: COLORS.gold + 'CC', marginBottom: SPACING.md }]}>
+        <View style={styles.sectionGroup}>
+          <Text style={[typography.label, styles.sectionLabel]}>
             ACCOUNT
           </Text>
 
           {user ? (
             <>
-              <View style={[shared.row, shared.rowBetween, { paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.gold + '40' }]}>
-                <Text style={[typography.body, { color: COLORS.cream }]}>Logged in as</Text>
-                <Text style={[typography.bodySmall, { color: COLORS.cream + 'AA' }]}>
+              <View style={[shared.row, shared.rowBetween, styles.row]}>
+                <Text style={[typography.body, styles.bodyTextCream]}>Logged in as</Text>
+                <Text style={[typography.bodySmall, styles.bodyTextCreamMuted]}>
                   {user.email || `User ${user.id.substring(0, 8)}`}
                 </Text>
               </View>
 
-              <View style={{ paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.gold + '40' }}>
-                <Text style={[typography.body, { color: COLORS.cream, marginBottom: SPACING.xs }]}>Curator Name</Text>
+              <View style={styles.curatorNameRow}>
+                <Text style={[typography.body, styles.curatorNameLabel]}>Curator Name</Text>
                 <TextInput
-                  style={{ color: COLORS.cream, fontSize: 15, backgroundColor: COLORS.gold + '15', borderRadius: 4, paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs, borderWidth: 1, borderColor: COLORS.gold + '40' }}
+                  style={styles.curatorNameInput}
                   value={curatorName}
                   onChangeText={saveCuratorName}
                   placeholder={user.email?.split('@')[0] ?? 'Curator'}
@@ -113,65 +115,65 @@ export function Settings() {
 
               <TouchableOpacity
                 onPress={handleSignOut}
-                style={[shared.row, shared.rowBetween, { paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: '#e63946' + '40' }]}
+                style={[shared.row, shared.rowBetween, styles.dangerRow]}
               >
-                <Text style={[typography.body, { color: '#e63946' }]}>Sign Out</Text>
-                <Text style={{ color: '#e63946' }}>→</Text>
+                <Text style={[typography.body, styles.dangerText]}>Sign Out</Text>
+                <Text style={styles.dangerText}>→</Text>
               </TouchableOpacity>
             </>
           ) : (
             <TouchableOpacity
-              onPress={() => navigation.navigate(Paths.Auth as never)}
-              style={[shared.row, shared.rowBetween, { paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.gold + '40' }]}
+              onPress={() => navigation.navigate(Paths.Auth)}
+              style={[shared.row, shared.rowBetween, styles.row]}
             >
-              <Text style={[typography.body, { color: COLORS.cream }]}>Sign In / Sign Up</Text>
-              <Text style={[typography.body, { color: COLORS.gold }]}>›</Text>
+              <Text style={[typography.body, styles.bodyTextCream]}>Sign In / Sign Up</Text>
+              <Text style={[typography.body, styles.goldChevron]}>›</Text>
             </TouchableOpacity>
           )}
         </View>
 
-        <View style={{ marginBottom: SPACING.xl }}>
-          <Text style={[typography.label, { color: COLORS.gold + 'CC', marginBottom: SPACING.md }]}>
+        <View style={styles.sectionGroup}>
+          <Text style={[typography.label, styles.sectionLabel]}>
             ARCHIVE
           </Text>
 
           <TouchableOpacity
             onPress={handleShowStorageInfo}
-            style={[shared.row, shared.rowBetween, { paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.gold + '40' }]}
+            style={[shared.row, shared.rowBetween, styles.row]}
           >
-            <Text style={[typography.body, { color: COLORS.cream }]}>Archive Status</Text>
-            <Text style={[typography.body, { color: COLORS.gold }]}>›</Text>
+            <Text style={[typography.body, styles.bodyTextCream]}>Archive Status</Text>
+            <Text style={[typography.body, styles.goldChevron]}>›</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={handleClearStorage}
-            style={[shared.row, shared.rowBetween, { paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: '#e63946' + '40' }]}
+            style={[shared.row, shared.rowBetween, styles.dangerRow]}
           >
-            <Text style={[typography.body, { color: '#e63946' }]}>Clear Archive</Text>
-            <Text style={{ color: '#e63946' }}>×</Text>
+            <Text style={[typography.body, styles.dangerText]}>Clear Archive</Text>
+            <Text style={styles.dangerText}>×</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={{ marginBottom: SPACING.xl }}>
-          <Text style={[typography.label, { color: COLORS.gold + 'CC', marginBottom: SPACING.md }]}>
+        <View style={styles.sectionGroup}>
+          <Text style={[typography.label, styles.sectionLabel]}>
             SYSTEM
           </Text>
 
-          <View style={[shared.row, shared.rowBetween, { paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.gold + '40' }]}>
-            <Text style={[typography.body, { color: COLORS.cream }]}>Version</Text>
-            <Text style={[typography.bodySmall, { color: COLORS.cream + 'AA' }]}>1.0.0</Text>
+          <View style={[shared.row, shared.rowBetween, styles.row]}>
+            <Text style={[typography.body, styles.bodyTextCream]}>Version</Text>
+            <Text style={[typography.bodySmall, styles.bodyTextCreamMuted]}>1.0.0</Text>
           </View>
 
-          <View style={[shared.row, shared.rowBetween, { paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.gold + '40' }]}>
-            <Text style={[typography.body, { color: COLORS.cream }]}>Data Version</Text>
-            <Text style={[typography.bodySmall, { color: COLORS.cream + 'AA' }]}>
+          <View style={[shared.row, shared.rowBetween, styles.row]}>
+            <Text style={[typography.body, styles.bodyTextCream]}>Data Version</Text>
+            <Text style={[typography.bodySmall, styles.bodyTextCreamMuted]}>
               {storage.getString('palette_data_version') || '—'}
             </Text>
           </View>
         </View>
 
-        <View style={{ marginTop: SPACING.lg, padding: SPACING.md, backgroundColor: COLORS.gold + '10', borderRadius: 8 }}>
-          <Text style={[typography.caption, { color: COLORS.cream + 'AA', textAlign: 'center', lineHeight: 18 }]}>
+        <View style={styles.footerBox}>
+          <Text style={[typography.caption, styles.footerText]}>
             All changes are saved locally on this device.{'\n'}
             Your collection persists automatically.
           </Text>

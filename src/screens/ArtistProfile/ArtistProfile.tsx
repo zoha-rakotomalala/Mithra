@@ -1,13 +1,14 @@
 import type { Painting } from '@/types/painting';
 
 import { useNavigation, useRoute } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { RootStackParamList } from '@/navigation/types';
 import React, { useMemo } from 'react';
 import {
   Alert,
   FlatList,
   Image,
   StatusBar,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -25,7 +26,7 @@ type RouteParameters = {
 
 export function ArtistProfile() {
   const route = useRoute();
-  const navigation = useNavigation();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { artistName } = route.params as RouteParameters;
   const { addToCollection, paintings } = usePaintings();
 
@@ -51,7 +52,7 @@ export function ArtistProfile() {
   }, [artistPaintings]);
 
   const handlePaintingPress = (painting: Painting) => {
-    navigation.navigate(Paths.PaintingDetail, { painting });
+    navigation.navigate(Paths.PaintingDetail, { paintingId: painting.id });
   };
 
   const handleAddAllToWantToVisit = () => {

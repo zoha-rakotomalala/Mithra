@@ -4,6 +4,7 @@ import FastImage from 'react-native-fast-image';
 import { cards, badges } from '@/styles';
 import { COLORS } from '@/constants';
 import { getMuseumBadge } from '@/constants/museums';
+import { museumImageSource } from '@/utils/imageSource';
 import type { GridPaintingCardProps } from './types';
 
 export function GridPaintingCard({ 
@@ -26,11 +27,7 @@ export function GridPaintingCard({
               </View>
             )}
             <FastImage
-              source={{
-                uri: painting.thumbnailUrl || painting.imageUrl,
-                priority: FastImage.priority.normal,
-                cache: FastImage.cacheControl.immutable,
-              }}
+              source={museumImageSource(painting.thumbnailUrl || painting.imageUrl)}
               style={cards.image}
               resizeMode={FastImage.resizeMode.cover}
               onLoadStart={() => setImageLoading(true)}

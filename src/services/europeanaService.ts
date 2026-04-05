@@ -1,6 +1,7 @@
 import type { Painting } from '@/types/painting';
-import {  } from '@/utils/colorGenerator';
+import { generateColorFromString } from '@/utils/colorGenerator';
 import Config from 'react-native-config';
+import { museumApi } from './museumApiClient';
 
 const EUROPEANA_API_BASE = 'https://api.europeana.eu/record/v2';
 const API_KEY = Config.EUROPEANA_API_KEY;
@@ -32,9 +33,7 @@ export async function searchEuropeana(
     const queryParams = new URLSearchParams({
       wskey: API_KEY || "",
       query: query.trim(),
-      qf: 'TYPE:IMAGE', // Filter for images
-      theme: 'art', // Focus on art theme
-      reusability: 'open', // Only openly licensed content
+      qf: 'what:painting', // Focus on paintings
       media: 'true', // Must have media
       start: ((page - 1) * rows + 1).toString(),
       rows: rows.toString(),
@@ -44,16 +43,7 @@ export async function searchEuropeana(
     const url = `${EUROPEANA_API_BASE}/search.json?${queryParams.toString()}`;
     console.log('🇪🇺 Searching Europeana:', url);
 
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('Invalid Europeana API key');
-      }
-      throw new Error(`Europeana API error: ${response.status}`);
-    }
-
-    const data = await response.json();
+    const data = await museumApi.get(url).json<any>();
 
     if (!data.success) {
       throw new Error(data.error || 'Europeana search failed');
@@ -72,7 +62,7 @@ export async function searchEuropeana(
     };
   } catch (error) {
     console.error('Error searching Europeana:', error);
-    throw error;
+    return { paintings: [], totalResults: 0 };
   }
 }
 
@@ -194,17 +184,7 @@ export function getPopularEuropeanaSearches(): string[] {
   ];
 }
 
-function generateColorFromString(str: string): string {
-  const colors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
-    '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
-  ];
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
-}
+
 
 import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
 import { registerAdapter } from './museumAdapterRegistry';

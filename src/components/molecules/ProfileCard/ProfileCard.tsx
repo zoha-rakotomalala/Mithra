@@ -9,12 +9,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { COLORS } from '@/constants/colors';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 64) / 3;
 const CARD_HEIGHT = CARD_WIDTH * 1.3;
 
-type ProfileCardProps = {
+export type ProfileCardProps = {
   readonly isFlipped: boolean;
   readonly onPress: () => void;
   readonly profile: UserProfile;
@@ -121,7 +122,7 @@ const styles = StyleSheet.create({
   },
   flipCard: {
     backfaceVisibility: 'hidden',
-    backgroundColor: '#f5f3ed',
+    backgroundColor: COLORS.backgroundCream,
     borderColor: 'rgba(212,175,55,0.35)',
     borderWidth: 2,
     height: '100%',
@@ -129,7 +130,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   flipCardBack: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: COLORS.text,
   },
 
   /* FRONT */
@@ -139,20 +140,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   frontLabel: {
-    color: '#004d40',
+    color: COLORS.teal,
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 2,
   },
   initial: {
-    color: '#fff',
+    color: COLORS.textInverse,
     fontSize: 40,
     fontWeight: '300',
     letterSpacing: 2,
   },
   initialCircle: {
     alignItems: 'center',
-    borderColor: '#d4af37',
+    borderColor: COLORS.gold,
     borderRadius: CARD_WIDTH * 0.3,
     borderWidth: 2,
     height: CARD_WIDTH * 0.6,
@@ -185,12 +186,12 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   statNumber: {
-    color: '#fff',
+    color: COLORS.textInverse,
     fontSize: 18,
     fontWeight: '300',
   },
   username: {
-    color: '#d4af37',
+    color: COLORS.gold,
     fontSize: 12,
     fontWeight: '600',
     letterSpacing: 2,

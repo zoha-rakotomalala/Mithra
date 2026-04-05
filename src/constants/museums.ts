@@ -36,11 +36,11 @@ export const MUSEUM_BADGES: Record<string, MuseumBadgeInfo> = {
     color: MUSEUM_COLORS.chicago,
     tier: 1,
   },
-  NATIONAL_GALLERY: {
-    id: 'NATIONAL_GALLERY',
+  NG: {
+    id: 'NG',
     shortName: 'NG',
     color: MUSEUM_COLORS.nationalGallery,
-    tier: 1,
+    tier: 2,
   },
   HARVARD: {
     id: 'HARVARD',
@@ -60,8 +60,8 @@ export const MUSEUM_BADGES: Record<string, MuseumBadgeInfo> = {
     color: MUSEUM_COLORS.europeana,
     tier: 3,
   },
-  PARIS_MUSEUMS: {
-    id: 'PARIS_MUSEUMS',
+  PARIS: {
+    id: 'PARIS',
     shortName: 'Paris',
     color: MUSEUM_COLORS.parisMuseums,
     tier: 3,
@@ -77,6 +77,24 @@ export const MUSEUM_BADGES: Record<string, MuseumBadgeInfo> = {
     shortName: 'Wiki',
     color: MUSEUM_COLORS.wikidata,
     tier: 3,
+  },
+  SMK: {
+    id: 'SMK',
+    shortName: 'SMK',
+    color: MUSEUM_COLORS.smk,
+    tier: 2,
+  },
+  LOUVRE: {
+    id: 'LOUVRE',
+    shortName: 'Louvre',
+    color: MUSEUM_COLORS.louvre,
+    tier: 2,
+  },
+  SMITHSONIAN: {
+    id: 'SMITHSONIAN',
+    shortName: 'Smith.',
+    color: MUSEUM_COLORS.smithsonian,
+    tier: 2,
   },
 };
 

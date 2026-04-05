@@ -1,5 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { COLORS } from '@/constants/colors';
 
 export function LoadingScreen() {
   return (
@@ -7,7 +8,7 @@ export function LoadingScreen() {
       <Text style={styles.title}>Palette</Text>
       <View style={styles.brushStroke} />
       <ActivityIndicator
-        color="#2d6a4f"
+        color={COLORS.primary}
         size="large"
         style={styles.loader}
       />
@@ -18,7 +19,7 @@ export function LoadingScreen() {
 
 const styles = StyleSheet.create({
   brushStroke: {
-    backgroundColor: '#2d6a4f',
+    backgroundColor: COLORS.primary,
     borderRadius: 2,
     height: 3,
     marginBottom: 40,
@@ -27,7 +28,7 @@ const styles = StyleSheet.create({
   },
   container: {
     alignItems: 'center',
-    backgroundColor: '#FAFAFA',
+    backgroundColor: COLORS.backgroundLight,
     flex: 1,
     justifyContent: 'center',
   },
@@ -35,12 +36,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   subtitle: {
-    color: '#666',
+    color: COLORS.textMuted,
     fontSize: 14,
     letterSpacing: 1,
   },
   title: {
-    color: '#1a4d3e',
+    color: COLORS.primaryDark,
     fontSize: 48,
     fontStyle: 'italic',
     fontWeight: '300',

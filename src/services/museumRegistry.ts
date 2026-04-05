@@ -59,6 +59,28 @@ export const MUSEUMS: Record<string, MuseumConfig> = {
     shortName: 'Harvard',
     tier: 2,
   },
+  JOCONDE: {
+    id: 'JOCONDE',
+    name: 'Joconde (French Museums)',
+    shortName: 'Joconde',
+    color: '#2563EB',
+    country: 'France',
+    description: '600,000+ artworks from 350+ French museums',
+    enabled: true,
+    requiresApiKey: false,
+    tier: 3,
+  },
+  LOUVRE: {
+    id: 'LOUVRE',
+    name: 'Musée du Louvre',
+    shortName: 'Louvre',
+    color: '#7C3AED',
+    country: 'France',
+    description: '500,000+ works including the Mona Lisa',
+    enabled: true,
+    requiresApiKey: false,
+    tier: 2,
+  },
   MET: {
     color: '#d4af37',
     country: 'USA',
@@ -103,6 +125,28 @@ export const MUSEUMS: Record<string, MuseumConfig> = {
     shortName: 'Rijks',
     tier: 1,
   },
+  SMK: {
+    id: 'SMK',
+    name: 'SMK — National Gallery of Denmark',
+    shortName: 'SMK',
+    color: '#059669',
+    country: 'Denmark',
+    description: '240,000+ works of Danish and international art',
+    enabled: true,
+    requiresApiKey: false,
+    tier: 2,
+  },
+  SMITHSONIAN: {
+    id: 'SMITHSONIAN',
+    name: 'Smithsonian Institution',
+    shortName: 'Smithsonian',
+    color: '#DC2626',
+    country: 'USA',
+    description: '5.1M+ items across 19 museums',
+    enabled: true,
+    requiresApiKey: true,
+    tier: 2,
+  },
   VA: {
     color: '#6A4C93',
     country: 'UK',
@@ -113,6 +157,17 @@ export const MUSEUMS: Record<string, MuseumConfig> = {
     requiresApiKey: false,
     shortName: 'V&A',
     tier: 2,
+  },
+  WIKIDATA: {
+    id: 'WIKIDATA',
+    name: 'Wikidata',
+    shortName: 'Wikidata',
+    color: '#339966',
+    country: 'Global',
+    description: '500,000+ paintings from global collections',
+    enabled: true,
+    requiresApiKey: false,
+    tier: 3,
   },
 };
 
@@ -137,5 +192,5 @@ export function getMuseumsByTier(tier: 1 | 2 | 3): MuseumConfig[] {
 
 // Quick access to commonly used museum groups
 export const TIER_1_MUSEUMS = ['MET', 'RIJKS', 'CHICAGO', 'CLEVELAND']; // Best 4
-export const TIER_2_MUSEUMS = ['HARVARD', 'VA', 'NG']; // Optional
-export const TIER_3_MUSEUMS = ['EUROPEANA', 'PARIS']; // Advanced
+export const TIER_2_MUSEUMS = ['HARVARD', 'VA', 'NG', 'SMK', 'LOUVRE', 'SMITHSONIAN']; // Optional
+export const TIER_3_MUSEUMS = ['EUROPEANA', 'PARIS', 'JOCONDE', 'WIKIDATA']; // Advanced

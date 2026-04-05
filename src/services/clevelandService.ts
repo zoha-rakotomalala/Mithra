@@ -1,5 +1,6 @@
 import type { Painting } from '@/types/painting';
-import {  } from '@/utils/colorGenerator';
+import { generateColorFromString } from '@/utils/colorGenerator';
+import { museumApi } from './museumApiClient';
 
 const CMA_API_BASE = 'https://openaccess-api.clevelandart.org/api/artworks';
 
@@ -38,13 +39,7 @@ export async function searchCleveland(
     const url = `${CMA_API_BASE}?${queryParameters.toString()}`;
     console.log('🎨 Searching Cleveland Museum:', url);
 
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`Cleveland API error: ${response.status}`);
-    }
-
-    const data = await response.json();
+    const data = await museumApi.get(url).json<any>();
     const artworks = data.data || [];
     const info = data.info || {};
 
@@ -145,17 +140,7 @@ export function getPopularClevelandArtists(): string[] {
   ];
 }
 
-function generateColorFromString(string_: string): string {
-  const colors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
-    '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
-  ];
-  let hash = 0;
-  for (let index = 0; index < string_.length; index++) {
-    hash = string_.charCodeAt(index) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
-}
+
 
 import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
 import { registerAdapter } from './museumAdapterRegistry';

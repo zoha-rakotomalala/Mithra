@@ -112,9 +112,9 @@ export function VisitPalette() {
             renderItem={renderPainting}
             keyExtractor={(item) => item.id}
             numColumns={3}
-            columnWrapperStyle={{ gap: SPACING.sm, paddingHorizontal: SPACING.md }}
-            contentContainerStyle={{ paddingTop: SPACING.md, paddingBottom: SPACING.md, gap: SPACING.sm }}
-            style={{ backgroundColor: COLORS.cream }}
+            columnWrapperStyle={styles.columnWrapper}
+            contentContainerStyle={styles.listContent}
+            style={styles.flatList}
           />
 
           <View style={styles.footer}>

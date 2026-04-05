@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { shared, typography, buttons } from '@/styles';
-import { COLORS, SPACING } from '@/constants';
+import { COLORS } from '@/constants';
 import { authStyles } from './Auth.styles';
 
 export function Auth() {

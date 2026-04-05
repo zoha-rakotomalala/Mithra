@@ -1,6 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { View, Text, ScrollView, StatusBar, TouchableOpacity, SafeAreaView, ActivityIndicator, Platform, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { RootStackParamList } from '@/navigation/types';
 import ViewShot from 'react-native-view-shot';
 import RNShare from 'react-native-share';
 import { PaletteTile, EmptyPaletteTile } from '@/components/molecules/PaletteTile';
@@ -10,15 +12,15 @@ import { usePaintings } from '@/contexts/PaintingsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { storage } from '@/App';
 import { Paths } from '@/navigation/paths';
-import { COLORS, SPACING } from '@/constants';
+import { COLORS } from '@/constants';
 import { paletteStyles as styles } from './Palette.styles';
-import type { UserProfile } from '@/types/painting';
+import type { Painting, UserProfile } from '@/types/painting';
 
 const { width } = Dimensions.get('window');
 const TILE_SIZE = (width - 64) / 3;
 
 export function Palette() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { getPalettePaintings, paintings, syncing, syncError, removeFromPalette } = usePaintings();
   const { user } = useAuth();
   const viewShotRef = useRef<ViewShot>(null);
@@ -49,11 +51,11 @@ export function Palette() {
     }
   };
 
-  const handlePaintingPress = (painting: any) => {
+  const handlePaintingPress = (painting: Painting) => {
     if (editing) {
       removeFromPalette(painting.id);
     } else {
-      navigation.navigate(Paths.PaintingDetail, { painting });
+      navigation.navigate(Paths.PaintingDetail, { paintingId: painting.id });
     }
   };
 
@@ -63,18 +65,18 @@ export function Palette() {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
       <View style={styles.container}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={styles.headerRow}>
               <Text style={styles.headerTitle}>PALETTE</Text>
-              <View style={{ flex: 1 }} />
+              <View style={styles.headerSpacer} />
               {palettePaintings.length > 0 && !editing && (
-                <TouchableOpacity onPress={handleShare} style={{ padding: SPACING.xs }}>
-                  <Text style={{ fontSize: 22, color: COLORS.gold }}>⎘</Text>
+                <TouchableOpacity onPress={handleShare} style={styles.headerActionButton}>
+                  <Text style={styles.shareIcon}>⎘</Text>
                 </TouchableOpacity>
               )}
               {palettePaintings.length > 0 && (
-                <TouchableOpacity onPress={() => setEditing(!editing)} style={{ padding: SPACING.xs }}>
+                <TouchableOpacity onPress={() => setEditing(!editing)} style={styles.headerActionButton}>
                   <Text style={{ fontSize: 22, color: editing ? COLORS.goldLight : COLORS.gold }}>{editing ? '✓' : '✎'}</Text>
                 </TouchableOpacity>
               )}
@@ -82,9 +84,9 @@ export function Palette() {
           </View>
 
           {syncing && (
-            <View style={{ alignItems: 'center', paddingVertical: SPACING.sm }}>
+            <View style={styles.syncingContainer}>
               <ActivityIndicator color={COLORS.ivory} size="small" />
-              <Text style={{ color: COLORS.ivory, fontSize: 12, marginTop: 4, opacity: 0.7 }}>Syncing...</Text>
+              <Text style={styles.syncingText}>Syncing...</Text>
             </View>
           )}
 
@@ -110,7 +112,7 @@ export function Palette() {
             </View>
           )}
 
-          <View style={{ flex: 1, justifyContent: 'center' }}>
+          <View style={styles.gridWrapper}>
           <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1 }}>
             <View style={styles.grid}>
               {gridPositions.map((position, index) => {

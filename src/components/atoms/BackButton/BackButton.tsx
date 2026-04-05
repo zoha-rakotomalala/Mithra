@@ -3,7 +3,7 @@ import { TouchableOpacity, Text } from 'react-native';
 import type { StyleProp, ViewStyle, TextStyle } from 'react-native';
 import { backButtonStyles as styles } from './BackButton.styles';
 
-type BackButtonProps = {
+export type BackButtonProps = {
   readonly onPress: () => void;
   readonly style?: StyleProp<ViewStyle>;
   readonly textStyle?: StyleProp<TextStyle>;

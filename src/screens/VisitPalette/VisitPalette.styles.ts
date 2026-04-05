@@ -1,11 +1,11 @@
-import { StyleSheet, Platform } from 'react-native';
-import { COLORS, SPACING } from '@/constants';
+import { StyleSheet } from 'react-native';
+import { COLORS, SPACING, ANDROID_STATUS_BAR_PADDING } from '@/constants';
 
 export const visitPaletteStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: COLORS.black,
-    paddingTop: Platform.OS === 'android' ? 25 : 0,
+    paddingTop: ANDROID_STATUS_BAR_PADDING,
   },
 
   header: {
@@ -110,5 +110,20 @@ export const visitPaletteStyles = StyleSheet.create({
 
   buttonDisabled: {
     opacity: 0.5,
+  },
+
+  flatList: {
+    backgroundColor: COLORS.cream,
+  },
+
+  columnWrapper: {
+    gap: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+  },
+
+  listContent: {
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.md,
+    gap: SPACING.sm,
   },
 });

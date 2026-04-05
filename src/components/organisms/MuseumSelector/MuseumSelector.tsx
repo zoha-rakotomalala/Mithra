@@ -11,7 +11,7 @@ import { getAllMuseums, getMuseumsByTier, type MuseumConfig } from '@/services/m
 
 import { styles } from './MuseumSelector.styles';
 
-type MuseumSelectorProps = {
+export type MuseumSelectorProps = {
   readonly onMuseumsChange: (museums: string[]) => void;
   readonly selectedMuseums: string[];
 }

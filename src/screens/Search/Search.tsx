@@ -1,5 +1,4 @@
 import type { Painting } from '@/types/painting';
-import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback } from 'react';
 import {
   ActivityIndicator,
@@ -13,11 +12,12 @@ import {
   View,
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
-import { Paths } from '@/navigation/paths';
 import { MuseumSelector } from '@/components/organisms';
 import { searchStyles as styles } from './Search.styles';
+import { COLORS } from '@/constants/colors';
 import { getMuseumBadgeInfo } from '@/services/unifiedMuseumService';
-import { useMuseumSearch } from '@/hooks/domain/museum/useMuseumSearch';
+import { useSearch } from '@/hooks/domain/museum/useSearch';
+import { museumImageSource } from '@/utils/imageSource';
 
 const GridItem = React.memo(({
   collectionStatus,
@@ -49,7 +49,7 @@ const GridItem = React.memo(({
           <>
             {imageLoading && !imageError && (
               <View style={styles.imageLoadingOverlay}>
-                <ActivityIndicator color="#d4af37" size="small" />
+                <ActivityIndicator color={COLORS.gold} size="small" />
               </View>
             )}
             <FastImage
@@ -60,11 +60,7 @@ const GridItem = React.memo(({
               onLoadEnd={() => setImageLoading(false)}
               onLoadStart={() => setImageLoading(true)}
               resizeMode={FastImage.resizeMode.cover}
-              source={{
-                cache: FastImage.cacheControl.immutable,
-                priority: FastImage.priority.normal,
-                uri: painting.thumbnailUrl || painting.imageUrl || '',
-              }}
+              source={museumImageSource(painting.thumbnailUrl || painting.imageUrl)}
               style={styles.resultImage}
             />
           </>
@@ -117,9 +113,6 @@ const GridItem = React.memo(({
 });
 
 export function Search() {
-  const navigation = useNavigation();
-  const route = useRoute();
-  const { museumId, visitId } = (route.params as { museumId?: string; visitId?: string } | undefined) ?? {};
   const {
     searchQuery,
     setSearchQuery,
@@ -141,11 +134,10 @@ export function Search() {
     visitId: activeVisitId,
     handleLike,
     isLiked,
-  } = useMuseumSearch({ initialMuseumId: museumId, visitId });
-
-  const handlePaintingPress = useCallback((painting: Painting) => {
-    navigation.navigate(Paths.PaintingDetail, { painting });
-  }, [navigation]);
+    handlePaintingPress,
+    goBack,
+    hasVisitId,
+  } = useSearch();
 
   const renderItem = useCallback(({ item }: { readonly item: Painting }) => {
     const collectionInfo = isAlreadyInCollection(item);
@@ -165,13 +157,13 @@ export function Search() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar backgroundColor="#1a1a1a" barStyle="light-content" />
+      <StatusBar backgroundColor={COLORS.text} barStyle="light-content" />
       <View style={styles.container}>
         {/* Improved Header */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            {visitId && (
-              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            {hasVisitId && (
+              <TouchableOpacity onPress={() => goBack()} style={styles.backButton}>
                 <Text style={styles.backText}>←</Text>
               </TouchableOpacity>
             )}
@@ -223,7 +215,7 @@ export function Search() {
                 onChangeText={setSearchQuery}
                 onSubmitEditing={handleSearch}
                 placeholder={searchType === 'artist' ? 'Artist name...' : 'Painting title...'}
-                placeholderTextColor="#666"
+                placeholderTextColor={COLORS.textMuted}
                 returnKeyType="search"
                 style={styles.searchInput}
                 value={searchQuery}
@@ -316,7 +308,7 @@ export function Search() {
               </View>
             ) : isLoadingCache ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator color="#d4af37" size="large" />
+                <ActivityIndicator color={COLORS.gold} size="large" />
                 <Text style={styles.loadingText}>Searching...</Text>
               </View>
             ) : null

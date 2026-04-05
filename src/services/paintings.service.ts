@@ -3,21 +3,29 @@ import { resolveMuseumId } from './museumCache';
 import type { Painting as CachedPainting } from '@/types/database';
 
 /**
- * Get a painting from the cache by its UUID.
+ * Get a painting from the cache by UUID, falling back to legacy_id.
  */
-export async function getCachedPainting(paintingUuid: string): Promise<CachedPainting | null> {
+export async function getCachedPainting(paintingId: string): Promise<CachedPainting | null> {
   const { data, error } = await supabase
     .from('paintings')
     .select('*')
-    .eq('id', paintingUuid)
+    .eq('id', paintingId)
     .single();
 
-  if (error) {
-    console.error('Error fetching cached painting:', error);
-    return null;
+  if (data) return data;
+
+  // Fallback: try legacy_id for paintings that still have legacy IDs in navigation params
+  if (error?.code === 'PGRST116' || !data) {
+    const { data: byLegacy } = await supabase
+      .from('paintings')
+      .select('*')
+      .eq('legacy_id', paintingId)
+      .single();
+    return byLegacy || null;
   }
 
-  return data;
+  if (error) console.error('Error fetching cached painting:', error);
+  return null;
 }
 
 /**

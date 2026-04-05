@@ -1,5 +1,6 @@
 import type { Painting } from '@/types/painting';
-import {  } from '@/utils/colorGenerator';
+import { generateColorFromString } from '@/utils/colorGenerator';
+import { museumApi } from './museumApiClient';
 
 const JOCONDE_API_BASE = 'https://data.culture.gouv.fr/api/explore/v2.1/catalog/datasets/base-joconde-extrait/records';
 
@@ -39,13 +40,7 @@ export async function searchJoconde(
     const url = `${JOCONDE_API_BASE}?${queryParameters.toString()}`;
     console.log('🇫🇷 Searching Joconde (French Museums):', url);
 
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`Joconde API error: ${response.status}`);
-    }
-
-    const data = await response.json();
+    const data = await museumApi.get(url).json<any>();
     const results = data.results || [];
     const totalCount = data.total_count || 0;
 
@@ -59,7 +54,7 @@ export async function searchJoconde(
     };
   } catch (error) {
     console.error('Error searching Joconde:', error);
-    throw error;
+    return { paintings: [], totalResults: 0 };
   }
 }
 
@@ -79,12 +74,9 @@ function parseJocondeObject(record: any): null | Painting {
     const imageReference = fields.ref || fields.numero_inventaire;
     if (!imageReference) return null;
 
-    // Note: Joconde images might require additional API calls or URL construction
-    // This is a limitation of the open data API
-    const imageUrl = fields.contient_image
-      ? `https://data.culture.gouv.fr/explore/dataset/base-joconde-extrait/files/${imageReference}/300/`
-      : '';
-
+    // The Joconde open data API doesn't provide direct image URLs
+    // Skip records without images
+    const imageUrl = fields.img_url || fields.image_url || undefined;
     if (!imageUrl) return null;
 
     const thumbnailUrl = imageUrl;
@@ -149,17 +141,7 @@ export function getPopularJocondeArtists(): string[] {
   ];
 }
 
-function generateColorFromString(string_: string): string {
-  const colors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
-    '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
-  ];
-  let hash = 0;
-  for (let index = 0; index < string_.length; index++) {
-    hash = string_.charCodeAt(index) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
-}
+
 
 import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
 import { registerAdapter } from './museumAdapterRegistry';

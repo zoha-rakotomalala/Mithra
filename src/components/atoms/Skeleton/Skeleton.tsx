@@ -11,7 +11,7 @@ import Animated, {
 
 import { useTheme } from '@/theme';
 
-type Properties = {
+export type SkeletonLoaderProps = {
   readonly height?: DimensionValue;
   readonly loading?: boolean;
   readonly width?: DimensionValue;
@@ -27,7 +27,7 @@ function SkeletonLoader({
   loading = false,
   width = '100%',
   ...props
-}: Properties) {
+}: SkeletonLoaderProps) {
   const { backgrounds, borders } = useTheme();
 
   const opacity = useSharedValue(FROM);

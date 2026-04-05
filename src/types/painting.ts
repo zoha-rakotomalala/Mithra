@@ -16,6 +16,9 @@ export type Painting = {
   title: string;
   year?: number | string;
 
+  // Source tracking for badge display
+  sourceMuseumId?: string;    // Registry ID (e.g., 'EUROPEANA', 'SMK') — set during search
+
   // User interaction metadata
   dateAdded?: string;         // ISO date string when added to collection
   isSeen?: boolean;

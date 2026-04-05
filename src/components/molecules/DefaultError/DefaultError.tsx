@@ -6,11 +6,11 @@ import { useTheme } from '@/theme';
 
 import { IconByVariant } from '@/components/atoms';
 
-type Properties = {
+export type DefaultErrorScreenProps = {
   readonly onReset?: () => void;
 };
 
-function DefaultErrorScreen({ onReset = undefined }: Properties) {
+function DefaultErrorScreen({ onReset = undefined }: DefaultErrorScreenProps) {
   const { colors, fonts, gutters, layout } = useTheme();
   const { t } = useTranslation();
   const { resetBoundary } = useErrorBoundary();

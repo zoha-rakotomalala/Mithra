@@ -1,8 +1,26 @@
 import type { Painting } from '@/types/painting';
 import { cleanArtistName } from './utils/searchHelpers';
-import {  } from '@/utils/colorGenerator';
+import { generateColorFromString } from '@/utils/colorGenerator';
+import { museumApi } from './museumApiClient';
 
 const RIJKS_SEARCH_API = 'https://data.rijksmuseum.nl/search/collection';
+const IIIF_BASE = 'https://iiif.micr.io';
+
+/**
+ * In-memory IIIF ID cache (kintopp-style).
+ * Maps Rijksmuseum object URI → resolved IIIF ID (e.g., "AmWMg").
+ * Once resolved, images can be constructed directly without the 3-hop chain.
+ */
+const iiifCache = new Map<string, string>();
+
+/**
+ * Extract IIIF ID from a micr.io URL.
+ * e.g., "https://iiif.micr.io/AmWMg/full/max/0/default.jpg" → "AmWMg"
+ */
+function extractIiifId(url: string): string | null {
+  const match = url.match(/iiif\.micr\.io\/([^/]+)/);
+  return match ? match[1] : null;
+}
 
 interface RijksSearchParams {
   query: string;
@@ -22,22 +40,20 @@ export async function searchRijksmuseum(
   params: RijksSearchParams
 ): Promise<RijksSearchResult> {
   try {
-    const { query, limit = 30 } = params;
+    const { query, limit = 10 } = params;
 
     if (!query || query.trim().length === 0) {
       return { paintings: [], totalResults: 0 };
     }
 
-    // Build search URL - use description for broad search
+    // Build search URL
     const searchParams = new URLSearchParams({
       imageAvailable: 'true',
     });
 
     if (params.searchType === 'artist') {
-      // Partial matching already handled by Rijks
       searchParams.set('creator', query.trim());
     } else {
-      // Title search + smart fallback
       searchParams.set('title', query.trim());
       searchParams.set('description', query.trim());
     }
@@ -45,50 +61,25 @@ export async function searchRijksmuseum(
     const searchUrl = `${RIJKS_SEARCH_API}?${searchParams.toString()}`;
     console.log('🇳🇱 Searching Rijksmuseum:', searchUrl);
 
-    const response = await fetch(searchUrl);
-
-    console.log('🧪 Rijks raw object:', {
-      id: data.id,
-      type: data.type,
-      label: data._label,
-      hasRepresentation: !!data.representation,
-    });
-
-    if (!response.ok) {
-      console.warn(`Rijksmuseum search error: ${response.status}`);
-      return { paintings: [], totalResults: 0 };
-    }
-
-    const data = await response.json();
-    const orderedItems = data.orderedItems || [];
+    const data = await museumApi.get(searchUrl).json<any>();
     const totalItems = data.partOf?.totalItems || 0;
 
-    if (orderedItems.length === 0) {
-      return { paintings: [], totalResults: 0 };
-    }
-
-    // Fetch full objects (first N results)
-    const rawItems = Array.isArray(data.orderedItems)
-      ? data.orderedItems
-      : [];
-
+    const rawItems = Array.isArray(data.orderedItems) ? data.orderedItems : [];
     const validItems = rawItems.filter(
       (item: any) => item && typeof item.id === 'string'
     );
 
-    const objectIds = validItems
-      .slice(0, limit)
-      .map((item: any) => item.id);
+    if (validItems.length === 0) {
+      return { paintings: [], totalResults: 0 };
+    }
 
-    console.log(
-      `🇳🇱 Rijks search: ${rawItems.length} raw items → ${validItems.length} valid IDs`
-    );
+    const objectIds = validItems.slice(0, limit).map((item: any) => item.id);
+    console.log(`🇳🇱 Rijks search: ${rawItems.length} raw → ${objectIds.length} to resolve`);
+
+    const paintings = await resolveObjects(objectIds);
     console.log(`🇳🇱 Rijksmuseum: ${paintings.length} paintings resolved`);
 
-    return {
-      paintings,
-      totalResults: totalItems,
-    };
+    return { paintings, totalResults: totalItems };
   } catch (error) {
     console.error('Error searching Rijksmuseum:', error);
     return { paintings: [], totalResults: 0 };
@@ -96,11 +87,18 @@ export async function searchRijksmuseum(
 }
 
 /**
- * Resolve multiple object IDs to full painting data
+ * Resolve multiple objects with concurrency limit of 3.
  */
 async function resolveObjects(objectIds: string[]): Promise<Painting[]> {
-  const promises = objectIds.map(id => resolveObject(id));
-  const results = await Promise.all(promises);
+  const concurrency = 3;
+  const results: (Painting | null)[] = [];
+
+  for (let i = 0; i < objectIds.length; i += concurrency) {
+    const batch = objectIds.slice(i, i + concurrency);
+    const batchResults = await Promise.all(batch.map(id => resolveObject(id)));
+    results.push(...batchResults);
+  }
+
   return results.filter((p): p is Painting => p !== null);
 }
 
@@ -109,21 +107,10 @@ async function resolveObjects(objectIds: string[]): Promise<Painting[]> {
  */
 async function resolveObject(objectId: string): Promise<Painting | null> {
   try {
-    console.log('🧩 Resolving Rijks object:', objectId);
-
-    const response = await fetch(objectId, {
-      headers: {
-        // Request Linked Art JSON-LD explicitly
-        Accept: 'application/ld+json'
-      },
-    });
-
-    if (!response.ok) {
-      console.warn(`Failed to resolve Rijks object: ${objectId} (${response.status})`);
-      return null;
-    }
-
-    const data = await response.json();
+    const data = await museumApi.get(objectId, {
+      headers: { Accept: 'application/ld+json' },
+      timeout: 15000,
+    }).json<any>();
     return parseLinkedArtObject(data);
   } catch (error) {
     console.error(`Error resolving Rijks object ${objectId}:`, error);
@@ -134,37 +121,24 @@ async function resolveObject(objectId: string): Promise<Painting | null> {
 /**
  * Parse Linked Art object into Painting format
  */
-function parseLinkedArtObject(data: any): Painting | null {
+async function parseLinkedArtObject(data: any): Promise<Painting | null> {
   try {
-    // Must be a HumanMadeObject
-    const isHumanMadeObject =
-      data.type === 'HumanMadeObject' ||
-      Array.isArray(data.type) && data.type.includes('HumanMadeObject') ||
-      data.classified_as?.some((c: any) =>
-        c._label?.toLowerCase().includes('object')
-      );
-
     const types = Array.isArray(data.type) ? data.type : [data.type];
     if (!types.includes('HumanMadeObject')) return null;
 
-    // Extract title
     const title = extractTitle(data);
     if (!title || title === 'Untitled') return null;
 
-    // Extract artist
-    const artistDisplay = extractArtist(data);
-    const artist = cleanArtistName(artistDisplay);
-
-    const imageUrl = extractImage(data) ?? undefined;
-
-    // Extract year
+    const artist = cleanArtistName(extractArtist(data));
+    const imageUrl = (await resolveImageUrl(data)) ?? undefined;
     const year = extractYear(data);
-
-    // Extract dimensions
     const dimensions = extractDimensions(data);
-
-    // Extract medium
     const medium = extractMedium(data);
+
+    // Build thumbnail from IIIF URL
+    const thumbnailUrl = imageUrl
+      ? imageUrl.replace('/full/max/', '/full/!400,400/')
+      : undefined;
 
     return {
       id: `rijks-${generateIdFromUrl(data.id)}`,
@@ -177,7 +151,7 @@ function parseLinkedArtObject(data: any): Painting | null {
       location: 'Amsterdam, Netherlands',
       description: undefined,
       imageUrl,
-      thumbnailUrl: imageUrl,
+      thumbnailUrl,
       color: generateColorFromString(title),
       isSeen: false,
       wantToVisit: false,
@@ -189,100 +163,115 @@ function parseLinkedArtObject(data: any): Painting | null {
 }
 
 /**
- * Extract title from Linked Art object
+ * Resolve image URL with IIIF cache (kintopp-style).
+ *
+ * Fast path: if we've already resolved this object's IIIF ID, construct the URL directly (0 hops).
+ * Slow path: follow the 3-hop Linked Art chain, cache the IIIF ID for next time.
+ *
+ * Chain: Object → shows[].id (VisualItem) → digitally_shown_by[].id (DigitalObject) → access_point[].id (IIIF URL)
  */
-function extractTitle(data: any): string {
-  if (data._label) return data._label;
+async function resolveImageUrl(data: any): Promise<string | null> {
+  const objectUri = data.id;
 
-  const names = data.identified_by || [];
-  const title = names.find((item: any) =>
-    item.type === 'Name' &&
-    (item.classified_as?.[0]?._label === 'Primary Name' || !item.classified_as)
-  );
-
-  return title?.content || 'Untitled';
-}
-
-/**
- * Extract artist from Linked Art object
- */
-function extractArtist(data: any): string {
-  if (data.produced_by?.carried_out_by) {
-    const creators = Array.isArray(data.produced_by.carried_out_by)
-      ? data.produced_by.carried_out_by
-      : [data.produced_by.carried_out_by];
-
-    const artist = creators[0];
-    return artist?._label ||
-           artist?.identified_by?.[0]?.content ||
-           'Unknown Artist';
+  // Fast path: IIIF ID already cached
+  const cachedIiifId = iiifCache.get(objectUri);
+  if (cachedIiifId) {
+    return `${IIIF_BASE}/${cachedIiifId}/full/max/0/default.jpg`;
   }
-  return 'Unknown Artist';
+
+  // Check inline image first (some objects embed it directly)
+  const inline = extractInlineImage(data);
+  if (inline) {
+    const id = extractIiifId(inline);
+    if (id && objectUri) iiifCache.set(objectUri, id);
+    return inline;
+  }
+
+  // Slow path: 3-hop chain
+  const visualItemUrl = extractFirstId(data.shows);
+  if (!visualItemUrl) return null;
+
+  try {
+    const visualItem = await museumApi.get(visualItemUrl, {
+      headers: { Accept: 'application/ld+json' },
+      timeout: 12000,
+    }).json<any>();
+
+    const digitalObjectUrl = extractFirstId(visualItem.digitally_shown_by);
+    if (!digitalObjectUrl) return null;
+
+    const digitalObject = await museumApi.get(digitalObjectUrl, {
+      headers: { Accept: 'application/ld+json' },
+      timeout: 12000,
+    }).json<any>();
+
+    const iiifUrl = extractFirstId(digitalObject.access_point);
+    if (!iiifUrl) return null;
+
+    // Cache the IIIF ID for fast path next time
+    const id = extractIiifId(iiifUrl);
+    if (id && objectUri) {
+      iiifCache.set(objectUri, id);
+      console.log(`🇳🇱 Cached IIIF ID: ${objectUri} → ${id}`);
+    }
+
+    return iiifUrl;
+  } catch (error) {
+    console.error('Error resolving Rijks image chain:', error);
+    return null;
+  }
 }
 
 /**
- * Extract image URL - FIXED to handle both patterns
+ * Check for image URLs embedded directly in the object (no extra hops needed)
  */
-function extractImage(data: any): string | null {
-  // Pattern 1: representation (standard Linked Art)
+function extractInlineImage(data: any): string | null {
   if (data.representation) {
-    const reps = Array.isArray(data.representation)
-      ? data.representation
-      : [data.representation];
-
+    const reps = Array.isArray(data.representation) ? data.representation : [data.representation];
     for (const rep of reps) {
-      // Try access_point first
-      if (rep.access_point?.[0]?.id) {
-        return rep.access_point[0].id;
-      }
-      // Try digitally_shown_by
+      if (rep.access_point?.[0]?.id) return rep.access_point[0].id;
       if (rep.digitally_shown_by?.[0]?.access_point?.[0]?.id) {
         return rep.digitally_shown_by[0].access_point[0].id;
       }
     }
   }
-
-  // Pattern 2: shows (Rijksmuseum specific)
-  if (data.shows) {
-    const shows = Array.isArray(data.shows) ? data.shows : [data.shows];
-
-    for (const show of shows) {
-      if (show.digitally_shown_by?.[0]?.access_point?.[0]?.id) {
-        return show.digitally_shown_by[0].access_point[0].id;
-      }
-    }
-  }
-
-  // Pattern 3: subject_of with digital representations
-  if (data.subject_of) {
-    const subjects = Array.isArray(data.subject_of)
-      ? data.subject_of
-      : [data.subject_of];
-
-    for (const subj of subjects) {
-      if (subj.digitally_carried_by?.[0]?.access_point?.[0]?.id) {
-        return subj.digitally_carried_by[0].access_point[0].id;
-      }
-    }
-  }
-
   return null;
 }
 
-/**
- * Extract creation year
- */
+function extractFirstId(field: any): string | null {
+  if (!field) return null;
+  const items = Array.isArray(field) ? field : [field];
+  return items[0]?.id ?? null;
+}
+
+function extractTitle(data: any): string {
+  if (data._label) return data._label;
+  const names = data.identified_by || [];
+  const title = names.find((item: any) =>
+    item.type === 'Name' &&
+    (item.classified_as?.[0]?._label === 'Primary Name' || !item.classified_as)
+  );
+  return title?.content || 'Untitled';
+}
+
+function extractArtist(data: any): string {
+  if (data.produced_by?.carried_out_by) {
+    const creators = Array.isArray(data.produced_by.carried_out_by)
+      ? data.produced_by.carried_out_by
+      : [data.produced_by.carried_out_by];
+    const artist = creators[0];
+    return artist?._label || artist?.identified_by?.[0]?.content || 'Unknown Artist';
+  }
+  return 'Unknown Artist';
+}
+
 function extractYear(data: any): number | undefined {
   const timespan = data.produced_by?.timespan;
   if (!timespan) return undefined;
-
-  // Try begin_of_the_begin first
   if (timespan.begin_of_the_begin) {
     const match = timespan.begin_of_the_begin.match(/\d{4}/);
     if (match) return parseInt(match[0]);
   }
-
-  // Try identified_by
   if (timespan.identified_by) {
     const dateLabel = timespan.identified_by.find((id: any) => id.type === 'Name');
     if (dateLabel?.content) {
@@ -290,16 +279,11 @@ function extractYear(data: any): number | undefined {
       if (match) return parseInt(match[0]);
     }
   }
-
   return undefined;
 }
 
-/**
- * Extract dimensions
- */
 function extractDimensions(data: any): string | undefined {
   if (!data.dimension) return undefined;
-
   const dims = Array.isArray(data.dimension) ? data.dimension : [data.dimension];
   const height = dims.find((d: any) =>
     d.classified_as?.[0]?._label?.toLowerCase().includes('height')
@@ -307,47 +291,33 @@ function extractDimensions(data: any): string | undefined {
   const width = dims.find((d: any) =>
     d.classified_as?.[0]?._label?.toLowerCase().includes('width')
   );
-
   if (height?.value && width?.value) {
     const unit = height.unit?._label || 'cm';
     return `${height.value} × ${width.value} ${unit}`;
   }
-
   return undefined;
 }
 
-/**
- * Extract medium/materials
- */
 function extractMedium(data: any): string | undefined {
   const materials: string[] = [];
-
   if (data.made_of) {
     const mats = Array.isArray(data.made_of) ? data.made_of : [data.made_of];
     materials.push(...mats.map((m: any) => m._label).filter(Boolean));
   }
-
   if (data.produced_by?.technique) {
     const techs = Array.isArray(data.produced_by.technique)
       ? data.produced_by.technique
       : [data.produced_by.technique];
     materials.push(...techs.map((t: any) => t._label).filter(Boolean));
   }
-
   return materials.length > 0 ? materials.join(', ') : undefined;
 }
 
-/**
- * Generate numeric ID from URL
- */
 function generateIdFromUrl(url: string): string {
   const match = url.match(/([^\/]+)$/);
   return match ? match[1] : Date.now().toString();
 }
 
-/**
- * Get popular Rijksmuseum artists
- */
 export function getPopularRijksmuseumArtists(): string[] {
   return [
     'Rembrandt van Rijn',
@@ -356,18 +326,6 @@ export function getPopularRijksmuseumArtists(): string[] {
     'Jan Steen',
     'Vincent van Gogh',
   ];
-}
-
-function generateColorFromString(str: string): string {
-  const colors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
-    '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
-  ];
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
 }
 
 import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';

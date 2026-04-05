@@ -1,11 +1,11 @@
-import { StyleSheet, Platform } from 'react-native';
-import { COLORS, SPACING } from '@/constants';
+import { StyleSheet } from 'react-native';
+import { COLORS, SPACING, ANDROID_STATUS_BAR_PADDING } from '@/constants';
 
 export const visitDetailStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: COLORS.black,
-    paddingTop: Platform.OS === 'android' ? 25 : 0,
+    paddingTop: ANDROID_STATUS_BAR_PADDING,
   },
 
   header: {
@@ -138,5 +138,20 @@ export const visitDetailStyles = StyleSheet.create({
   backText: {
     fontSize: 24,
     color: COLORS.gold,
+  },
+
+  scrollView: {
+    flex: 1,
+    backgroundColor: COLORS.cream,
+  },
+
+  modalHeaderStyle: {
+    backgroundColor: undefined,
+    borderBottomWidth: 1,
+  },
+
+  modalCloseButton: {
+    fontSize: 32,
+    color: COLORS.text,
   },
 });

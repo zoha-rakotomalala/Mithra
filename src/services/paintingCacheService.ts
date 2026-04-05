@@ -32,6 +32,7 @@ function convertToPainting(db: any): Painting {
         period: m.period,
         culture: m.culture,
         department: m.department,
+        sourceMuseumId: m.sourceMuseumId,
     };
 }
 
@@ -96,7 +97,8 @@ export async function updateCacheWithFreshResults(museumLegacyId: string, search
                 objectURL: painting.objectURL,
                 period: painting.period,
                 culture: painting.culture,
-                department: painting.department
+                department: painting.department,
+                sourceMuseumId: museumLegacyId
             };
             if (legacyId.indexOf('chicago-') === 0 && painting.image_id) metadata.image_id = painting.image_id;
             return {
@@ -116,9 +118,18 @@ export async function updateCacheWithFreshResults(museumLegacyId: string, search
                 updated_at: new Date().toISOString()
             };
         });
+        // Deduplicate by (museum_id, external_id) to avoid Postgres upsert conflict
+        const seen = new Set<string>();
+        const uniqueDbPaintings = dbPaintings.filter(p => {
+            const key = `${p.museum_id}:${p.external_id}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+
         const batchSize = 50;
-        for (let i = 0; i < dbPaintings.length; i += batchSize) {
-            const {error} = await supabase.from('paintings').upsert(dbPaintings.slice(i, i + batchSize), {
+        for (let i = 0; i < uniqueDbPaintings.length; i += batchSize) {
+            const {error} = await supabase.from('paintings').upsert(uniqueDbPaintings.slice(i, i + batchSize), {
                 onConflict: 'museum_id,external_id',
                 ignoreDuplicates: false
             });

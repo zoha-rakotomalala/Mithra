@@ -1,10 +1,8 @@
 import type { Painting } from '@/types/painting';
 
-import { useNavigation } from '@react-navigation/native';
-import React, { useCallback } from 'react';
+import React from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
   FlatList,
   SafeAreaView,
   ScrollView,
@@ -15,15 +13,12 @@ import {
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 
-import { Paths } from '@/navigation/paths';
 import { COLORS } from '@/constants';
+import { museumImageSource } from '@/utils/imageSource';
 
 import { EmptyState, SyncErrorBanner } from '@/components/molecules';
-import { useCollection } from '@/hooks/domain/collection/useCollection';
-import { usePaintings } from '@/contexts/PaintingsContext';
+import { useCollectionFilter } from '@/hooks/domain/collection/useCollectionFilter';
 import { collectionStyles as styles } from './Collection.styles';
-
-const { width } = Dimensions.get('window');
 
 // Memoized painting card
 const PaintingCard = React.memo(({
@@ -42,11 +37,7 @@ const PaintingCard = React.memo(({
       {painting.imageUrl ? (
         <FastImage
           resizeMode={FastImage.resizeMode.cover}
-          source={{
-            cache: FastImage.cacheControl.immutable,
-            priority: FastImage.priority.normal,
-            uri: painting.thumbnailUrl || painting.imageUrl,
-          }}
+          source={museumImageSource(painting.thumbnailUrl || painting.imageUrl)}
           style={styles.paintingImage}
         />
       ) : (
@@ -77,7 +68,6 @@ const PaintingCard = React.memo(({
 ));
 
 export function Collection() {
-  const navigation = useNavigation();
   const {
     paintings,
     activeFilter,
@@ -87,12 +77,10 @@ export function Collection() {
     stats,
     preparedData,
     isGroupedView,
-  } = useCollection();
-  const { syncing, syncError } = usePaintings();
-
-  const handlePaintingPress = useCallback((painting: Painting) => {
-    navigation.navigate(Paths.PaintingDetail, { painting });
-  }, [navigation]);
+    syncing,
+    syncError,
+    handlePaintingPress,
+  } = useCollectionFilter();
 
   const renderEmpty = () => (
     <EmptyState

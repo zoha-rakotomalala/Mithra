@@ -17,6 +17,9 @@ import './parisMuseumsService';
 import './nationalGalleryService';
 import './jocondeService';
 import './wikidataService';
+import './smkService';
+import './smithsonianService';
+import './louvreService';
 import { getMuseumsByIds } from './museumRegistry';
 import {
   cleanArtistName,
@@ -127,7 +130,11 @@ export async function searchAllMuseums(
     });
 
     const cacheResults = await Promise.all(cachePromises);
-    cachedPaintings = cacheResults.flatMap(r => r.paintings);
+    cachedPaintings = cacheResults.flatMap(r => {
+      // Tag cached paintings with sourceMuseumId for badge display
+      r.paintings.forEach(p => { (p as any).sourceMuseumId = r.museumId; });
+      return r.paintings;
+    });
 
     if (cachedPaintings.length > 0) {
       console.log(`💨 Showing ${cachedPaintings.length} cached results (${cacheStats.hits} hits, ${cacheStats.misses} misses, ${cacheStats.stale} stale)`);
@@ -170,8 +177,9 @@ export async function searchAllMuseums(
         updateStats.added += updateResult.added;
         updateStats.updated += updateResult.updated;
 
-        // Replace legacy IDs with database UUIDs on in-memory paintings
+        // Replace legacy IDs with database UUIDs, tag source museum for badges
         for (const painting of freshPaintings) {
+          (painting as any).sourceMuseumId = museumId;
           const uuid = updateResult.legacyToUuid[painting.id];
           if (uuid) {
             (painting as any).id = uuid;
@@ -266,6 +274,12 @@ export function getPopularArtistsByMuseums(museumIds: string[]): string[] {
     VA: ['John Constable', 'J.M.W. Turner', 'Raphael'],
     EUROPEANA: ['Vermeer', 'Monet', 'Van Gogh'],
     PARIS: ['Auguste Rodin', 'Eugène Delacroix', 'Gustave Courbet'],
+    NG: ['J.M.W. Turner', 'John Constable', 'Leonardo da Vinci'],
+    SMK: ['Vilhelm Hammershøi', 'P.S. Krøyer', 'Anna Ancher'],
+    SMITHSONIAN: ['John Singer Sargent', 'Mary Cassatt', 'Winslow Homer'],
+    LOUVRE: ['Leonardo da Vinci', 'Eugène Delacroix', 'Jacques-Louis David'],
+    JOCONDE: ['Claude Monet', 'Paul Cézanne', 'Nicolas Poussin'],
+    WIKIDATA: ['Rembrandt', 'Vermeer', 'Caravaggio'],
   };
 
   museumIds.forEach(museumId => {
@@ -282,55 +296,44 @@ export function getMuseumBadgeInfo(painting: Painting): {
   shortName: string;
   color: string;
 } {
-  // Use the painting.museum field to determine the museum badge.
-  // This works for both UUID-based paintings (from cache) and legacy-ID paintings (uncached).
-  const museumName = (painting.museum || '').toLowerCase();
+  // PRIMARY: Use sourceMuseumId (set during search, always correct)
+  let museumId = painting.sourceMuseumId;
 
-  // Map museum display names / short codes to registry IDs
-  const museumIdMap: Record<string, string> = {
-    met: 'MET',
-    metropolitan: 'MET',
-    rijks: 'RIJKS',
-    rijksmuseum: 'RIJKS',
-    cleveland: 'CLEVELAND',
-    chicago: 'CHICAGO',
-    'art institute': 'CHICAGO',
-    harvard: 'HARVARD',
-    va: 'VA',
-    'victoria and albert': 'VA',
-    'v&a': 'VA',
-    paris: 'PARIS',
-    europeana: 'EUROPEANA',
-    national: 'NATIONAL_GALLERY',
-    joconde: 'JOCONDE',
-  };
+  // Europeana special case: show the actual source institution name
+  if (museumId === 'EUROPEANA') {
+    const displayName = getDisplayMuseumName(painting);
+    return {
+      shortName: getShortMuseumName(displayName),
+      color: '#1E3A8A',
+    };
+  }
 
-  let museumId = 'MET'; // default fallback
+  // FALLBACK: paintings from Supabase cache don't have sourceMuseumId
+  if (!museumId) {
+    const exactMap: [RegExp, string][] = [
+      [/^metropolitan museum of art$/i, 'MET'],
+      [/\brijksmuseum\b/i, 'RIJKS'],
+      [/\bcleveland museum\b/i, 'CLEVELAND'],
+      [/\bart institute of chicago\b/i, 'CHICAGO'],
+      [/\bharvard art museum/i, 'HARVARD'],
+      [/\bvictoria and albert\b/i, 'VA'],
+      [/\bnational gallery\b(?!.*denmark)/i, 'NG'],
+      [/\bsmk\b/i, 'SMK'],
+      [/\bsmithsonian\b/i, 'SMITHSONIAN'],
+      [/\blouvre\b|musée du louvre/i, 'LOUVRE'],
+      [/\bjoconde\b|musée français/i, 'JOCONDE'],
+      [/\bparis mus[eé]/i, 'PARIS'],
+    ];
 
-  // Try matching by museum name
-  for (const [key, id] of Object.entries(museumIdMap)) {
-    if (museumName.includes(key)) {
-      museumId = id;
-      break;
+    for (const [pattern, id] of exactMap) {
+      if (pattern.test(painting.museum || '')) {
+        museumId = id;
+        break;
+      }
     }
   }
 
-  // Fallback: try legacy ID prefix if museum field didn't match
-  if (museumId === 'MET' && typeof painting.id === 'string') {
-    if (painting.id.startsWith('rijks-')) museumId = 'RIJKS';
-    else if (painting.id.startsWith('cleveland-')) museumId = 'CLEVELAND';
-    else if (painting.id.startsWith('chicago-')) museumId = 'CHICAGO';
-    else if (painting.id.startsWith('harvard-')) museumId = 'HARVARD';
-    else if (painting.id.startsWith('va-')) museumId = 'VA';
-    else if (painting.id.startsWith('paris-')) museumId = 'PARIS';
-    else if (painting.id.startsWith('europeana-')) {
-      const displayName = getDisplayMuseumName(painting);
-      return {
-        shortName: getShortMuseumName(displayName),
-        color: '#1E3A8A',
-      };
-    }
-  }
+  if (!museumId) museumId = 'MET';
 
   const museums = getMuseumsByIds([museumId]);
   const museum = museums[0];

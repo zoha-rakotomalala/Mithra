@@ -7,6 +7,7 @@ import { COLORS, GRID } from '@/constants';
 import { useLikedPaintings } from '@/hooks/domain/visits/useLikedPaintings';
 import { likedPaintingsStyles as styles } from './LikedPaintings.styles';
 import { Paths } from '@/navigation/paths';
+import type { RootScreenProps } from '@/navigation/types';
 import { createSyncService } from '@/services/syncService';
 import { useAuth } from '@/contexts/AuthContext';
 import { storage } from '@/App';
@@ -28,7 +29,7 @@ function toUIPainting(db: CachedPainting): Painting {
 }
 
 export function LikedPaintings() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<RootScreenProps['navigation']>();
   const route = useRoute();
   const { visitId } = route.params as { visitId: string };
   const { user } = useAuth();
@@ -60,7 +61,7 @@ export function LikedPaintings() {
       });
     }
 
-    navigation.navigate(Paths.PaintingDetail as never, { painting: item } as never);
+    navigation.navigate(Paths.PaintingDetail, { paintingId: item.id });
   }, [user, museumName, visitDate, navigation]);
 
   const renderPainting = ({ item }: { item: Painting }) => (

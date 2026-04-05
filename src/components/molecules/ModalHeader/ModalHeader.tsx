@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { modalHeaderStyles as styles } from './ModalHeader.styles';
 
-type ModalHeaderProps = {
+export type ModalHeaderProps = {
   readonly title: string;
   readonly onClose: () => void;
   readonly titleStyle?: StyleProp<TextStyle>;

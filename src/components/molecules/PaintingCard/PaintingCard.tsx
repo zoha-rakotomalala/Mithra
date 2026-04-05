@@ -1,6 +1,8 @@
 import type { Painting } from '@/types/painting';
 
 import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { RootStackParamList } from '@/navigation/types';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -13,20 +15,21 @@ import {
   View,
 } from 'react-native';
 
+import { COLORS } from '@/constants/colors';
 import { Paths } from '@/navigation/paths';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 3;
 const CARD_HEIGHT = CARD_WIDTH * 1.3;
 
-type PaintingCardProps = {
+export type PaintingCardProps = {
   readonly isFlipped: boolean;
   readonly onPress: () => void;
   readonly painting: Painting;
 };
 
 export function PaintingCard({ isFlipped, onPress, painting }: PaintingCardProps) {
-  const navigation = useNavigation();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const flipAnimation = useRef(new Animated.Value(0)).current;
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
@@ -63,7 +66,7 @@ export function PaintingCard({ isFlipped, onPress, painting }: PaintingCardProps
   return (
     <TouchableOpacity
       activeOpacity={0.7}
-      onLongPress={() => { navigation.navigate(Paths.PaintingDetail, { painting }); }}
+      onLongPress={() => { navigation.navigate(Paths.PaintingDetail, { paintingId: painting.id }); }}
       onPress={onPress}
       style={styles.container}
     >
@@ -83,7 +86,7 @@ export function PaintingCard({ isFlipped, onPress, painting }: PaintingCardProps
             {painting.imageUrl && !imageError ? (
               <>
                 {imageLoading ? <View style={styles.imageLoadingContainer}>
-                    <ActivityIndicator color="#2d6a4f" size="small" />
+                    <ActivityIndicator color={COLORS.primary} size="small" />
                   </View> : null}
                 <Image
                   onError={() => {
@@ -148,7 +151,7 @@ const styles = StyleSheet.create({
   },
   cardBack: {
     alignItems: 'center',
-    backgroundColor: '#1a4d3e',
+    backgroundColor: COLORS.primaryDark,
     borderRadius: 12,
     flex: 1,
     justifyContent: 'center',
@@ -176,7 +179,7 @@ const styles = StyleSheet.create({
     elevation: 4,
     height: '100%',
     position: 'absolute',
-    shadowColor: '#000',
+    shadowColor: COLORS.pureBlack,
     shadowOffset: {
       height: 2,
       width: 0,
@@ -186,15 +189,15 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   flipCardBack: {
-    backgroundColor: '#1a4d3e',
+    backgroundColor: COLORS.primaryDark,
   },
   flipCardFront: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.white,
   },
   imageLoadingContainer: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.surfaceLight,
     justifyContent: 'center',
     zIndex: 10,
   },
@@ -232,7 +235,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   paintingTitle: {
-    color: '#fff',
+    color: COLORS.textInverse,
     fontSize: 13,
     fontWeight: '600',
     lineHeight: 16,

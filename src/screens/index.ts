@@ -1,4 +1,3 @@
-export { Example } from './Example';
 export { Startup } from './Startup';
 export { Palette } from './Palette';
 export { Settings } from './Settings';

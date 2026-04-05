@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { COLORS, SPACING } from '@/constants';
+import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS, TOUCHABLE_HEIGHT } from '@/constants';
 
 /**
  * Painting Detail Screen Styles
@@ -15,7 +15,7 @@ export const paintingDetailStyles = StyleSheet.create({
     flex: 1,
   },
   scrollViewContent: {
-    paddingBottom: 40, // Extra padding for Android nav bar
+    paddingBottom: SPACING.xl + SPACING.sm, // Extra padding for Android nav bar
   },
 
   /* Header */
@@ -28,17 +28,17 @@ export const paintingDetailStyles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingBottom: SPACING.sm + 4,
     paddingHorizontal: SPACING.md + 4,
-    paddingTop: 50,
+    paddingTop: SPACING.xxl + 2,
   },
   backButton: {
     alignItems: 'center',
-    height: 44,
+    height: TOUCHABLE_HEIGHT.lg,
     justifyContent: 'center',
-    width: 44,
+    width: TOUCHABLE_HEIGHT.lg,
   },
   backText: {
     color: COLORS.gold,
-    fontSize: 28,
+    fontSize: FONT_SIZE['5xl'],
     fontWeight: '300',
   },
   headerActions: {
@@ -50,12 +50,12 @@ export const paintingDetailStyles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderColor: COLORS.gold,
-    borderRadius: 18,
+    borderRadius: BORDER_RADIUS.round,
     borderWidth: 1,
-    height: 36,
+    height: TOUCHABLE_HEIGHT.md,
     justifyContent: 'center',
     opacity: 0.3,
-    width: 36,
+    width: TOUCHABLE_HEIGHT.md,
   },
   actionButtonActive: {
     backgroundColor: COLORS.gold,
@@ -64,9 +64,9 @@ export const paintingDetailStyles = StyleSheet.create({
   },
   actionText: {
     color: 'rgba(255, 255, 255, 0.5)',
-    fontSize: 14,
+    fontSize: FONT_SIZE.lg,
     fontWeight: '700',
-    lineHeight: 14,
+    lineHeight: FONT_SIZE.lg,
     textAlign: 'center',
   },
   actionTextActive: {
@@ -74,24 +74,24 @@ export const paintingDetailStyles = StyleSheet.create({
   },
   dividerVertical: {
     backgroundColor: COLORS.gold,
-    height: 24,
-    marginHorizontal: 4,
+    height: SPACING.lg,
+    marginHorizontal: SPACING.xs,
     opacity: 0.3,
     width: 1,
   },
   deleteButton: {
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 18,
-    height: 36,
+    borderRadius: BORDER_RADIUS.round,
+    height: TOUCHABLE_HEIGHT.md,
     justifyContent: 'center',
-    width: 36,
+    width: TOUCHABLE_HEIGHT.md,
   },
   deleteText: {
     color: 'rgba(255, 255, 255, 0.5)',
-    fontSize: 28,
+    fontSize: FONT_SIZE['5xl'],
     fontWeight: '300',
-    lineHeight: 28,
+    lineHeight: FONT_SIZE['5xl'],
     marginTop: -4,
     textAlign: 'center',
   },
@@ -100,7 +100,7 @@ export const paintingDetailStyles = StyleSheet.create({
   gallerySection: {
     backgroundColor: COLORS.black,
     paddingHorizontal: SPACING.md + 4,
-    paddingVertical: 40,
+    paddingVertical: SPACING.xl + SPACING.sm,
     position: 'relative',
   },
   image: {
@@ -115,7 +115,7 @@ export const paintingDetailStyles = StyleSheet.create({
   },
   loadingText: {
     color: COLORS.gold,
-    fontSize: 14,
+    fontSize: FONT_SIZE.lg,
     letterSpacing: 1,
     marginTop: SPACING.md,
   },
@@ -127,12 +127,12 @@ export const paintingDetailStyles = StyleSheet.create({
   },
   errorText: {
     color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 16,
+    fontSize: FONT_SIZE['2xl'],
     marginBottom: SPACING.sm,
   },
   errorSubtext: {
     color: 'rgba(255, 255, 255, 0.5)',
-    fontSize: 12,
+    fontSize: FONT_SIZE.md,
   },
   placeholderImage: {
     alignItems: 'center',
@@ -142,7 +142,7 @@ export const paintingDetailStyles = StyleSheet.create({
   },
   placeholderText: {
     color: 'rgba(255, 255, 255, 0.5)',
-    fontSize: 14,
+    fontSize: FONT_SIZE.lg,
     letterSpacing: 1,
   },
 
@@ -173,7 +173,7 @@ export const paintingDetailStyles = StyleSheet.create({
   },
   cornerOrnament: {
     color: COLORS.gold,
-    fontSize: 16,
+    fontSize: FONT_SIZE['2xl'],
     opacity: 0.6,
   },
 
@@ -200,7 +200,7 @@ export const paintingDetailStyles = StyleSheet.create({
   },
   artDecoButtonText: {
     color: COLORS.gold,
-    fontSize: 12,
+    fontSize: FONT_SIZE.md,
     fontWeight: '700',
     letterSpacing: 2,
   },
@@ -217,9 +217,9 @@ export const paintingDetailStyles = StyleSheet.create({
   },
   title: {
     color: COLORS.text,
-    fontSize: 28,
+    fontSize: FONT_SIZE['5xl'],
     fontWeight: '600',
-    lineHeight: 36,
+    lineHeight: TOUCHABLE_HEIGHT.md,
     marginBottom: SPACING.sm + 4,
     textAlign: 'center',
   },
@@ -232,18 +232,18 @@ export const paintingDetailStyles = StyleSheet.create({
   },
   artistLabel: {
     color: COLORS.textLight,
-    fontSize: 14,
+    fontSize: FONT_SIZE.lg,
     fontStyle: 'italic',
   },
   artist: {
     color: COLORS.text,
-    fontSize: 16,
+    fontSize: FONT_SIZE['2xl'],
     fontStyle: 'italic',
     textDecorationLine: 'underline',
   },
   year: {
     color: COLORS.gray500,
-    fontSize: 14,
+    fontSize: FONT_SIZE.lg,
     letterSpacing: 2,
     marginBottom: SPACING.md,
     textAlign: 'center',
@@ -261,11 +261,11 @@ export const paintingDetailStyles = StyleSheet.create({
     borderRadius: 2,
     borderWidth: 1,
     paddingHorizontal: SPACING.sm + 4,
-    paddingVertical: 6,
+    paddingVertical: SPACING.sm - 2,
   },
   tagWant: {
     backgroundColor: COLORS.warning + '20',
-    borderColor: '#cd7f32',
+    borderColor: COLORS.bronze,
   },
   tagPalette: {
     backgroundColor: COLORS.gold + '20',
@@ -273,7 +273,7 @@ export const paintingDetailStyles = StyleSheet.create({
   },
   tagText: {
     color: COLORS.text,
-    fontSize: 10,
+    fontSize: FONT_SIZE.xs,
     fontWeight: '700',
     letterSpacing: 1.5,
   },
@@ -292,39 +292,39 @@ export const paintingDetailStyles = StyleSheet.create({
   },
   sectionTitle: {
     color: COLORS.text,
-    fontSize: 11,
+    fontSize: FONT_SIZE.sm,
     fontWeight: '700',
     letterSpacing: 2,
     marginHorizontal: SPACING.md,
   },
   description: {
     color: COLORS.textLight,
-    fontSize: 15,
-    lineHeight: 24,
+    fontSize: FONT_SIZE.xl,
+    lineHeight: SPACING.lg,
   },
   detailRow: {
     marginBottom: SPACING.sm + 4,
   },
   label: {
     color: COLORS.gray500,
-    fontSize: 11,
+    fontSize: FONT_SIZE.sm,
     letterSpacing: 1,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
     textTransform: 'uppercase',
   },
   value: {
     color: COLORS.text,
-    fontSize: 15,
+    fontSize: FONT_SIZE.xl,
   },
   museum: {
     color: COLORS.text,
-    fontSize: 16,
+    fontSize: FONT_SIZE['2xl'],
     fontWeight: '600',
     marginBottom: SPACING.sm,
   },
   location: {
     color: COLORS.textLight,
-    fontSize: 14,
+    fontSize: FONT_SIZE.lg,
   },
 
   visitProvenance: {
@@ -336,12 +336,12 @@ export const paintingDetailStyles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.gold,
-    borderRadius: 8,
+    borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.sm,
   },
 
   visitProvenanceLabel: {
-    fontSize: 10,
+    fontSize: FONT_SIZE.xs,
     fontWeight: '700',
     letterSpacing: 2,
     color: COLORS.gold,
@@ -349,7 +349,7 @@ export const paintingDetailStyles = StyleSheet.create({
   },
 
   visitProvenanceValue: {
-    fontSize: 14,
+    fontSize: FONT_SIZE.lg,
     color: COLORS.text,
     marginTop: 2,
   },
