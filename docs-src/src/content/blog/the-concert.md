@@ -2,6 +2,7 @@
 title: "The Concert — The Painting That Started Everything"
 date: 2026-04-14
 description: "How a Baroque painting by Gerrit van Honthorst in a Parisian museum set me on a path I never expected."
+image: "https://upload.wikimedia.org/wikipedia/commons/e/ee/Gerrit_van_honthorst%2C_il_concerto%2C_1620-27%2C_01.jpg"
 tags: ["paintings", "honthorst", "baroque"]
 ---
 

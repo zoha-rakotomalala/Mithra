@@ -3,8 +3,8 @@ import BaseLayout from './BaseLayout.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 
-interface Props { title: string; date: Date; }
-const { title, date } = Astro.props;
+interface Props { title: string; date: Date; image?: string; }
+const { title, date, image } = Astro.props;
 ---
 <BaseLayout title={`${title} — Palette Journal`}>
     <Nav />
@@ -13,6 +13,7 @@ const { title, date } = Astro.props;
             <a class="blog-back" href={`${import.meta.env.BASE_URL}blog/`}>← Back to Journal</a>
             <h1 class="blog-post-title">{title}</h1>
             <time class="blog-post-date" datetime={date.toISOString()}>{date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</time>
+            {image && <img class="blog-post-image" src={image} alt={title} loading="lazy" />}
             <div class="blog-post-content">
                 <slot />
             </div>
@@ -28,6 +29,7 @@ const { title, date } = Astro.props;
     .blog-post-date{font-size:.85rem;color:rgba(26,26,26,.4);display:block;margin-bottom:2.5rem}
     .blog-post-content{font-size:1rem;color:rgba(26,26,26,.75);line-height:1.8}
     .blog-post-content p{margin-bottom:1.5rem}
+    .blog-post-image{width:100%;border-radius:8px;margin-bottom:2.5rem;box-shadow:0 8px 30px rgba(0,0,0,.12)}
     .blog-post-content h2{font-size:1.2rem;margin:2rem 0 1rem;color:var(--dark)}
     .blog-post-content h3{font-size:1.05rem;margin:1.5rem 0 .75rem;color:var(--dark)}
     .blog-post-content blockquote{border-left:3px solid var(--gold);padding-left:1.5rem;margin:1.5rem 0;color:rgba(26,26,26,.6);font-style:italic}
