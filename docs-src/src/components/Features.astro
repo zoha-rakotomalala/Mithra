@@ -1,0 +1,59 @@
+---
+const base = import.meta.env.BASE_URL;
+---
+<section id="features" style="background:var(--cream)">
+    <div class="wrap">
+        <h2 class="section-title fade">What It Does</h2>
+        <p class="features-intro fade">Search real museum collections, build your personal art
+            collection and curate your Palette. Create a canon Palette of your all-time top 8, or
+            capture a unique palette for each museum visit.</p>
+        <p class="fade"
+           style="font-size:.85rem;color:rgba(26,26,26,.4);font-style:italic;margin-bottom:3rem">All
+            images are real screenshots from the app.</p>
+
+        <div class="screenshots-row fade">
+            <div>
+                <img alt="Palette app search screen showing Van Gogh paintings from the Met Museum"
+                     loading="lazy"
+                     src={`${base}screenshots/search.jpg`}>
+                <div class="label"><h3>Discover</h3>
+                    <p>Search across museums</p></div>
+            </div>
+            <div>
+                <img alt="Palette app collection screen showing 39 tracked paintings"
+                     loading="lazy"
+                     src={`${base}screenshots/collection.jpg`}>
+                <div class="label"><h3>Save</h3>
+                    <p>Build your collection</p></div>
+            </div>
+            <div>
+                <img alt="Palette app showing a curated 3x3 grid of favorite paintings"
+                     loading="lazy"
+                     src={`${base}screenshots/palette.jpg`}>
+                <div class="label"><h3>Curate</h3>
+                    <p>Pick your top 8</p></div>
+            </div>
+        </div>
+
+        <div class="exports-row fade">
+            <div>
+                <div class="export-card">
+                    <img alt="Exported canon palette showing 8 favorite paintings with curator profile"
+                         loading="lazy"
+                         src={`${base}screenshots/canon-export.png`}>
+                </div>
+                <div class="label"><h3>Canon Palette</h3>
+                    <p>Your all-time top 8, shareable</p></div>
+            </div>
+            <div>
+                <div class="export-card">
+                    <img alt="Exported visit palette from the Metropolitan Museum of Art"
+                         loading="lazy"
+                         src={`${base}screenshots/visit-export.png`}>
+                </div>
+                <div class="label"><h3>Visit Palette</h3>
+                    <p>One for each museum visit, shareable</p></div>
+            </div>
+        </div>
+    </div>
+</section>

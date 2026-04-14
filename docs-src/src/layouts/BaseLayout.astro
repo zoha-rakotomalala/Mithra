@@ -1,0 +1,46 @@
+---
+interface Props { title?: string; }
+const { title = 'Palette - Track, Curate & Discover Art Across Museums' } = Astro.props;
+---
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>{title}</title>
+    <meta content="A personal project born from a journey into art. Track paintings, build your collection, discover museums." name="description">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Medula+One&display=swap" rel="stylesheet">
+</head>
+<body>
+    <slot />
+    <script>
+        // Nav scroll behavior
+        const nav = document.querySelector('.nav');
+        const hero = document.querySelector('.hero');
+        function updateNav() {
+            nav?.classList.toggle('scrolled', window.scrollY > 60);
+        }
+        window.addEventListener('scroll', updateNav, {passive: true});
+
+        // Mobile menu
+        const hamburger = document.querySelector('.hamburger');
+        const navLinks = document.querySelector('.nav-links');
+        hamburger?.addEventListener('click', () => {
+            const open = navLinks!.classList.toggle('open');
+            hamburger.setAttribute('aria-expanded', String(open));
+        });
+
+        // Fade in on scroll
+        const fades = document.querySelectorAll('.fade');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }});
+        }, {threshold: 0.1});
+        fades.forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>
+
+<style is:global>
+    @import '../styles/global.css';
+</style>
