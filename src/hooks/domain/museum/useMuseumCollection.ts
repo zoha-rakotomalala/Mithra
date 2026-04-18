@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { searchAllMuseums } from '@/services/unifiedMuseumService';
-import { likePainting, unlikePainting, getLikedUuidsForVisit } from '@/services';
+import {
+  likePainting,
+  unlikePainting,
+  getLikedUuidsForVisit,
+} from '@/services';
 import { usePaintings } from '@/contexts/PaintingsContext';
 import type { Painting } from '@/types/painting';
 
@@ -39,7 +43,7 @@ export function useMuseumCollection(museumId: string, visitId: string) {
           requireArtist: true,
           paintingsOnly: true,
           minRelevanceScore: 10,
-        }
+        },
       });
 
       setPaintings(result.paintings);
@@ -59,14 +63,14 @@ export function useMuseumCollection(museumId: string, visitId: string) {
 
     if (isCurrentlyLiked) {
       await unlikePainting(painting.id, visitId);
-      setLikedIds(prev => {
+      setLikedIds((prev) => {
         const next = new Set(prev);
         next.delete(painting.id);
         return next;
       });
     } else {
       await likePainting(painting.id, visitId);
-      setLikedIds(prev => new Set(prev).add(painting.id));
+      setLikedIds((prev) => new Set(prev).add(painting.id));
       // Bridge to PaintingsContext: add to collection as seen
       if (!isInCollection(painting.id)) {
         addToCollection({ ...painting, isSeen: true, wantToVisit: false });

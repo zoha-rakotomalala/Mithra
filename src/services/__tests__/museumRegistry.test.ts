@@ -1,4 +1,8 @@
-import { getAllMuseums, getMuseumById, getMuseumsByTier } from '../museumRegistry';
+import {
+  getAllMuseums,
+  getMuseumById,
+  getMuseumsByTier,
+} from '../museumRegistry';
 
 describe('museumRegistry', () => {
   describe('getAllMuseums', () => {
@@ -8,7 +12,7 @@ describe('museumRegistry', () => {
     });
 
     it('every museum has required fields', () => {
-      getAllMuseums().forEach(museum => {
+      getAllMuseums().forEach((museum) => {
         expect(museum).toHaveProperty('id');
         expect(museum).toHaveProperty('name');
         expect(museum).toHaveProperty('shortName');
@@ -18,7 +22,7 @@ describe('museumRegistry', () => {
     });
 
     it('has no duplicate museum IDs', () => {
-      const ids = getAllMuseums().map(m => m.id);
+      const ids = getAllMuseums().map((m) => m.id);
       expect(new Set(ids).size).toBe(ids.length);
     });
   });
@@ -37,7 +41,7 @@ describe('museumRegistry', () => {
 
   describe('getMuseumsByTier', () => {
     it('tier 1 contains the major museums', () => {
-      const ids = getMuseumsByTier(1).map(m => m.id);
+      const ids = getMuseumsByTier(1).map((m) => m.id);
       expect(ids).toContain('MET');
       expect(ids).toContain('RIJKS');
       expect(ids).toContain('CHICAGO');
@@ -45,8 +49,8 @@ describe('museumRegistry', () => {
     });
 
     it('each tier returns only museums of that tier', () => {
-      ([1, 2, 3] as const).forEach(tier => {
-        getMuseumsByTier(tier).forEach(m => expect(m.tier).toBe(tier));
+      ([1, 2, 3] as const).forEach((tier) => {
+        getMuseumsByTier(tier).forEach((m) => expect(m.tier).toBe(tier));
       });
     });
 

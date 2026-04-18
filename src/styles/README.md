@@ -4,7 +4,8 @@
 
 ## Overview
 
-The Mithra style system provides a cohesive, reusable set of styles inspired by Art Deco design principles from the 1920s-1930s. The system emphasizes:
+The Mithra style system provides a cohesive, reusable set of styles inspired by Art Deco design
+principles from the 1920s-1930s. The system emphasizes:
 
 - **Geometric forms** - Clean lines, symmetry, bold shapes
 - **Luxurious materials** - Gold accents, rich colors
@@ -38,6 +39,7 @@ The Palette app uses a consolidated styling approach with three layers:
 | **StyleSheet objects** | `src/styles/`                 | Pre-built `StyleSheet.create()` objects for reusable UI patterns                         |
 
 ### Constants (`src/constants/`)
+
 Foundational values used throughout the app:
 
 - **colors.ts** — Art Deco color palette (`COLORS`), museum brand colors (`MUSEUM_COLORS`), opacity
@@ -47,6 +49,7 @@ Foundational values used throughout the app:
 - **museums.ts** — Museum badge metadata
 
 ### Styles (`src/styles/`)
+
 Pre-built StyleSheet objects for common patterns:
 
 - **shared.ts** — Common layouts, containers, flex helpers, shadows, dividers
@@ -130,9 +133,9 @@ GRID.gutter    // 16
 GRID.margin    // 24
 
 // Usage
-<View style={{ 
+<View style={{
   padding: SPACING.md,
-  marginBottom: SPACING.lg 
+  marginBottom: SPACING.lg
 }}>
 ```
 
@@ -169,7 +172,7 @@ import { CARD } from '@/constants';
 // Grid painting card
 <View style={cards.gridCard}>
   <View style={cards.imageContainer}>
-    <Image 
+    <Image
       source={{ uri: painting.imageUrl }}
       style={cards.image}
     />
@@ -295,19 +298,19 @@ import { getMuseumBadge } from '@/constants/museums';
   data={paintings}
   numColumns={GRID.columns}
   columnWrapperStyle={{ gap: GRID.gutter }}
-  contentContainerStyle={{ 
+  contentContainerStyle={{
     padding: GRID.margin,
-    gap: GRID.gutter 
+    gap: GRID.gutter
   }}
   renderItem={({ item }) => (
     <TouchableOpacity style={cards.gridCard}>
       <View style={cards.imageContainer}>
         <Image source={{ uri: item.imageUrl }} style={cards.image} />
-        
+
         {/* Museum badge (Search screen) */}
         {showMuseumBadge && (
           <View style={[
-            badges.museumBadge, 
+            badges.museumBadge,
             { backgroundColor: getMuseumBadge(item.museum).color }
           ]}>
             <Text style={badges.museumBadgeText}>
@@ -315,7 +318,7 @@ import { getMuseumBadge } from '@/constants/museums';
             </Text>
           </View>
         )}
-        
+
         {/* Status badges (Collection screen) */}
         {item.isSeen && (
           <View style={[badges.statusBadge, badges.statusBadgeSeen]}>
@@ -323,7 +326,7 @@ import { getMuseumBadge } from '@/constants/museums';
           </View>
         )}
       </View>
-      
+
       <Text style={cards.cardTitle} numberOfLines={2}>{item.title}</Text>
       <Text style={cards.cardArtist} numberOfLines={1}>{item.artist}</Text>
       {item.year && <Text style={cards.cardYear}>{item.year}</Text>}
@@ -340,12 +343,12 @@ import { COLORS } from '@/constants';
 
 <View style={shared.container}>
   <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
-  
+
   <View style={shared.paddingHorizontal}>
     <Text style={typography.h1}>Screen Title</Text>
     <View style={shared.artDecoDivider} />
   </View>
-  
+
   {/* Content */}
 </View>
 ```
@@ -355,7 +358,9 @@ import { COLORS } from '@/constants';
 ## Design Principles
 
 ### 1. Consistency
+
 Always use constants and shared styles instead of inline values:
+
 ```typescript
 // ❌ Don't
 <View style={{ padding: 16, backgroundColor: '#d4af37' }}>
@@ -365,23 +370,28 @@ Always use constants and shared styles instead of inline values:
 ```
 
 ### 2. Composition
+
 Combine styles for flexibility:
+
 ```typescript
 <View style={[shared.row, shared.gap8, shared.paddingHorizontal]}>
 ```
 
 ### 3. Semantic Naming
+
 Use semantic color names:
+
 ```typescript
 // ❌ Don't
-backgroundColor: COLORS.gold
+backgroundColor: COLORS.gold;
 
 // ✅ Do (when appropriate)
-backgroundColor: COLORS.seen  // For status
-backgroundColor: COLORS.inPalette  // For palette items
+backgroundColor: COLORS.seen; // For status
+backgroundColor: COLORS.inPalette; // For palette items
 ```
 
 ### 4. Art Deco Aesthetic
+
 - Use gold accents sparingly for emphasis
 - Maintain geometric, clean layouts
 - Prefer bold, uppercase labels for headings
@@ -392,6 +402,7 @@ backgroundColor: COLORS.inPalette  // For palette items
 ## Migration Guide
 
 ### Before (Inline Styles)
+
 ```typescript
 const styles = StyleSheet.create({
   card: {
@@ -408,6 +419,7 @@ const styles = StyleSheet.create({
 ```
 
 ### After (Shared Styles)
+
 ```typescript
 import { cards } from '@/styles';
 
@@ -422,10 +434,12 @@ import { cards } from '@/styles';
 ## FAQ
 
 **Q: When should I create new styles vs. use shared styles?**
-A: Use shared styles for common patterns (cards, badges, buttons). Create component-specific styles only for unique layouts.
+A: Use shared styles for common patterns (cards, badges, buttons). Create component-specific styles
+only for unique layouts.
 
 **Q: Can I override shared styles?**
 A: Yes! Combine with inline styles:
+
 ```typescript
 <Text style={[typography.h1, { color: COLORS.gold }]}>
 ```
@@ -435,8 +449,9 @@ A: Add to `src/constants/colors.ts` and document the use case.
 
 **Q: What if I need a different card size?**
 A: Use the constants as a base:
+
 ```typescript
-width: CARD.gridWidth * 2  // Double width
+width: CARD.gridWidth * 2; // Double width
 ```
 
 ---

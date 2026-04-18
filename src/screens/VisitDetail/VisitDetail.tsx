@@ -1,7 +1,17 @@
 import type { RootScreenProps } from '@/navigation/types';
 import { Paths } from '@/navigation/paths';
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StatusBar, Modal, TextInput, SafeAreaView, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StatusBar,
+  Modal,
+  TextInput,
+  SafeAreaView,
+  ActivityIndicator,
+} from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ModalHeader } from '@/components/molecules';
 import { shared, typography, buttons } from '@/styles';
@@ -47,83 +57,107 @@ export function VisitDetail() {
         <ScrollView style={styles.scrollView}>
           <View style={styles.header}>
             <View style={styles.headerRow}>
-              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <TouchableOpacity
+                onPress={() => navigation.goBack()}
+                style={styles.backButton}
+              >
                 <Text style={styles.backText}>←</Text>
               </TouchableOpacity>
-              <Text style={styles.headerTitle} numberOfLines={1}>{visit.museum?.name}</Text>
+              <Text style={styles.headerTitle} numberOfLines={1}>
+                {visit.museum?.name}
+              </Text>
             </View>
           </View>
 
           <View style={styles.content}>
-          <View style={styles.infoCard}>
-            <View style={styles.infoRow}>
-              <Text style={typography.label}>Date</Text>
-              <Text style={typography.body}>{formatDate(visit.visit_date)}</Text>
-            </View>
-
-            {visit.notes && (
+            <View style={styles.infoCard}>
               <View style={styles.infoRow}>
-                <Text style={typography.label}>Notes</Text>
-                <Text style={typography.body}>{visit.notes}</Text>
+                <Text style={typography.label}>Date</Text>
+                <Text style={typography.body}>
+                  {formatDate(visit.visit_date)}
+                </Text>
               </View>
-            )}
 
-            <View style={styles.infoRow}>
-              <Text style={typography.label}>Liked Artworks</Text>
-              <Text style={typography.body}>{likedCount} artworks</Text>
+              {visit.notes && (
+                <View style={styles.infoRow}>
+                  <Text style={typography.label}>Notes</Text>
+                  <Text style={typography.body}>{visit.notes}</Text>
+                </View>
+              )}
+
+              <View style={styles.infoRow}>
+                <Text style={typography.label}>Liked Artworks</Text>
+                <Text style={typography.body}>{likedCount} artworks</Text>
+              </View>
             </View>
-          </View>
 
-          <View style={styles.actions}>
-            <TouchableOpacity
-              style={buttons.primary}
-              onPress={() => navigation.navigate(Paths.Search, { museumId: museumRegistryId, visitId })}
-            >
-              <Text style={buttons.primaryText}>Browse Collection</Text>
-            </TouchableOpacity>
-
-            {likedCount > 0 && (
+            <View style={styles.actions}>
               <TouchableOpacity
-                style={buttons.secondary}
-                onPress={() => navigation.navigate(Paths.LikedPaintings, { visitId })}
+                style={buttons.primary}
+                onPress={() =>
+                  navigation.navigate(Paths.Search, {
+                    museumId: museumRegistryId,
+                    visitId,
+                  })
+                }
               >
-                <Text style={buttons.secondaryText}>View Liked Artworks ({likedCount})</Text>
+                <Text style={buttons.primaryText}>Browse Collection</Text>
               </TouchableOpacity>
-            )}
 
-            {likedCount > 0 && (
+              {likedCount > 0 && (
+                <TouchableOpacity
+                  style={buttons.secondary}
+                  onPress={() =>
+                    navigation.navigate(Paths.LikedPaintings, { visitId })
+                  }
+                >
+                  <Text style={buttons.secondaryText}>
+                    View Liked Artworks ({likedCount})
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {likedCount > 0 && (
+                <TouchableOpacity
+                  style={buttons.secondary}
+                  onPress={() =>
+                    navigation.navigate(
+                      hasPalette ? Paths.ViewPalette : Paths.VisitPalette,
+                      { visitId },
+                    )
+                  }
+                >
+                  <Text style={buttons.secondaryText}>
+                    {hasPalette ? 'View Palette' : 'Create Palette'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
               <TouchableOpacity
                 style={buttons.secondary}
-                onPress={() => navigation.navigate(
-                  hasPalette ? Paths.ViewPalette : Paths.VisitPalette,
-                  { visitId }
-                )}
+                onPress={() => setShowEditModal(true)}
               >
-                <Text style={buttons.secondaryText}>
-                  {hasPalette ? 'View Palette' : 'Create Palette'}
+                <Text style={buttons.secondaryText}>Edit Visit</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[buttons.secondary, styles.deleteButton]}
+                onPress={handleDelete}
+              >
+                <Text style={[buttons.secondaryText, styles.deleteText]}>
+                  Delete Visit
                 </Text>
               </TouchableOpacity>
-            )}
-
-            <TouchableOpacity
-              style={buttons.secondary}
-              onPress={() => setShowEditModal(true)}
-            >
-              <Text style={buttons.secondaryText}>Edit Visit</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[buttons.secondary, styles.deleteButton]}
-              onPress={handleDelete}
-            >
-              <Text style={[buttons.secondaryText, styles.deleteText]}>Delete Visit</Text>
-            </TouchableOpacity>
+            </View>
           </View>
-        </View>
         </ScrollView>
       </SafeAreaView>
 
-      <Modal visible={showEditModal} animationType="slide" presentationStyle="pageSheet">
+      <Modal
+        visible={showEditModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
         <View style={shared.container}>
           <ModalHeader
             title="Edit Visit"
@@ -134,7 +168,9 @@ export function VisitDetail() {
           />
 
           <View style={styles.modalContent}>
-            <Text style={[styles.input, styles.readOnlyField]}>{visit.museum?.name}</Text>
+            <Text style={[styles.input, styles.readOnlyField]}>
+              {visit.museum?.name}
+            </Text>
 
             <TextInput
               style={styles.input}
@@ -155,7 +191,10 @@ export function VisitDetail() {
             />
 
             <TouchableOpacity
-              style={[buttons.primary, !editForm.visitDate && styles.buttonDisabled]}
+              style={[
+                buttons.primary,
+                !editForm.visitDate && styles.buttonDisabled,
+              ]}
               onPress={handleEdit}
               disabled={!editForm.visitDate}
             >

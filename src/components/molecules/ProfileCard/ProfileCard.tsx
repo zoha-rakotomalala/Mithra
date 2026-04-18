@@ -54,7 +54,11 @@ export function ProfileCard({ isFlipped, onPress, profile }: ProfileCardProps) {
   });
 
   return (
-    <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={styles.container}>
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={onPress}
+      style={styles.container}
+    >
       <View style={styles.cardContainer}>
         {/* FRONT */}
         <Animated.View

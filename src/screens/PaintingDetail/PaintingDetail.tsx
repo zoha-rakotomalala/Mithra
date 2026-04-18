@@ -44,36 +44,77 @@ export function PaintingDetail() {
       <View style={styles.container}>
         {/* Art Deco Header */}
         <View style={styles.header}>
-          <BackButton onPress={() => { goBack(); }} style={styles.backButton} textStyle={styles.backText} />
+          <BackButton
+            onPress={() => {
+              goBack();
+            }}
+            style={styles.backButton}
+            textStyle={styles.backText}
+          />
 
-          {inCollection ? <View style={styles.headerActions}>
+          {inCollection ? (
+            <View style={styles.headerActions}>
               <TouchableOpacity
                 onPress={handleToggleSeen}
-                style={[styles.actionButton, currentPainting.isSeen && styles.actionButtonActive]}
+                style={[
+                  styles.actionButton,
+                  currentPainting.isSeen && styles.actionButtonActive,
+                ]}
               >
-                <Text style={[styles.actionText, currentPainting.isSeen && styles.actionTextActive]}>S</Text>
+                <Text
+                  style={[
+                    styles.actionText,
+                    currentPainting.isSeen && styles.actionTextActive,
+                  ]}
+                >
+                  S
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={handleToggleWantToVisit}
-                style={[styles.actionButton, currentPainting.wantToVisit && styles.actionButtonActive]}
+                style={[
+                  styles.actionButton,
+                  currentPainting.wantToVisit && styles.actionButtonActive,
+                ]}
               >
-                <Text style={[styles.actionText, currentPainting.wantToVisit && styles.actionTextActive]}>W</Text>
+                <Text
+                  style={[
+                    styles.actionText,
+                    currentPainting.wantToVisit && styles.actionTextActive,
+                  ]}
+                >
+                  W
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={handleTogglePalette}
-                style={[styles.actionButton, isInPalette && styles.actionButtonActive]}
+                style={[
+                  styles.actionButton,
+                  isInPalette && styles.actionButtonActive,
+                ]}
               >
-                <Text style={[styles.actionText, isInPalette && styles.actionTextActive]}>P</Text>
+                <Text
+                  style={[
+                    styles.actionText,
+                    isInPalette && styles.actionTextActive,
+                  ]}
+                >
+                  P
+                </Text>
               </TouchableOpacity>
 
               <View style={styles.dividerVertical} />
 
-              <TouchableOpacity onPress={handleRemoveFromCollection} style={styles.deleteButton}>
+              <TouchableOpacity
+                onPress={handleRemoveFromCollection}
+                style={styles.deleteButton}
+              >
                 <Text style={styles.deleteText}>×</Text>
               </TouchableOpacity>
-            </View> : null}
+            </View>
+          ) : null}
         </View>
 
         <ScrollView
@@ -93,27 +134,40 @@ export function PaintingDetail() {
 
             {imageUrl ? (
               <>
-                {imageLoading ? <View style={styles.loadingContainer}>
+                {imageLoading ? (
+                  <View style={styles.loadingContainer}>
                     <ActivityIndicator color="#d4af37" size="large" />
                     <Text style={styles.loadingText}>Loading artwork...</Text>
-                  </View> : null}
+                  </View>
+                ) : null}
                 <FastImage
                   onError={() => {
                     setImageLoading(false);
                     setImageError(true);
                   }}
-                  onLoadEnd={() => { setImageLoading(false); }}
+                  onLoadEnd={() => {
+                    setImageLoading(false);
+                  }}
                   resizeMode={FastImage.resizeMode.contain}
                   source={museumImageSource(imageUrl, FastImage.priority.high)}
                   style={styles.image}
                 />
-                {imageError ? <View style={styles.errorContainer}>
+                {imageError ? (
+                  <View style={styles.errorContainer}>
                     <Text style={styles.errorText}>Unable to load artwork</Text>
-                    <Text style={styles.errorSubtext}>Image may be unavailable</Text>
-                  </View> : null}
+                    <Text style={styles.errorSubtext}>
+                      Image may be unavailable
+                    </Text>
+                  </View>
+                ) : null}
               </>
             ) : (
-              <View style={[styles.placeholderImage, { backgroundColor: currentPainting.color }]}>
+              <View
+                style={[
+                  styles.placeholderImage,
+                  { backgroundColor: currentPainting.color },
+                ]}
+              >
                 <Text style={styles.placeholderText}>No image available</Text>
               </View>
             )}
@@ -133,17 +187,28 @@ export function PaintingDetail() {
 
               <View style={styles.quickAddRow}>
                 <TouchableOpacity
-                  onPress={() => { handleQuickAdd('seen'); }}
+                  onPress={() => {
+                    handleQuickAdd('seen');
+                  }}
                   style={styles.artDecoButton}
                 >
                   <Text style={styles.artDecoButtonText}>SEEN</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  onPress={() => { handleQuickAdd('wantToVisit'); }}
+                  onPress={() => {
+                    handleQuickAdd('wantToVisit');
+                  }}
                   style={[styles.artDecoButton, styles.artDecoButtonSecondary]}
                 >
-                  <Text style={[styles.artDecoButtonText, styles.artDecoButtonTextSecondary]}>WANT TO VISIT</Text>
+                  <Text
+                    style={[
+                      styles.artDecoButtonText,
+                      styles.artDecoButtonTextSecondary,
+                    ]}
+                  >
+                    WANT TO VISIT
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -161,23 +226,34 @@ export function PaintingDetail() {
               </TouchableOpacity>
             </View>
 
-            {currentPainting.year ? <Text style={styles.year}>· {currentPainting.year} ·</Text> : null}
+            {currentPainting.year ? (
+              <Text style={styles.year}>· {currentPainting.year} ·</Text>
+            ) : null}
 
             {/* Status Tags */}
-            {inCollection ? <View style={styles.tags}>
-                {currentPainting.isSeen ? <View style={styles.tag}>
+            {inCollection ? (
+              <View style={styles.tags}>
+                {currentPainting.isSeen ? (
+                  <View style={styles.tag}>
                     <Text style={styles.tagText}>SEEN</Text>
-                  </View> : null}
-                {currentPainting.wantToVisit ? <View style={[styles.tag, styles.tagWant]}>
+                  </View>
+                ) : null}
+                {currentPainting.wantToVisit ? (
+                  <View style={[styles.tag, styles.tagWant]}>
                     <Text style={styles.tagText}>WANT TO VISIT</Text>
-                  </View> : null}
-                {isInPalette ? <View style={[styles.tag, styles.tagPalette]}>
+                  </View>
+                ) : null}
+                {isInPalette ? (
+                  <View style={[styles.tag, styles.tagPalette]}>
                     <Text style={styles.tagText}>IN PALETTE</Text>
-                  </View> : null}
-              </View> : null}
+                  </View>
+                ) : null}
+              </View>
+            ) : null}
 
             {/* Visit Provenance */}
-            {visitInfo.length > 0 ? <View style={styles.visitProvenance}>
+            {visitInfo.length > 0 ? (
+              <View style={styles.visitProvenance}>
                 {visitInfo.map((v) => (
                   <TouchableOpacity
                     key={v.visit_id}
@@ -185,42 +261,59 @@ export function PaintingDetail() {
                     style={styles.visitProvenanceRow}
                   >
                     <Text style={styles.visitProvenanceLabel}>Seen during</Text>
-                    <Text style={styles.visitProvenanceValue}>{v.museum_name} · {formatDate(v.visit_date)}</Text>
+                    <Text style={styles.visitProvenanceValue}>
+                      {v.museum_name} · {formatDate(v.visit_date)}
+                    </Text>
                   </TouchableOpacity>
                 ))}
-              </View> : null}
+              </View>
+            ) : null}
           </View>
 
           {/* Description */}
-          {currentPainting.description ? <View style={styles.section}>
-              <Text style={styles.description}>{currentPainting.description}</Text>
-            </View> : null}
+          {currentPainting.description ? (
+            <View style={styles.section}>
+              <Text style={styles.description}>
+                {currentPainting.description}
+              </Text>
+            </View>
+          ) : null}
 
           {/* Details Section */}
           <View style={styles.section}>
             <SectionHeader title="DETAILS" />
 
-            {currentPainting.medium ? <View style={styles.detailRow}>
+            {currentPainting.medium ? (
+              <View style={styles.detailRow}>
                 <Text style={styles.label}>Medium</Text>
                 <Text style={styles.value}>{currentPainting.medium}</Text>
-              </View> : null}
-            {currentPainting.dimensions ? <View style={styles.detailRow}>
+              </View>
+            ) : null}
+            {currentPainting.dimensions ? (
+              <View style={styles.detailRow}>
                 <Text style={styles.label}>Dimensions</Text>
                 <Text style={styles.value}>{currentPainting.dimensions}</Text>
-              </View> : null}
-            {currentPainting.year ? <View style={styles.detailRow}>
+              </View>
+            ) : null}
+            {currentPainting.year ? (
+              <View style={styles.detailRow}>
                 <Text style={styles.label}>Year</Text>
                 <Text style={styles.value}>{currentPainting.year}</Text>
-              </View> : null}
+              </View>
+            ) : null}
           </View>
 
           {/* Location Section */}
-          {currentPainting.museum ? <View style={styles.section}>
+          {currentPainting.museum ? (
+            <View style={styles.section}>
               <SectionHeader title="LOCATION" />
 
               <Text style={styles.museum}>{currentPainting.museum}</Text>
-              {currentPainting.location ? <Text style={styles.location}>{currentPainting.location}</Text> : null}
-            </View> : null}
+              {currentPainting.location ? (
+                <Text style={styles.location}>{currentPainting.location}</Text>
+              ) : null}
+            </View>
+          ) : null}
         </ScrollView>
       </View>
     </>

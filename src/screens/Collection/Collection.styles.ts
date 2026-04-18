@@ -1,5 +1,12 @@
 import { Dimensions, StyleSheet } from 'react-native';
-import { COLORS, SPACING, ANDROID_STATUS_BAR_PADDING, FONT_SIZE, BORDER_RADIUS, ICON_SIZE } from '@/constants';
+import {
+  COLORS,
+  SPACING,
+  ANDROID_STATUS_BAR_PADDING,
+  FONT_SIZE,
+  BORDER_RADIUS,
+  ICON_SIZE,
+} from '@/constants';
 
 const { width } = Dimensions.get('window');
 const CARD_SIZE = (width - 64) / 3;

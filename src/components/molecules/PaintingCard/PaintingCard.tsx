@@ -28,7 +28,11 @@ export type PaintingCardProps = {
   readonly painting: Painting;
 };
 
-export function PaintingCard({ isFlipped, onPress, painting }: PaintingCardProps) {
+export function PaintingCard({
+  isFlipped,
+  onPress,
+  painting,
+}: PaintingCardProps) {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const flipAnimation = useRef(new Animated.Value(0)).current;
   const [imageLoading, setImageLoading] = useState(true);
@@ -66,7 +70,9 @@ export function PaintingCard({ isFlipped, onPress, painting }: PaintingCardProps
   return (
     <TouchableOpacity
       activeOpacity={0.7}
-      onLongPress={() => { navigation.navigate(Paths.PaintingDetail, { paintingId: painting.id }); }}
+      onLongPress={() => {
+        navigation.navigate(Paths.PaintingDetail, { paintingId: painting.id });
+      }}
       onPress={onPress}
       style={styles.container}
     >
@@ -85,16 +91,22 @@ export function PaintingCard({ isFlipped, onPress, painting }: PaintingCardProps
           <View style={styles.paintingFront}>
             {painting.imageUrl && !imageError ? (
               <>
-                {imageLoading ? <View style={styles.imageLoadingContainer}>
+                {imageLoading ? (
+                  <View style={styles.imageLoadingContainer}>
                     <ActivityIndicator color={COLORS.primary} size="small" />
-                  </View> : null}
+                  </View>
+                ) : null}
                 <Image
                   onError={() => {
                     setImageLoading(false);
                     setImageError(true);
                   }}
-                  onLoadEnd={() => { setImageLoading(false); }}
-                  onLoadStart={() => { setImageLoading(true); }}
+                  onLoadEnd={() => {
+                    setImageLoading(false);
+                  }}
+                  onLoadStart={() => {
+                    setImageLoading(true);
+                  }}
                   resizeMode="cover"
                   source={{ uri: painting.imageUrl }}
                   style={styles.paintingImage}
@@ -102,7 +114,12 @@ export function PaintingCard({ isFlipped, onPress, painting }: PaintingCardProps
                 <View style={styles.imageOverlay} />
               </>
             ) : (
-              <View style={[styles.paintingPlaceholder, { backgroundColor: painting.color }]}>
+              <View
+                style={[
+                  styles.paintingPlaceholder,
+                  { backgroundColor: painting.color },
+                ]}
+              >
                 <View style={styles.artFrame}>
                   <Text style={styles.paintingIcon}>🎨</Text>
                 </View>

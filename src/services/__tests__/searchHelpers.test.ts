@@ -26,11 +26,15 @@ describe('cleanArtistName', () => {
   });
 
   it('strips nationality in parentheses', () => {
-    expect(cleanArtistName('Vincent van Gogh (Dutch, 1853-1890)')).toBe('Vincent van Gogh');
+    expect(cleanArtistName('Vincent van Gogh (Dutch, 1853-1890)')).toBe(
+      'Vincent van Gogh',
+    );
   });
 
   it('strips nationality and date on newline', () => {
-    expect(cleanArtistName('Claude Monet\nFrench, 1840-1926')).toBe('Claude Monet');
+    expect(cleanArtistName('Claude Monet\nFrench, 1840-1926')).toBe(
+      'Claude Monet',
+    );
   });
 
   it('returns Unknown Artist for empty input', () => {
@@ -86,7 +90,7 @@ describe('filterByQuality', () => {
       paintingsOnly: false,
       minRelevanceScore: 0,
     });
-    expect(result.every(p => !!p.imageUrl)).toBe(true);
+    expect(result.every((p) => !!p.imageUrl)).toBe(true);
   });
 
   it('filters out unknown artists when requireArtist=true', () => {
@@ -130,7 +134,11 @@ describe('sortByRelevance', () => {
 
   it('exact artist matches rank higher than partial', () => {
     const paintings = [
-      makePainting({ id: 'partial', title: 'Work', artist: 'Claude Monet School' }),
+      makePainting({
+        id: 'partial',
+        title: 'Work',
+        artist: 'Claude Monet School',
+      }),
       makePainting({ id: 'exact', title: 'Work', artist: 'Monet' }),
     ];
     const result = sortByRelevance(paintings, 'Monet');
@@ -139,7 +147,13 @@ describe('sortByRelevance', () => {
 
   it('filters out zero-score results', () => {
     const paintings = [
-      makePainting({ id: 'p1', title: 'Completely Unrelated', artist: 'Unknown', imageUrl: undefined, year: undefined }),
+      makePainting({
+        id: 'p1',
+        title: 'Completely Unrelated',
+        artist: 'Unknown',
+        imageUrl: undefined,
+        year: undefined,
+      }),
     ];
     const result = sortByRelevance(paintings, 'zzzzz');
     expect(result).toHaveLength(0);

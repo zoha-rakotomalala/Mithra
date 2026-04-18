@@ -13,13 +13,17 @@ import { useMuseumSearch } from './useMuseumSearch';
 export function useSearch() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const route = useRoute();
-  const { museumId, visitId } = (route.params as { museumId?: string; visitId?: string } | undefined) ?? {};
+  const { museumId, visitId } =
+    (route.params as { museumId?: string; visitId?: string } | undefined) ?? {};
 
   const museumSearch = useMuseumSearch({ initialMuseumId: museumId, visitId });
 
-  const handlePaintingPress = useCallback((painting: Painting) => {
-    navigation.navigate(Paths.PaintingDetail, { paintingId: painting.id });
-  }, [navigation]);
+  const handlePaintingPress = useCallback(
+    (painting: Painting) => {
+      navigation.navigate(Paths.PaintingDetail, { paintingId: painting.id });
+    },
+    [navigation],
+  );
 
   const goBack = useCallback(() => {
     navigation.goBack();

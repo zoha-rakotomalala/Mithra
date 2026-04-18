@@ -1,4 +1,3 @@
- 
 export type AssetType = 'icons' | 'images';
 
 const getAssetsContext = (type: AssetType) =>

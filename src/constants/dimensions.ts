@@ -36,10 +36,10 @@ export const CARD = {
   get gridHeight() {
     return this.gridWidth * 1.3; // Art Deco proportion
   },
-  
+
   // Detail card
   detailMaxWidth: width - SPACING.xl * 2,
-  
+
   // Border radius
   borderRadius: 8,
   borderRadiusLarge: 16,

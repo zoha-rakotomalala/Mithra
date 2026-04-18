@@ -1,7 +1,17 @@
 import type { RootScreenProps } from '@/navigation/types';
 import { Paths } from '@/navigation/paths';
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StatusBar, Modal, TextInput, Platform, SafeAreaView } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StatusBar,
+  Modal,
+  TextInput,
+  Platform,
+  SafeAreaView,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { EmptyState, ModalHeader } from '@/components/molecules';
@@ -36,14 +46,23 @@ export function Visits() {
   const renderVisit = ({ item }: { item: Visit }) => (
     <TouchableOpacity
       style={styles.visitCard}
-      onPress={() => navigation.navigate(Paths.VisitDetail, { visitId: item.id })}
+      onPress={() =>
+        navigation.navigate(Paths.VisitDetail, { visitId: item.id })
+      }
     >
       <View style={styles.visitHeader}>
-        <Text style={[typography.h3, { color: COLORS.black }]}>{item.museum?.name ?? item.museum_id}</Text>
-        <Text style={[typography.caption, { color: COLORS.black + 'AA' }]}>{formatDate(item.visit_date)}</Text>
+        <Text style={[typography.h3, { color: COLORS.black }]}>
+          {item.museum?.name ?? item.museum_id}
+        </Text>
+        <Text style={[typography.caption, { color: COLORS.black + 'AA' }]}>
+          {formatDate(item.visit_date)}
+        </Text>
       </View>
       {item.notes && (
-        <Text style={[typography.bodySmall, styles.visitNotes]} numberOfLines={2}>
+        <Text
+          style={[typography.bodySmall, styles.visitNotes]}
+          numberOfLines={2}
+        >
           {item.notes}
         </Text>
       )}
@@ -52,47 +71,57 @@ export function Visits() {
 
   return (
     <>
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
-      <View style={[shared.container, { backgroundColor: COLORS.cream }]}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>MY VISITS</Text>
-        </View>
-
-        {/* Stats Row */}
-        <View style={styles.statsRow}>
-          <View style={styles.statCompact}>
-            <Text style={styles.statNumber}>{visits.length}</Text>
-            <Text style={styles.statLabel}>visits</Text>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
+        <View style={[shared.container, { backgroundColor: COLORS.cream }]}>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>MY VISITS</Text>
           </View>
+
+          {/* Stats Row */}
+          <View style={styles.statsRow}>
+            <View style={styles.statCompact}>
+              <Text style={styles.statNumber}>{visits.length}</Text>
+              <Text style={styles.statLabel}>visits</Text>
+            </View>
+          </View>
+
+          <FlatList
+            data={visits}
+            renderItem={renderVisit}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContent}
+            ListEmptyComponent={
+              <EmptyState
+                icon="🏛️"
+                title="No Visits Yet"
+                subtitle="Log your first museum visit to get started!"
+              />
+            }
+          />
+
+          <TouchableOpacity
+            style={styles.fab}
+            onPress={() => {
+              const today = new Date();
+              setSelectedDate(today);
+              updateNewVisitField(
+                'visitDate',
+                today.toISOString().split('T')[0],
+              );
+              setShowAddModal(true);
+            }}
+          >
+            <Text style={styles.fabText}>+</Text>
+          </TouchableOpacity>
         </View>
+      </SafeAreaView>
 
-        <FlatList
-          data={visits}
-          renderItem={renderVisit}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          ListEmptyComponent={
-            <EmptyState
-              icon="🏛️"
-              title="No Visits Yet"
-              subtitle="Log your first museum visit to get started!"
-            />
-          }
-        />
-
-        <TouchableOpacity style={styles.fab} onPress={() => {
-          const today = new Date();
-          setSelectedDate(today);
-          updateNewVisitField('visitDate', today.toISOString().split('T')[0]);
-          setShowAddModal(true);
-        }}>
-          <Text style={styles.fabText}>+</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
-
-      <Modal visible={showAddModal} animationType="slide" presentationStyle="pageSheet">
+      <Modal
+        visible={showAddModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
         <View style={[shared.container, { backgroundColor: COLORS.cream }]}>
           <ModalHeader
             title="LOG MUSEUM VISIT"
@@ -105,7 +134,13 @@ export function Visits() {
               style={styles.museumPickerField}
               onPress={() => setShowMuseumPicker(true)}
             >
-              <Text style={newVisit.museumName ? styles.inputText : styles.inputPlaceholder}>
+              <Text
+                style={
+                  newVisit.museumName
+                    ? styles.inputText
+                    : styles.inputPlaceholder
+                }
+              >
                 {newVisit.museumName || 'Select Museum'}
               </Text>
               <Text style={styles.chevronIcon}>⌵</Text>
@@ -115,7 +150,13 @@ export function Visits() {
               style={styles.datePickerField}
               onPress={() => setShowDatePicker(true)}
             >
-              <Text style={newVisit.visitDate ? styles.inputText : styles.inputPlaceholder}>
+              <Text
+                style={
+                  newVisit.visitDate
+                    ? styles.inputText
+                    : styles.inputPlaceholder
+                }
+              >
                 {newVisit.visitDate || 'Select Date'}
               </Text>
               <Text style={[styles.chevronIcon, { fontSize: 18 }]}>▩</Text>
@@ -129,7 +170,10 @@ export function Visits() {
                   setShowDatePicker(Platform.OS === 'ios');
                   if (date) {
                     setSelectedDate(date);
-                    updateNewVisitField('visitDate', date.toISOString().split('T')[0]);
+                    updateNewVisitField(
+                      'visitDate',
+                      date.toISOString().split('T')[0],
+                    );
                   }
                 }}
               />
@@ -156,7 +200,11 @@ export function Visits() {
         </View>
       </Modal>
 
-      <Modal visible={showMuseumPicker} animationType="slide" presentationStyle="pageSheet">
+      <Modal
+        visible={showMuseumPicker}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
         <View style={[shared.container, { backgroundColor: COLORS.cream }]}>
           <ModalHeader
             title="SELECT MUSEUM"
@@ -171,10 +219,18 @@ export function Visits() {
                 style={styles.museumOption}
                 onPress={() => selectMuseum(item)}
               >
-                <View style={[styles.colorBadge, { backgroundColor: item.color }]} />
+                <View
+                  style={[styles.colorBadge, { backgroundColor: item.color }]}
+                />
                 <View style={styles.museumOptionText}>
-                  <Text style={[typography.h4, { color: COLORS.black }]}>{item.name}</Text>
-                  <Text style={[typography.caption, { color: COLORS.gold + 'AA' }]}>{item.shortName} · {item.country}</Text>
+                  <Text style={[typography.h4, { color: COLORS.black }]}>
+                    {item.name}
+                  </Text>
+                  <Text
+                    style={[typography.caption, { color: COLORS.gold + 'AA' }]}
+                  >
+                    {item.shortName} · {item.country}
+                  </Text>
                 </View>
               </TouchableOpacity>
             )}

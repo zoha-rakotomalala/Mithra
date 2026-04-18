@@ -22,7 +22,12 @@ interface UseMuseumSearchOptions {
 
 export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
   const { initialMuseumId, visitId } = options;
-  const { paintings: existingPaintings, addToCollection, isInCollection, toggleSeen } = usePaintings();
+  const {
+    paintings: existingPaintings,
+    addToCollection,
+    isInCollection,
+    toggleSeen,
+  } = usePaintings();
   const allMuseums = getAllMuseums();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,7 +36,7 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
   const [isLoadingCache, setIsLoadingCache] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedMuseums, setSelectedMuseums] = useState<string[]>(
-    initialMuseumId ? [initialMuseumId] : TIER_1_MUSEUMS
+    initialMuseumId ? [initialMuseumId] : TIER_1_MUSEUMS,
   );
   const [showMuseumPicker, setShowMuseumPicker] = useState(false);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
@@ -43,34 +48,42 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
     getLikedUuidsForVisit(visitId).then((ids) => {
       if (!cancelled) setLikedIds(ids);
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [visitId]);
 
-  const handleLike = useCallback(async (painting: Painting) => {
-    if (!visitId) return;
-    const paintingId = painting.id;
-    if (likedIds.has(paintingId)) {
-      await unlikePainting(paintingId, visitId);
-      setLikedIds((prev) => {
-        const next = new Set(prev);
-        next.delete(paintingId);
-        return next;
-      });
-    } else {
-      await likePainting(paintingId, visitId);
-      setLikedIds((prev) => new Set(prev).add(paintingId));
-      // Bridge to PaintingsContext: add to collection as seen
-      if (!isInCollection(paintingId)) {
-        addToCollection({ ...painting, isSeen: true, wantToVisit: false });
+  const handleLike = useCallback(
+    async (painting: Painting) => {
+      if (!visitId) return;
+      const paintingId = painting.id;
+      if (likedIds.has(paintingId)) {
+        await unlikePainting(paintingId, visitId);
+        setLikedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(paintingId);
+          return next;
+        });
       } else {
-        toggleSeen(paintingId);
+        await likePainting(paintingId, visitId);
+        setLikedIds((prev) => new Set(prev).add(paintingId));
+        // Bridge to PaintingsContext: add to collection as seen
+        if (!isInCollection(paintingId)) {
+          addToCollection({ ...painting, isSeen: true, wantToVisit: false });
+        } else {
+          toggleSeen(paintingId);
+        }
       }
-    }
-  }, [visitId, likedIds, addToCollection, isInCollection, toggleSeen]);
+    },
+    [visitId, likedIds, addToCollection, isInCollection, toggleSeen],
+  );
 
-  const isLiked = useCallback((painting: Painting) => {
-    return likedIds.has(painting.id);
-  }, [likedIds]);
+  const isLiked = useCallback(
+    (painting: Painting) => {
+      return likedIds.has(painting.id);
+    },
+    [likedIds],
+  );
 
   const handleProgressUpdate = useCallback((update: ProgressUpdate) => {
     if (update.phase === 'cache') {
@@ -110,14 +123,14 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
         Alert.alert(
           'No Results',
           `No ${searchType === 'artist' ? 'works by' : 'paintings titled'} "${searchQuery}" found.\n\nTry different keywords or select more museums.`,
-          [{ text: 'OK' }]
+          [{ text: 'OK' }],
         );
       }
     } catch (error) {
       Alert.alert(
         'Search Error',
         'Failed to search paintings. Please check your connection.',
-        [{ text: 'OK' }]
+        [{ text: 'OK' }],
       );
       console.error('Search error:', error);
     } finally {
@@ -149,17 +162,26 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
     }
   };
 
-  const isAlreadyInCollection = useCallback((painting: Painting) => {
-    const found = existingPaintings.find(
-      p => p.id === painting.id ||
-      (p.title.toLowerCase() === painting.title.toLowerCase() &&
-       p.artist.toLowerCase() === painting.artist.toLowerCase())
-    );
-    return found ? {
-      inCollection: true,
-      status: { isSeen: found.isSeen || false, wantToVisit: found.wantToVisit || false }
-    } : { inCollection: false };
-  }, [existingPaintings]);
+  const isAlreadyInCollection = useCallback(
+    (painting: Painting) => {
+      const found = existingPaintings.find(
+        (p) =>
+          p.id === painting.id ||
+          (p.title.toLowerCase() === painting.title.toLowerCase() &&
+            p.artist.toLowerCase() === painting.artist.toLowerCase()),
+      );
+      return found
+        ? {
+            inCollection: true,
+            status: {
+              isSeen: found.isSeen || false,
+              wantToVisit: found.wantToVisit || false,
+            },
+          }
+        : { inCollection: false };
+    },
+    [existingPaintings],
+  );
 
   const clearSearch = () => {
     setSearchQuery('');

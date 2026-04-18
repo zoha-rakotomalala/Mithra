@@ -8,10 +8,11 @@ export function museumImageSource(
   uri: string | undefined,
   priority: Priority = FastImage.priority.normal,
 ): Source {
-  const headers: Record<string, string> | undefined =
-    uri?.includes('artic.edu/iiif')
-      ? { Referer: 'https://www.artic.edu/' }
-      : undefined;
+  const headers: Record<string, string> | undefined = uri?.includes(
+    'artic.edu/iiif',
+  )
+    ? { Referer: 'https://www.artic.edu/' }
+    : undefined;
 
   return {
     uri: uri || '',

@@ -16,9 +16,12 @@ export function useCollectionFilter() {
   const collection = useCollection();
   const { syncing, syncError } = usePaintings();
 
-  const handlePaintingPress = useCallback((painting: Painting) => {
-    navigation.navigate(Paths.PaintingDetail, { paintingId: painting.id });
-  }, [navigation]);
+  const handlePaintingPress = useCallback(
+    (painting: Painting) => {
+      navigation.navigate(Paths.PaintingDetail, { paintingId: painting.id });
+    },
+    [navigation],
+  );
 
   return {
     ...collection,

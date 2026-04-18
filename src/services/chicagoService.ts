@@ -21,7 +21,7 @@ interface ChicagoSearchResult {
  * Search Art Institute of Chicago collection
  */
 export async function searchChicago(
-  params: ChicagoSearchParams
+  params: ChicagoSearchParams,
 ): Promise<ChicagoSearchResult> {
   try {
     const { query, page = 1, limit = 20 } = params;
@@ -34,7 +34,8 @@ export async function searchChicago(
       q: query.trim(),
       page: page.toString(),
       limit: limit.toString(),
-      fields: 'id,title,artist_display,date_display,medium_display,dimensions,image_id,thumbnail,color',
+      fields:
+        'id,title,artist_display,date_display,medium_display,dimensions,image_id,thumbnail,color',
     });
 
     const url = `${AIC_API_BASE}/artworks/search?${queryParams.toString()}`;
@@ -50,7 +51,9 @@ export async function searchChicago(
     }
 
     // Fetch artworks in batch
-    const paintings = await fetchArtworksBatch(artworkIds.map((item: any) => item.id));
+    const paintings = await fetchArtworksBatch(
+      artworkIds.map((item: any) => item.id),
+    );
 
     return {
       paintings,
@@ -155,9 +158,11 @@ export function getPopularChicagoArtists(): string[] {
   ];
 }
 
-
-
-import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import type {
+  MuseumServiceAdapter,
+  MuseumSearchParams,
+  MuseumSearchResult,
+} from './types/museumAdapter';
 import { registerAdapter } from './museumAdapterRegistry';
 
 export const chicagoAdapter: MuseumServiceAdapter = {

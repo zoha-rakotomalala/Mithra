@@ -10,7 +10,10 @@ import type { MMKV } from 'react-native-mmkv';
 import React, { useCallback, useRef, useState } from 'react';
 
 import { SyncProvider, useSync } from '@/contexts/SyncContext';
-import { CollectionProvider, useCollection } from '@/contexts/CollectionContext';
+import {
+  CollectionProvider,
+  useCollection,
+} from '@/contexts/CollectionContext';
 import { PaletteProvider, usePalette } from '@/contexts/PaletteContext';
 
 type PaintingsProviderProps = {
@@ -26,7 +29,10 @@ function PaintingsInner({ children }: { readonly children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export function PaintingsProvider({ children, storage }: PaintingsProviderProps) {
+export function PaintingsProvider({
+  children,
+  storage,
+}: PaintingsProviderProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const collectionRefreshRef = useRef<(() => void) | null>(null);
   const paletteRefreshRef = useRef<(() => void) | null>(null);
@@ -41,7 +47,11 @@ export function PaintingsProvider({ children, storage }: PaintingsProviderProps)
   }, []);
 
   return (
-    <SyncProvider storage={storage} isLoaded={isLoaded} onSyncComplete={handleSyncComplete}>
+    <SyncProvider
+      storage={storage}
+      isLoaded={isLoaded}
+      onSyncComplete={handleSyncComplete}
+    >
       <CollectionProvider storage={storage} onLoaded={handleLoaded}>
         <PaletteProvider storage={storage}>
           <RefCapture
@@ -88,10 +98,13 @@ export function usePaintings() {
   const sync = useSync();
 
   // Preserve original behavior: removeFromCollection also removes from palette
-  const removeFromCollection = useCallback((paintingId: string) => {
-    collection.removeFromCollection(paintingId);
-    palette.removeFromPalette(paintingId);
-  }, [collection.removeFromCollection, palette.removeFromPalette]);
+  const removeFromCollection = useCallback(
+    (paintingId: string) => {
+      collection.removeFromCollection(paintingId);
+      palette.removeFromPalette(paintingId);
+    },
+    [collection.removeFromCollection, palette.removeFromPalette],
+  );
 
   return {
     // Collection

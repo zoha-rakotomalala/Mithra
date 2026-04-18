@@ -21,51 +21,66 @@ import { useCollectionFilter } from '@/hooks/domain/collection/useCollectionFilt
 import { collectionStyles as styles } from './Collection.styles';
 
 // Memoized painting card
-const PaintingCard = React.memo(({
-  onPress,
-  painting
-}: {
-  readonly onPress: () => void;
-  readonly painting: Painting;
-}) => (
-  <TouchableOpacity
-    activeOpacity={0.7}
-    onPress={onPress}
-    style={styles.gridItem}
-  >
-    <View style={styles.paintingCard}>
-      {painting.imageUrl ? (
-        <FastImage
-          resizeMode={FastImage.resizeMode.cover}
-          source={museumImageSource(painting.thumbnailUrl || painting.imageUrl)}
-          style={styles.paintingImage}
-        />
-      ) : (
-        <View style={[styles.paintingPlaceholder, { backgroundColor: painting.color }]}>
-          <View style={styles.artFrame}>
-            <Text style={styles.paintingIcon}>🎨</Text>
+const PaintingCard = React.memo(
+  ({
+    onPress,
+    painting,
+  }: {
+    readonly onPress: () => void;
+    readonly painting: Painting;
+  }) => (
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={onPress}
+      style={styles.gridItem}
+    >
+      <View style={styles.paintingCard}>
+        {painting.imageUrl ? (
+          <FastImage
+            resizeMode={FastImage.resizeMode.cover}
+            source={museumImageSource(
+              painting.thumbnailUrl || painting.imageUrl,
+            )}
+            style={styles.paintingImage}
+          />
+        ) : (
+          <View
+            style={[
+              styles.paintingPlaceholder,
+              { backgroundColor: painting.color },
+            ]}
+          >
+            <View style={styles.artFrame}>
+              <Text style={styles.paintingIcon}>🎨</Text>
+            </View>
           </View>
-        </View>
-      )}
+        )}
 
-      {/* Status Badge */}
-      {painting.isSeen ? <View style={styles.seenBadge}>
-          <Text style={styles.badgeIcon}>S</Text>
-        </View> : null}
-      {painting.wantToVisit ? <View style={styles.wantToVisitBadge}>
-          <Text style={styles.badgeIcon}>W</Text>
-        </View> : null}
-    </View>
+        {/* Status Badge */}
+        {painting.isSeen ? (
+          <View style={styles.seenBadge}>
+            <Text style={styles.badgeIcon}>S</Text>
+          </View>
+        ) : null}
+        {painting.wantToVisit ? (
+          <View style={styles.wantToVisitBadge}>
+            <Text style={styles.badgeIcon}>W</Text>
+          </View>
+        ) : null}
+      </View>
 
-    <Text numberOfLines={2} style={styles.paintingTitle}>
-      {painting.title}
-    </Text>
-    <Text numberOfLines={1} style={styles.paintingArtist}>
-      {painting.artist}
-    </Text>
-    {painting.year ? <Text style={styles.paintingYear}>{painting.year}</Text> : null}
-  </TouchableOpacity>
-));
+      <Text numberOfLines={2} style={styles.paintingTitle}>
+        {painting.title}
+      </Text>
+      <Text numberOfLines={1} style={styles.paintingArtist}>
+        {painting.artist}
+      </Text>
+      {painting.year ? (
+        <Text style={styles.paintingYear}>{painting.year}</Text>
+      ) : null}
+    </TouchableOpacity>
+  ),
+);
 
 export function Collection() {
   const {
@@ -102,7 +117,16 @@ export function Collection() {
         {syncing && (
           <View style={{ alignItems: 'center', paddingVertical: 8 }}>
             <ActivityIndicator color={COLORS.white} size="small" />
-            <Text style={{ color: COLORS.white, fontSize: 12, marginTop: 4, opacity: 0.7 }}>Syncing...</Text>
+            <Text
+              style={{
+                color: COLORS.white,
+                fontSize: 12,
+                marginTop: 4,
+                opacity: 0.7,
+              }}
+            >
+              Syncing...
+            </Text>
           </View>
         )}
 
@@ -116,12 +140,16 @@ export function Collection() {
           </View>
           <Text style={styles.statDivider}>·</Text>
           <View style={styles.statCompact}>
-            <Text style={[styles.statNumber, styles.seenNumber]}>{stats.seen}</Text>
+            <Text style={[styles.statNumber, styles.seenNumber]}>
+              {stats.seen}
+            </Text>
             <Text style={styles.statLabel}>seen</Text>
           </View>
           <Text style={styles.statDivider}>·</Text>
           <View style={styles.statCompact}>
-            <Text style={[styles.statNumber, styles.wantNumber]}>{stats.wantToVisit}</Text>
+            <Text style={[styles.statNumber, styles.wantNumber]}>
+              {stats.wantToVisit}
+            </Text>
             <Text style={styles.statLabel}>to visit</Text>
           </View>
         </View>
@@ -138,13 +166,23 @@ export function Collection() {
               { key: 'wantToVisit', label: 'Want to Visit' },
             ]}
             horizontal
-            keyExtractor={item => item.key}
+            keyExtractor={(item) => item.key}
             renderItem={({ item }) => (
               <TouchableOpacity
-                onPress={() => { setActiveFilter(item.key as any); }}
-                style={[styles.filterChip, activeFilter === item.key && styles.filterChipActive]}
+                onPress={() => {
+                  setActiveFilter(item.key as any);
+                }}
+                style={[
+                  styles.filterChip,
+                  activeFilter === item.key && styles.filterChipActive,
+                ]}
               >
-                <Text style={[styles.filterChipText, activeFilter === item.key && styles.filterChipTextActive]}>
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    activeFilter === item.key && styles.filterChipTextActive,
+                  ]}
+                >
                   {item.label}
                 </Text>
               </TouchableOpacity>
@@ -165,13 +203,23 @@ export function Collection() {
                 { key: 'yearOldest', label: 'Oldest' },
               ]}
               horizontal
-              keyExtractor={item => item.key}
+              keyExtractor={(item) => item.key}
               renderItem={({ item }) => (
                 <TouchableOpacity
-                  onPress={() => { setSortBy(item.key as any); }}
-                  style={[styles.sortOption, sortBy === item.key && styles.sortOptionActive]}
+                  onPress={() => {
+                    setSortBy(item.key as any);
+                  }}
+                  style={[
+                    styles.sortOption,
+                    sortBy === item.key && styles.sortOptionActive,
+                  ]}
                 >
-                  <Text style={[styles.sortOptionText, sortBy === item.key && styles.sortOptionTextActive]}>
+                  <Text
+                    style={[
+                      styles.sortOptionText,
+                      sortBy === item.key && styles.sortOptionTextActive,
+                    ]}
+                  >
                     {item.label}
                   </Text>
                 </TouchableOpacity>
@@ -192,18 +240,18 @@ export function Collection() {
                 <View key={`section-${index}`} style={styles.groupSection}>
                   <View style={styles.groupHeader}>
                     <Text style={styles.groupTitle}>{section.title}</Text>
-                    <Text style={styles.groupCount}>
-                      {section.data.length}
-                    </Text>
+                    <Text style={styles.groupCount}>{section.data.length}</Text>
                   </View>
                   <FlatList
                     contentContainerStyle={styles.horizontalList}
                     data={section.data}
                     horizontal
-                    keyExtractor={item => `painting-${item.id}`}
+                    keyExtractor={(item) => `painting-${item.id}`}
                     renderItem={({ item }) => (
                       <PaintingCard
-                        onPress={() => { handlePaintingPress(item); }}
+                        onPress={() => {
+                          handlePaintingPress(item);
+                        }}
                         painting={item}
                       />
                     )}
@@ -217,7 +265,9 @@ export function Collection() {
                 {preparedData[0].data.map((painting) => (
                   <PaintingCard
                     key={painting.id}
-                    onPress={() => { handlePaintingPress(painting); }}
+                    onPress={() => {
+                      handlePaintingPress(painting);
+                    }}
                     painting={painting}
                   />
                 ))}

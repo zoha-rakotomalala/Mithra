@@ -1,6 +1,13 @@
 import type { MMKV } from 'react-native-mmkv';
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import { createSyncService } from '@/services/syncService';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,7 +28,12 @@ type SyncProviderProps = {
   readonly onSyncComplete: () => void;
 };
 
-export function SyncProvider({ children, storage, isLoaded, onSyncComplete }: SyncProviderProps) {
+export function SyncProvider({
+  children,
+  storage,
+  isLoaded,
+  onSyncComplete,
+}: SyncProviderProps) {
   const { user } = useAuth();
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -57,21 +69,22 @@ export function SyncProvider({ children, storage, isLoaded, onSyncComplete }: Sy
     };
 
     runSync();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id, isLoaded, syncService]);
 
-  const value = useMemo(() => ({
-    syncing,
-    syncError,
-    syncService,
-    reportSyncError,
-  }), [syncing, syncError, syncService, reportSyncError]);
-
-  return (
-    <SyncContext.Provider value={value}>
-      {children}
-    </SyncContext.Provider>
+  const value = useMemo(
+    () => ({
+      syncing,
+      syncError,
+      syncService,
+      reportSyncError,
+    }),
+    [syncing, syncError, syncService, reportSyncError],
   );
+
+  return <SyncContext.Provider value={value}>{children}</SyncContext.Provider>;
 }
 
 export function useSync() {

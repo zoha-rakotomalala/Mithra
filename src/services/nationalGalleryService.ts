@@ -19,7 +19,7 @@ interface NGSearchResult {
  * Search National Gallery (UK) collection via Elasticsearch API
  */
 export async function searchNationalGallery(
-  params: NGSearchParams
+  params: NGSearchParams,
 ): Promise<NGSearchResult> {
   try {
     const { query, limit = 20 } = params;
@@ -31,21 +31,32 @@ export async function searchNationalGallery(
     console.log('🇬🇧 Searching National Gallery:', query);
 
     // POST to Elasticsearch endpoint
-    const data = await museumApi.post(NG_ES_API, {
-      json: {
-        query: {
-          bool: {
-            must: [
-              { multi_match: { query: query.trim(), fields: ['summary.title', 'creation.maker.summary.title', 'summary.description'] } },
-              { term: { '@datatype.base': 'object' } },
-            ],
+    const data = await museumApi
+      .post(NG_ES_API, {
+        json: {
+          query: {
+            bool: {
+              must: [
+                {
+                  multi_match: {
+                    query: query.trim(),
+                    fields: [
+                      'summary.title',
+                      'creation.maker.summary.title',
+                      'summary.description',
+                    ],
+                  },
+                },
+                { term: { '@datatype.base': 'object' } },
+              ],
+            },
           },
+          size: limit,
+          _source: ['summary', 'creation', 'identifier'],
         },
-        size: limit,
-        _source: ['summary', 'creation', 'identifier'],
-      },
-      headers: { 'Content-Type': 'application/json' },
-    }).json<any>();
+        headers: { 'Content-Type': 'application/json' },
+      })
+      .json<any>();
 
     const hits = data.hits?.hits || [];
     const total = data.hits?.total?.value || 0;
@@ -71,7 +82,10 @@ function parseNGElasticsearchHit(hit: any): Painting | null {
     if (title === 'Untitled') return null;
 
     const maker = src?.creation?.[0]?.maker?.[0];
-    const artistRaw = maker?.summary?.title || src?.creation?.[0]?.attribution?.[0]?.value || 'Unknown Artist';
+    const artistRaw =
+      maker?.summary?.title ||
+      src?.creation?.[0]?.attribution?.[0]?.value ||
+      'Unknown Artist';
     const artist = cleanArtistName(artistRaw);
 
     // Extract year from creation date
@@ -84,7 +98,9 @@ function parseNGElasticsearchHit(hit: any): Painting | null {
 
     // Extract image via IIIF using the object number (e.g., NG6607)
     const identifiers = src?.identifier || [];
-    const objNumEntry = identifiers.find((i: any) => i.type === 'object number');
+    const objNumEntry = identifiers.find(
+      (i: any) => i.type === 'object number',
+    );
     const objectNumber = objNumEntry?.value;
     if (!objectNumber) return null;
 
@@ -115,6 +131,7 @@ function parseNGElasticsearchHit(hit: any): Painting | null {
     return null;
   }
 }
+
 /**
  * Get popular National Gallery artists
  */
@@ -130,9 +147,11 @@ export function getPopularNGArtists(): string[] {
   ];
 }
 
-
-
-import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import type {
+  MuseumServiceAdapter,
+  MuseumSearchParams,
+  MuseumSearchResult,
+} from './types/museumAdapter';
 import { registerAdapter } from './museumAdapterRegistry';
 
 export const nationalGalleryAdapter: MuseumServiceAdapter = {

@@ -21,7 +21,7 @@ interface EuropeanaSearchResult {
  * Search Europeana collection (50M+ objects from European cultural institutions)
  */
 export async function searchEuropeana(
-  params: EuropeanaSearchParams
+  params: EuropeanaSearchParams,
 ): Promise<EuropeanaSearchResult> {
   try {
     const { query, page = 1, rows = 30 } = params;
@@ -31,7 +31,7 @@ export async function searchEuropeana(
     }
 
     const queryParams = new URLSearchParams({
-      wskey: API_KEY || "",
+      wskey: API_KEY || '',
       query: query.trim(),
       qf: 'what:painting', // Focus on paintings
       media: 'true', // Must have media
@@ -73,7 +73,9 @@ function parseEuropeanaObject(item: any): Painting | null {
   try {
     // Extract title (can be array or string)
     const titleRaw = item.title || item.dcTitle;
-    const title = Array.isArray(titleRaw) ? titleRaw[0] : titleRaw || 'Untitled';
+    const title = Array.isArray(titleRaw)
+      ? titleRaw[0]
+      : titleRaw || 'Untitled';
 
     // Extract artist/creator
     const creatorRaw = item.dcCreator;
@@ -137,7 +139,8 @@ function parseEuropeanaObject(item: any): Painting | null {
       dimensions: undefined,
       museum: dataProvider,
       location: country,
-      description: descParts.length > 0 ? cleanText(descParts.join('. ')) : undefined,
+      description:
+        descParts.length > 0 ? cleanText(descParts.join('. ')) : undefined,
       imageUrl,
       thumbnailUrl,
       color: generateColorFromString(title),
@@ -184,9 +187,11 @@ export function getPopularEuropeanaSearches(): string[] {
   ];
 }
 
-
-
-import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import type {
+  MuseumServiceAdapter,
+  MuseumSearchParams,
+  MuseumSearchResult,
+} from './types/museumAdapter';
 import { registerAdapter } from './museumAdapterRegistry';
 
 export const europeanaAdapter: MuseumServiceAdapter = {

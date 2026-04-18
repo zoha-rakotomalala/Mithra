@@ -1,7 +1,10 @@
 import type { RootStackParamList } from '@/navigation/types';
 
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator, CardStyleInterpolators } from '@react-navigation/stack';
+import {
+  createStackNavigator,
+  CardStyleInterpolators,
+} from '@react-navigation/stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { TabNavigator } from '@/navigation/TabNavigator';
@@ -10,7 +13,18 @@ import { Paths } from '@/navigation/paths';
 import { useTheme } from '@/theme';
 import { useAuth } from '@/contexts/AuthContext';
 
-import { Startup, PaintingDetail, ArtistProfile, VisitDetail, MuseumCollection, LikedPaintings, VisitPalette, ViewPalette, Auth, Search } from '@/screens';
+import {
+  Startup,
+  PaintingDetail,
+  ArtistProfile,
+  VisitDetail,
+  MuseumCollection,
+  LikedPaintings,
+  VisitPalette,
+  ViewPalette,
+  Auth,
+  Search,
+} from '@/screens';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -25,7 +39,13 @@ function ApplicationNavigator() {
   return (
     <SafeAreaProvider>
       <NavigationContainer theme={navigationTheme}>
-        <Stack.Navigator key={variant} screenOptions={{ headerShown: false, cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS }}>
+        <Stack.Navigator
+          key={variant}
+          screenOptions={{
+            headerShown: false,
+            cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          }}
+        >
           {user ? (
             // Authenticated screens
             <>

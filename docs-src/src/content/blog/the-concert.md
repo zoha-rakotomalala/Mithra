@@ -1,17 +1,37 @@
 ---
-title: "The Concert — The Painting That Started Everything"
-date: 2026-04-14
-description: "How a Baroque painting by Gerrit van Honthorst in a Parisian museum set me on a path I never expected."
-image: "https://upload.wikimedia.org/wikipedia/commons/e/ee/Gerrit_van_honthorst%2C_il_concerto%2C_1620-27%2C_01.jpg"
-tags: ["paintings", "honthorst", "baroque"]
+title: 'The Painting That Started Everything'
+date: 2026-04-19
+description: 'How a painting by Gerrit van Honthorst in a Parisian museum set me on a path I never expected.'
+image: 'https://www.arts-in-the-city.com/wp-content/uploads/2024/07/vue-de-lexposition-chefs-doeuvre-de-la-galerie-borghese-reouverture-du-musee-jacquemart-andre-3-3200x0.jpg'
+tags: [ 'paintings', 'honthorst', 'baroque' ]
 ---
 
-There's a painting by Gerrit van Honthorst called *The Concert*, from 1626. It shows musicians gathered around a table in warm candlelight — a scene that feels intimate, alive, like you could hear the music if you leaned in close enough.
+I remember it so clearly. The day I made the decision of going to Museum Jacquemart-André for their
+exhibition in partnership with the Galleria Borghese.
+I was in my Amsterdam apartment, about to eat lunch and selecting my entertainment for the meal. I
+was in a "Let's feel smart" mood and decided to watch a documentary about Persepolis.
+Before the start of the documentary I saw an ad, and I bought the ticket for my next trip home.
 
-I first saw his work at the Musée Jacquemart-André in Paris. It was a piece on loan from the Galleria Borghese. I didn't know anything about Honthorst at the time. I just stood there, drawn in by the light.
+I did go. It was not my first experience in a Museum at all but everytime I do feel weird going to
+those places.
+It's that feeling of not belonging somewhere, of being on the outside of a universe. Anyways, I
+still went in obviously.
 
-Then, months later, I found more of his paintings in Utrecht. He's Dutch, so it makes sense, but I was surprised. That moment of recognition — seeing a thread connecting experiences across cities and museums — is what Palette was initially about.
+I really liked it, some pieces more than others, and one really stood out to me.
+I don't know what it was that attracted me so.
+I remember that I had moved on to the next room, but it did not leave my mind. I went back, facing
+the crowd, just to take a picture.
+I still vividly remember the great lightning, the colors popping, the fun details. I was sort of
+mesmerized.
 
-It's a small thing, maybe. But that thread changed how I move through museums. I'm no longer just looking. I'm connecting. And that connection is what makes art feel personal, even when you're new to it.
+It's a painting by Gerrit van Honthorst called _The Concert (Le vol de l’amulette)_, from 1626.
 
-Honthorst was a master of chiaroscuro, the dramatic contrast between light and dark. His candlelit scenes have a warmth that feels modern even though they're four hundred years old. If you ever get the chance to see one in person, take it.
+Cut forward to 9 months later when I visit the Utrecht Centraal Museum. I have this déjà-vu
+impression when I look at a painting and sure enough, the paintings I am seeing have been made my
+the same artist.
+It does make sense, his name sounded very Dutch now that I think about it.
+
+Anyways, I chuckled at first, but that coincidence kept replaying in my head for weeks.
+At the time (and honestly now as well) I was really early in my art discovery journey and had never
+thought about researching artworks from specific artists to kind of schedule visits around them.
+And then I had this idea that kept growing. That's how I started this project.

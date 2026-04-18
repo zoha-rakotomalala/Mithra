@@ -30,7 +30,7 @@ export const typography = StyleSheet.create({
     fontWeight: '600',
     color: COLORS.text,
   },
-  
+
   // Body text
   body: {
     fontSize: 14,
@@ -50,7 +50,7 @@ export const typography = StyleSheet.create({
     color: COLORS.textLight,
     lineHeight: 18,
   },
-  
+
   // Special styles
   caption: {
     fontSize: 11,
@@ -66,7 +66,7 @@ export const typography = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
-  
+
   // Art Deco specific
   artDecoTitle: {
     fontSize: 28,

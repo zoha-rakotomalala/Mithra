@@ -51,7 +51,7 @@ export class OfflineQueue {
   }
 
   remove(operationId: string): void {
-    const queue = this.readQueue().filter(op => op.id !== operationId);
+    const queue = this.readQueue().filter((op) => op.id !== operationId);
     this.writeQueue(queue);
   }
 

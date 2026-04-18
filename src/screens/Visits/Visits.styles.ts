@@ -1,5 +1,12 @@
 import { StyleSheet, Platform } from 'react-native';
-import { COLORS, SPACING, ANDROID_STATUS_BAR_PADDING, FONT_SIZE, ICON_SIZE, TOUCHABLE_HEIGHT } from '@/constants';
+import {
+  COLORS,
+  SPACING,
+  ANDROID_STATUS_BAR_PADDING,
+  FONT_SIZE,
+  ICON_SIZE,
+  TOUCHABLE_HEIGHT,
+} from '@/constants';
 
 export const visitsStyles = StyleSheet.create({
   // Safe Area - Matches Collection/Search

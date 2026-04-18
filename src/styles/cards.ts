@@ -12,7 +12,7 @@ export const cards = StyleSheet.create({
     width: CARD.gridWidth,
     marginBottom: SPACING.md,
   },
-  
+
   // Image container with Art Deco frame
   imageContainer: {
     width: CARD.gridWidth,
@@ -24,13 +24,13 @@ export const cards = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.gold,
   },
-  
+
   // Image
   image: {
     width: '100%',
     height: '100%',
   },
-  
+
   // Placeholder for missing images
   imagePlaceholder: {
     width: '100%',
@@ -42,7 +42,7 @@ export const cards = StyleSheet.create({
   imagePlaceholderIcon: {
     fontSize: 32,
   },
-  
+
   // Loading overlay
   imageLoadingOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -50,7 +50,7 @@ export const cards = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  
+
   // Card text content
   cardTitle: {
     fontSize: 12,
@@ -71,7 +71,7 @@ export const cards = StyleSheet.create({
     color: COLORS.textLight,
     marginTop: 2,
   },
-  
+
   // Art Deco decorative elements
   artDecoCorner: {
     position: 'absolute',

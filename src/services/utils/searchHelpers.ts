@@ -9,14 +9,17 @@ export function cleanArtistName(artistDisplay: string): string {
   if (!artistDisplay) return 'Unknown Artist';
 
   return artistDisplay
-    .split('\n')[0]  // Take first line only
-    .replace(/\([^)]*\)/g, '')  // Remove (parentheses)
-    .replace(/\[[^\]]*\]/g, '')  // Remove [brackets]
-    .replace(/\d{4}\s*[-–]\s*\d{4}/g, '')  // Remove date ranges
-    .replace(/,\s*\d{4}\s*[-–]\s*\d{4}/g, '')  // Remove ", 1853-1890"
-    .replace(/,\s*\d{4}/g, '')  // Remove ", 1853"
-    .replace(/\b(?:Dutch|French|American|Italian|Spanish|German|British|Belgian|Swiss|Austrian|Russian|Japanese|Chinese|Korean)\b/gi, '')  // Remove nationalities
-    .replace(/\s+/g, ' ')  // Normalize spaces
+    .split('\n')[0] // Take first line only
+    .replace(/\([^)]*\)/g, '') // Remove (parentheses)
+    .replace(/\[[^\]]*\]/g, '') // Remove [brackets]
+    .replace(/\d{4}\s*[-–]\s*\d{4}/g, '') // Remove date ranges
+    .replace(/,\s*\d{4}\s*[-–]\s*\d{4}/g, '') // Remove ", 1853-1890"
+    .replace(/,\s*\d{4}/g, '') // Remove ", 1853"
+    .replace(
+      /\b(?:Dutch|French|American|Italian|Spanish|German|British|Belgian|Swiss|Austrian|Russian|Japanese|Chinese|Korean)\b/gi,
+      '',
+    ) // Remove nationalities
+    .replace(/\s+/g, ' ') // Normalize spaces
     .trim();
 }
 
@@ -40,8 +43,8 @@ export function calculateRelevance(painting: Painting, query: string): number {
   if (artist.includes(q)) score += 75;
 
   // Split query into words for multi-word matches
-  const queryWords = q.split(' ').filter(w => w.length > 2);
-  queryWords.forEach(word => {
+  const queryWords = q.split(' ').filter((w) => w.length > 2);
+  queryWords.forEach((word) => {
     if (title.includes(word)) score += 10;
     if (artist.includes(word)) score += 15;
   });
@@ -56,9 +59,11 @@ export function calculateRelevance(painting: Painting, query: string): number {
   if (painting.year) score += 5;
 
   // Paintings (vs other object types) = slight bonus
-  if (painting.medium?.toLowerCase().includes('paint') ||
-      painting.medium?.toLowerCase().includes('oil') ||
-      painting.medium?.toLowerCase().includes('canvas')) {
+  if (
+    painting.medium?.toLowerCase().includes('paint') ||
+    painting.medium?.toLowerCase().includes('oil') ||
+    painting.medium?.toLowerCase().includes('canvas')
+  ) {
     score += 5;
   }
 
@@ -68,11 +73,14 @@ export function calculateRelevance(painting: Painting, query: string): number {
 /**
  * Check if two paintings are duplicates
  */
-export function isDuplicate(painting: Painting, existingPaintings: Painting[]): boolean {
+export function isDuplicate(
+  painting: Painting,
+  existingPaintings: Painting[],
+): boolean {
   const cleanTitle = painting.title.toLowerCase().trim();
   const cleanArtist = cleanArtistName(painting.artist).toLowerCase();
 
-  return existingPaintings.some(existing => {
+  return existingPaintings.some((existing) => {
     const existingTitle = existing.title.toLowerCase().trim();
     const existingArtist = cleanArtistName(existing.artist).toLowerCase();
 
@@ -82,7 +90,8 @@ export function isDuplicate(painting: Painting, existingPaintings: Painting[]): 
 
     // Also check for very similar titles (allows for minor variations)
     const similarTitle =
-      cleanTitle.replace(/[^\w\s]/g, '') === existingTitle.replace(/[^\w\s]/g, '');
+      cleanTitle.replace(/[^\w\s]/g, '') ===
+      existingTitle.replace(/[^\w\s]/g, '');
 
     return (titleMatch && artistMatch) || (similarTitle && artistMatch);
   });
@@ -105,7 +114,7 @@ export function isPaintingLike(painting: Painting): boolean {
     'book',
     'print',
     'poster',
-    'drawing',  // Unless explicitly a painting
+    'drawing', // Unless explicitly a painting
     'sculpture',
     'textile',
     'furniture',
@@ -113,8 +122,8 @@ export function isPaintingLike(painting: Painting): boolean {
   ];
 
   // Check if it's explicitly excluded
-  const isExcluded = excludeTerms.some(term =>
-    title.includes(term) || description.includes(term)
+  const isExcluded = excludeTerms.some(
+    (term) => title.includes(term) || description.includes(term),
   );
 
   if (isExcluded) {
@@ -150,15 +159,18 @@ export function getDisplayMuseumName(painting: Painting): string {
 /**
  * Sort paintings by relevance score
  */
-export function sortByRelevance(paintings: Painting[], query: string): Painting[] {
+export function sortByRelevance(
+  paintings: Painting[],
+  query: string,
+): Painting[] {
   return paintings
-    .map(painting => ({
+    .map((painting) => ({
       painting,
       score: calculateRelevance(painting, query),
     }))
-    .filter(item => item.score > 0)  // Remove irrelevant results
-    .sort((a, b) => b.score - a.score)  // Highest score first
-    .map(item => item.painting);
+    .filter((item) => item.score > 0) // Remove irrelevant results
+    .sort((a, b) => b.score - a.score) // Highest score first
+    .map((item) => item.painting);
 }
 
 /**
@@ -190,7 +202,7 @@ export interface QualityFilter {
 export function filterByQuality(
   paintings: Painting[],
   query: string,
-  filters: QualityFilter = {}
+  filters: QualityFilter = {},
 ): Painting[] {
   const {
     requireImage = true,
@@ -200,7 +212,7 @@ export function filterByQuality(
     minRelevanceScore = 20,
   } = filters;
 
-  return paintings.filter(painting => {
+  return paintings.filter((painting) => {
     // Has image?
     if (requireImage && !painting.imageUrl) return false;
 

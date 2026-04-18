@@ -102,10 +102,12 @@ export const MUSEUM_BADGES: Record<string, MuseumBadgeInfo> = {
  * Get museum badge info by museum ID or source
  */
 export function getMuseumBadge(museumId: string): MuseumBadgeInfo {
-  return MUSEUM_BADGES[museumId] || {
-    id: 'UNKNOWN',
-    shortName: '?',
-    color: MUSEUM_COLORS.default,
-    tier: 3,
-  };
+  return (
+    MUSEUM_BADGES[museumId] || {
+      id: 'UNKNOWN',
+      shortName: '?',
+      color: MUSEUM_COLORS.default,
+      tier: 3,
+    }
+  );
 }

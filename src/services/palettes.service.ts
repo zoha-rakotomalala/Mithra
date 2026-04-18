@@ -13,7 +13,7 @@ export interface VisitPaletteWithPaintings {
  */
 export async function saveVisitPalette(
   visitId: string,
-  paintingUuids: string[]
+  paintingUuids: string[],
 ): Promise<VisitPalette | null> {
   if (paintingUuids.length === 0 || paintingUuids.length > 8) {
     console.error('Visit palette must have 1-8 artworks');
@@ -64,7 +64,9 @@ export async function saveVisitPalette(
 /**
  * Get a visit palette with its ordered paintings.
  */
-export async function getVisitPalette(visitId: string): Promise<VisitPaletteWithPaintings | null> {
+export async function getVisitPalette(
+  visitId: string,
+): Promise<VisitPaletteWithPaintings | null> {
   const { data, error } = await supabase
     .from('visit_palettes')
     .select('*, visit_palette_paintings(*)')
@@ -77,8 +79,12 @@ export async function getVisitPalette(visitId: string): Promise<VisitPaletteWith
     return null;
   }
 
-  const paintings: VisitPalettePainting[] = (data.visit_palette_paintings || [])
-    .sort((a: VisitPalettePainting, b: VisitPalettePainting) => a.position - b.position);
+  const paintings: VisitPalettePainting[] = (
+    data.visit_palette_paintings || []
+  ).sort(
+    (a: VisitPalettePainting, b: VisitPalettePainting) =>
+      a.position - b.position,
+  );
 
   return {
     palette: {

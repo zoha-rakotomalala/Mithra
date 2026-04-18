@@ -1,12 +1,24 @@
 import type { RootScreenProps } from '@/navigation/types';
 import { Paths } from '@/navigation/paths';
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StatusBar, SafeAreaView, Platform, Dimensions } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StatusBar,
+  SafeAreaView,
+  Platform,
+  Dimensions,
+} from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ViewShot from 'react-native-view-shot';
 import RNShare from 'react-native-share';
 import { getVisitPalette, getCachedPaintings, getVisitById } from '@/services';
-import { PaletteTile, EmptyPaletteTile } from '@/components/molecules/PaletteTile';
+import {
+  PaletteTile,
+  EmptyPaletteTile,
+} from '@/components/molecules/PaletteTile';
 import { EmptyState } from '@/components/molecules';
 import { typography } from '@/styles';
 import { COLORS } from '@/constants';
@@ -41,10 +53,10 @@ export function ViewPalette() {
     setLoading(true);
     const [paletteData, visitData] = await Promise.all([
       getVisitPalette(visitId),
-      getVisitById(visitId)
+      getVisitById(visitId),
     ]);
     if (paletteData && paletteData.paintings.length > 0) {
-      const paintingIds = paletteData.paintings.map(p => p.painting_id);
+      const paintingIds = paletteData.paintings.map((p) => p.painting_id);
       const cached = await getCachedPaintings(paintingIds);
       setPaintings(cached);
     }
@@ -73,21 +85,32 @@ export function ViewPalette() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+      >
         <View style={styles.header}>
           <View style={styles.headerRow}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
+            >
               <Text style={styles.backText}>←</Text>
             </TouchableOpacity>
             <Text style={styles.headerTitle}>VISIT PALETTE</Text>
             <View style={styles.headerSpacer} />
             {paintings.length > 0 && (
-              <TouchableOpacity onPress={handleShare} style={styles.headerAction}>
+              <TouchableOpacity
+                onPress={handleShare}
+                style={styles.headerAction}
+              >
                 <Text style={styles.headerActionIcon}>⎘</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity
-              onPress={() => navigation.navigate(Paths.VisitPalette, { visitId })}
+              onPress={() =>
+                navigation.navigate(Paths.VisitPalette, { visitId })
+              }
               style={styles.headerAction}
             >
               <Text style={styles.headerActionIcon}>✎</Text>
@@ -101,38 +124,54 @@ export function ViewPalette() {
           </View>
         ) : paintings.length > 0 ? (
           <View style={styles.gridWrapper}>
-          <View style={styles.content}>
-            <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1 }}>
-              <View style={styles.shareableGrid}>
-                <View style={styles.grid}>
-                  {gridPositions.map((pos, idx) => {
-                    if (pos === 'center') {
+            <View style={styles.content}>
+              <ViewShot
+                ref={viewShotRef}
+                options={{ format: 'png', quality: 1 }}
+              >
+                <View style={styles.shareableGrid}>
+                  <View style={styles.grid}>
+                    {gridPositions.map((pos, idx) => {
+                      if (pos === 'center') {
+                        return (
+                          <View key="center" style={styles.centerItem}>
+                            <Text style={styles.centerTitle}>
+                              {visit?.museum?.name}
+                            </Text>
+                            <Text style={styles.centerDate}>
+                              {visit?.visit_date}
+                            </Text>
+                          </View>
+                        );
+                      }
+                      const painting = paintings[pos as number];
+                      if (!painting) {
+                        return (
+                          <EmptyPaletteTile
+                            key={`empty-${idx}`}
+                            size={TILE_SIZE}
+                          />
+                        );
+                      }
                       return (
-                        <View key="center" style={styles.centerItem}>
-                          <Text style={styles.centerTitle}>{visit?.museum?.name}</Text>
-                          <Text style={styles.centerDate}>{visit?.visit_date}</Text>
-                        </View>
+                        <PaletteTile
+                          key={painting.id}
+                          imageUrl={painting.image_url}
+                          title={painting.title}
+                          artist={painting.artist}
+                          onPress={() =>
+                            navigation.navigate(Paths.PaintingDetail, {
+                              paintingId: painting.id,
+                            })
+                          }
+                          size={TILE_SIZE}
+                        />
                       );
-                    }
-                    const painting = paintings[pos as number];
-                    if (!painting) {
-                      return <EmptyPaletteTile key={`empty-${idx}`} size={TILE_SIZE} />;
-                    }
-                    return (
-                      <PaletteTile
-                        key={painting.id}
-                        imageUrl={painting.image_url}
-                        title={painting.title}
-                        artist={painting.artist}
-                        onPress={() => navigation.navigate(Paths.PaintingDetail, { paintingId: painting.id })}
-                        size={TILE_SIZE}
-                      />
-                    );
-                  })}
+                    })}
+                  </View>
                 </View>
-              </View>
-            </ViewShot>
-          </View>
+              </ViewShot>
+            </View>
           </View>
         ) : (
           <EmptyState

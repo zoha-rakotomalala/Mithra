@@ -5,7 +5,7 @@ import { museumApi } from './museumApiClient';
 const WIKIDATA_ENDPOINT = 'https://query.wikidata.org/sparql';
 
 const SPARQL_HEADERS = {
-  'Accept': 'application/json',
+  Accept: 'application/json',
   'Content-Type': 'application/x-www-form-urlencoded',
   'User-Agent': 'PaletteApp/1.0 (art collection mobile app)',
 };
@@ -21,7 +21,10 @@ function extractQId(uri: string): string {
 /**
  * Convert a Wikimedia Commons image URL to a thumbnail URL
  */
-function getWikimediaThumbnail(imageUrl: string, width = 400): string | undefined {
+function getWikimediaThumbnail(
+  imageUrl: string,
+  width = 400,
+): string | undefined {
   if (!imageUrl?.includes('upload.wikimedia.org')) return undefined;
   const match = imageUrl.match(/\/commons\/(.+\/([^/]+))$/);
   if (!match) return undefined;
@@ -31,12 +34,12 @@ function getWikimediaThumbnail(imageUrl: string, width = 400): string | undefine
 export type WikidataSearchParams = {
   limit?: number;
   query: string;
-}
+};
 
 export type WikidataSearchResult = {
   paintings: Painting[];
   totalResults: number;
-}
+};
 
 /**
  * Search for paintings in Wikidata
@@ -44,7 +47,7 @@ export type WikidataSearchResult = {
  * @returns Array of paintings with complete metadata
  */
 export async function searchPaintings(
-  parameters: WikidataSearchParams
+  parameters: WikidataSearchParams,
 ): Promise<WikidataSearchResult> {
   const { limit = 20, query } = parameters;
 
@@ -55,11 +58,13 @@ export async function searchPaintings(
   const sparqlQuery = buildSearchQuery(query, limit);
 
   try {
-    const data = await museumApi.post(WIKIDATA_ENDPOINT, {
-      body: `query=${encodeURIComponent(sparqlQuery)}`,
-      headers: SPARQL_HEADERS,
-      timeout: 20000,
-    }).json<any>();
+    const data = await museumApi
+      .post(WIKIDATA_ENDPOINT, {
+        body: `query=${encodeURIComponent(sparqlQuery)}`,
+        headers: SPARQL_HEADERS,
+        timeout: 20000,
+      })
+      .json<any>();
     const paintings = parsePaintings(data);
 
     return {
@@ -77,7 +82,7 @@ export async function searchPaintings(
  */
 export async function searchByArtist(
   artistName: string,
-  limit = 50
+  limit = 50,
 ): Promise<WikidataSearchResult> {
   const sparqlQuery = `
     SELECT DISTINCT ?painting ?paintingLabel ?artistLabel ?image ?year
@@ -112,10 +117,12 @@ export async function searchByArtist(
   `;
 
   try {
-    const data = await museumApi.post(WIKIDATA_ENDPOINT, {
-      body: `query=${encodeURIComponent(sparqlQuery)}`,
-      headers: SPARQL_HEADERS,
-    }).json<any>();
+    const data = await museumApi
+      .post(WIKIDATA_ENDPOINT, {
+        body: `query=${encodeURIComponent(sparqlQuery)}`,
+        headers: SPARQL_HEADERS,
+      })
+      .json<any>();
     const paintings = parsePaintings(data);
 
     return {
@@ -214,7 +221,9 @@ function parsePaintings(data: any): Painting[] {
       dimensions,
       id: `wikidata-${extractQId(item.painting.value)}`,
       imageUrl: item.image?.value,
-      thumbnailUrl: item.image?.value ? getWikimediaThumbnail(item.image.value) : undefined,
+      thumbnailUrl: item.image?.value
+        ? getWikimediaThumbnail(item.image.value)
+        : undefined,
       isSeen: false,
       location,
       medium: item.mediumLabel?.value,
@@ -263,18 +272,18 @@ function inferLocationFromMuseum(museum: string): string | undefined {
     'Galleria degli Uffizi': 'Florence, Italy',
     'Hermitage Museum': 'Saint Petersburg, Russia',
     'Kunsthistorisches Museum': 'Vienna, Austria',
-    'Louvre': 'Paris, France',
-    'Mauritshuis': 'The Hague, Netherlands',
+    Louvre: 'Paris, France',
+    Mauritshuis: 'The Hague, Netherlands',
     'Metropolitan Museum of Art': 'New York City, USA',
-    'MoMA': 'New York City, USA',
-    'Musée d\'Orsay': 'Paris, France',
+    MoMA: 'New York City, USA',
+    "Musée d'Orsay": 'Paris, France',
     'Musée du Louvre': 'Paris, France',
     'Museo del Prado': 'Madrid, Spain',
     'Museum of Modern Art': 'New York City, USA',
     'National Gallery': 'London, UK',
     'National Gallery of Art': 'Washington D.C., USA',
     'Prado Museum': 'Madrid, Spain',
-    'Rijksmuseum': 'Amsterdam, Netherlands',
+    Rijksmuseum: 'Amsterdam, Netherlands',
     'Tate Modern': 'London, UK',
     'Uffizi Gallery': 'Florence, Italy',
     'Van Gogh Museum': 'Amsterdam, Netherlands',
@@ -294,8 +303,6 @@ function inferLocationFromMuseum(museum: string): string | undefined {
 
   return undefined;
 }
-
-
 
 /**
  * Get suggestions for popular artists (for autocomplete)
@@ -343,7 +350,11 @@ export function getPopularMuseums(): string[] {
   ];
 }
 
-import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import type {
+  MuseumServiceAdapter,
+  MuseumSearchParams,
+  MuseumSearchResult,
+} from './types/museumAdapter';
 import { registerAdapter } from './museumAdapterRegistry';
 
 export const wikidataAdapter: MuseumServiceAdapter = {

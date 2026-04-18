@@ -13,5 +13,6 @@ export interface MuseumSearchResult {
 
 export interface MuseumServiceAdapter {
   readonly museumId: string;
+
   search(params: MuseumSearchParams): Promise<MuseumSearchResult>;
 }

@@ -2,25 +2,26 @@ import type { Painting } from '@/types/painting';
 import { generateColorFromString } from '@/utils/colorGenerator';
 import { museumApi } from './museumApiClient';
 
-const JOCONDE_API_BASE = 'https://data.culture.gouv.fr/api/explore/v2.1/catalog/datasets/base-joconde-extrait/records';
+const JOCONDE_API_BASE =
+  'https://data.culture.gouv.fr/api/explore/v2.1/catalog/datasets/base-joconde-extrait/records';
 
 type JocondeSearchParameters = {
   limit?: number;
   offset?: number;
   query: string;
-}
+};
 
 type JocondeSearchResult = {
   paintings: Painting[];
   totalResults: number;
-}
+};
 
 /**
  * Search Joconde database (French National Museums)
  * Over 600,000 artworks from 350+ French museums
  */
 export async function searchJoconde(
-  parameters: JocondeSearchParameters
+  parameters: JocondeSearchParameters,
 ): Promise<JocondeSearchResult> {
   try {
     const { limit = 30, offset = 0, query } = parameters;
@@ -99,9 +100,7 @@ function parseJocondeObject(record: any): null | Painting {
 
     // Extract museum and location
     const museum = fields.musee || 'Musée français';
-    const location = fields.ville
-      ? `${fields.ville}, France`
-      : 'France';
+    const location = fields.ville ? `${fields.ville}, France` : 'France';
 
     return {
       artist,
@@ -141,9 +140,11 @@ export function getPopularJocondeArtists(): string[] {
   ];
 }
 
-
-
-import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import type {
+  MuseumServiceAdapter,
+  MuseumSearchParams,
+  MuseumSearchResult,
+} from './types/museumAdapter';
 import { registerAdapter } from './museumAdapterRegistry';
 
 export const jocondeAdapter: MuseumServiceAdapter = {

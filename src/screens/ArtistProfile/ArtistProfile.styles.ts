@@ -1,5 +1,12 @@
 import { StyleSheet } from 'react-native';
-import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS, ICON_SIZE, TOUCHABLE_HEIGHT } from '@/constants';
+import {
+  COLORS,
+  SPACING,
+  FONT_SIZE,
+  BORDER_RADIUS,
+  ICON_SIZE,
+  TOUCHABLE_HEIGHT,
+} from '@/constants';
 
 /**
  * Artist Profile Screen Styles

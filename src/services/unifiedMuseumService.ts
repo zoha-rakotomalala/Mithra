@@ -2,7 +2,7 @@ import type { Painting } from '@/types/painting';
 import {
   getCachedPaintings,
   updateCacheWithFreshResults,
-  getCacheFreshness
+  getCacheFreshness,
 } from './paintingCacheService';
 import { getAdapter } from './museumAdapterRegistry';
 // Side-effect imports: each module registers its adapter on load
@@ -75,7 +75,7 @@ export interface UnifiedSearchResult {
  * 3. Update cache and return fresh results (phase: complete)
  */
 export async function searchAllMuseums(
-  params: UnifiedSearchParams
+  params: UnifiedSearchParams,
 ): Promise<UnifiedSearchResult> {
   const {
     query,
@@ -89,7 +89,7 @@ export async function searchAllMuseums(
       requireArtist: true,
       paintingsOnly: true,
       minRelevanceScore: 15,
-    }
+    },
   } = params;
 
   if (!query || query.trim().length === 0) {
@@ -102,7 +102,9 @@ export async function searchAllMuseums(
     };
   }
 
-  console.log(`🔍 Progressive search: "${query}" (${searchType}) across ${museumIds.length} museums`);
+  console.log(
+    `🔍 Progressive search: "${query}" (${searchType}) across ${museumIds.length} museums`,
+  );
 
   const cacheStats = { hits: 0, misses: 0, stale: 0 };
   const updateStats = { added: 0, updated: 0 };
@@ -130,14 +132,18 @@ export async function searchAllMuseums(
     });
 
     const cacheResults = await Promise.all(cachePromises);
-    cachedPaintings = cacheResults.flatMap(r => {
+    cachedPaintings = cacheResults.flatMap((r) => {
       // Tag cached paintings with sourceMuseumId for badge display
-      r.paintings.forEach(p => { (p as any).sourceMuseumId = r.museumId; });
+      r.paintings.forEach((p) => {
+        (p as any).sourceMuseumId = r.museumId;
+      });
       return r.paintings;
     });
 
     if (cachedPaintings.length > 0) {
-      console.log(`💨 Showing ${cachedPaintings.length} cached results (${cacheStats.hits} hits, ${cacheStats.misses} misses, ${cacheStats.stale} stale)`);
+      console.log(
+        `💨 Showing ${cachedPaintings.length} cached results (${cacheStats.hits} hits, ${cacheStats.misses} misses, ${cacheStats.stale} stale)`,
+      );
 
       // Notify: Showing cached results
       onProgressUpdate?.({
@@ -162,7 +168,7 @@ export async function searchAllMuseums(
         museumId,
         query,
         searchType,
-        maxResultsPerMuseum
+        maxResultsPerMuseum,
       );
 
       // Update cache with fresh results
@@ -171,7 +177,7 @@ export async function searchAllMuseums(
           museumId,
           query,
           searchType,
-          freshPaintings
+          freshPaintings,
         );
 
         updateStats.added += updateResult.added;
@@ -198,7 +204,7 @@ export async function searchAllMuseums(
   const apiResults = await Promise.all(apiPromises);
 
   // PHASE 3: Combine and process fresh results
-  let allPaintings = apiResults.flatMap(r => r.paintings);
+  let allPaintings = apiResults.flatMap((r) => r.paintings);
   const resultsByMuseum: Record<string, number> = {};
 
   apiResults.forEach(({ museumId, paintings }) => {
@@ -206,10 +212,12 @@ export async function searchAllMuseums(
   });
 
   console.log(`📊 API results: ${allPaintings.length} paintings`);
-  console.log(`📊 Cache updates: +${updateStats.added} new, ~${updateStats.updated} updated`);
+  console.log(
+    `📊 Cache updates: +${updateStats.added} new, ~${updateStats.updated} updated`,
+  );
 
   // Clean artist names
-  allPaintings = allPaintings.map(painting => ({
+  allPaintings = allPaintings.map((painting) => ({
     ...painting,
     artist: cleanArtistName(painting.artist),
   }));
@@ -251,7 +259,7 @@ async function searchSingleMuseumAPI(
   museumId: string,
   query: string,
   searchType: SearchType,
-  maxResults: number
+  maxResults: number,
 ): Promise<Painting[]> {
   const adapter = getAdapter(museumId);
   if (!adapter) {
@@ -269,7 +277,11 @@ export function getPopularArtistsByMuseums(museumIds: string[]): string[] {
     MET: ['Vincent van Gogh', 'Claude Monet', 'Rembrandt'],
     RIJKS: ['Rembrandt', 'Johannes Vermeer', 'Frans Hals'],
     CLEVELAND: ['Pablo Picasso', 'Claude Monet', 'El Greco'],
-    CHICAGO: ['Georges Seurat', 'Vincent van Gogh', 'Henri de Toulouse-Lautrec'],
+    CHICAGO: [
+      'Georges Seurat',
+      'Vincent van Gogh',
+      'Henri de Toulouse-Lautrec',
+    ],
     HARVARD: ['Rembrandt', 'Pablo Picasso', 'Albrecht Dürer'],
     VA: ['John Constable', 'J.M.W. Turner', 'Raphael'],
     EUROPEANA: ['Vermeer', 'Monet', 'Van Gogh'],
@@ -282,7 +294,7 @@ export function getPopularArtistsByMuseums(museumIds: string[]): string[] {
     WIKIDATA: ['Rembrandt', 'Vermeer', 'Caravaggio'],
   };
 
-  museumIds.forEach(museumId => {
+  museumIds.forEach((museumId) => {
     const artists = artistsByMuseum[museumId];
     if (artists) {
       allArtists.push(...artists.slice(0, 3));

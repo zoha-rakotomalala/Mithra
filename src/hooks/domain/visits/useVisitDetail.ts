@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { getVisitById, updateVisit, deleteVisit, getLikedPaintingsForVisit, getVisitPalette } from '@/services';
+import {
+  getVisitById,
+  updateVisit,
+  deleteVisit,
+  getLikedPaintingsForVisit,
+  getVisitPalette,
+} from '@/services';
 import { getAllMuseums } from '@/services/museumRegistry';
 import type { Visit } from '@/types/database';
 
@@ -78,7 +84,7 @@ export function useVisitDetail(visitId: string) {
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -91,7 +97,7 @@ export function useVisitDetail(visitId: string) {
   const museumRegistryId = (() => {
     const shortName = visit?.museum?.short_name ?? '';
     const match = getAllMuseums().find(
-      m => m.shortName.toUpperCase() === shortName.toUpperCase()
+      (m) => m.shortName.toUpperCase() === shortName.toUpperCase(),
     );
     return match?.id ?? '';
   })();

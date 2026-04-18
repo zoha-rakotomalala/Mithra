@@ -1,7 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StatusBar, Alert, SafeAreaView, Image, Dimensions } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StatusBar,
+  Alert,
+  SafeAreaView,
+  Image,
+  Dimensions,
+} from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { getLikedPaintingsForVisit, getCachedPaintings, saveVisitPalette, getVisitPalette } from '@/services';
+import {
+  getLikedPaintingsForVisit,
+  getCachedPaintings,
+  saveVisitPalette,
+  getVisitPalette,
+} from '@/services';
 import { EmptyState } from '@/components/molecules';
 import { buttons } from '@/styles';
 import { COLORS, SPACING } from '@/constants';
@@ -26,11 +41,11 @@ export function VisitPalette() {
   const loadPalette = async () => {
     const existingPalette = await getVisitPalette(visitId);
     if (existingPalette) {
-      setSelected(new Set(existingPalette.paintings.map(p => p.painting_id)));
+      setSelected(new Set(existingPalette.paintings.map((p) => p.painting_id)));
     }
 
     const likes = await getLikedPaintingsForVisit(visitId);
-    const paintingIds = likes.map(like => like.painting_id);
+    const paintingIds = likes.map((like) => like.painting_id);
     if (paintingIds.length > 0) {
       const cached = await getCachedPaintings(paintingIds);
       setPaintings(cached);
@@ -38,7 +53,7 @@ export function VisitPalette() {
   };
 
   const toggleSelect = (paintingId: string) => {
-    setSelected(prev => {
+    setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(paintingId)) {
         next.delete(paintingId);
@@ -51,7 +66,10 @@ export function VisitPalette() {
 
   const handleSave = async () => {
     if (selected.size === 0) {
-      Alert.alert('Select Artworks', 'Please select at least one artwork for your palette.');
+      Alert.alert(
+        'Select Artworks',
+        'Please select at least one artwork for your palette.',
+      );
       return;
     }
     await saveVisitPalette(visitId, Array.from(selected));
@@ -67,7 +85,12 @@ export function VisitPalette() {
         onPress={() => toggleSelect(item.id)}
         style={[styles.selectCard, { width: CARD_SIZE }]}
       >
-        <View style={[styles.selectImageWrap, isSelected && styles.selectImageSelected]}>
+        <View
+          style={[
+            styles.selectImageWrap,
+            isSelected && styles.selectImageSelected,
+          ]}
+        >
           <Image
             source={{ uri: item.thumbnail_url || item.image_url }}
             style={styles.selectImage}
@@ -79,8 +102,12 @@ export function VisitPalette() {
             </View>
           )}
         </View>
-        <Text style={styles.selectTitle} numberOfLines={1}>{item.title}</Text>
-        <Text style={styles.selectArtist} numberOfLines={1}>{item.artist}</Text>
+        <Text style={styles.selectTitle} numberOfLines={1}>
+          {item.title}
+        </Text>
+        <Text style={styles.selectArtist} numberOfLines={1}>
+          {item.artist}
+        </Text>
       </TouchableOpacity>
     );
   };
@@ -90,12 +117,17 @@ export function VisitPalette() {
       <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+          >
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>CREATE PALETTE</Text>
         </View>
-        <Text style={styles.subtitle}>Select up to 8 artworks ({selected.size}/8)</Text>
+        <Text style={styles.subtitle}>
+          Select up to 8 artworks ({selected.size}/8)
+        </Text>
       </View>
 
       {paintings.length === 0 ? (
@@ -119,7 +151,10 @@ export function VisitPalette() {
 
           <View style={styles.footer}>
             <TouchableOpacity
-              style={[buttons.primary, selected.size === 0 && styles.buttonDisabled]}
+              style={[
+                buttons.primary,
+                selected.size === 0 && styles.buttonDisabled,
+              ]}
               onPress={handleSave}
               disabled={selected.size === 0}
             >

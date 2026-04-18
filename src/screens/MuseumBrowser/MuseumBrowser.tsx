@@ -1,7 +1,13 @@
 import type { RootScreenProps } from '@/navigation/types';
 import { Paths } from '@/navigation/paths';
 import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, StatusBar } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StatusBar,
+} from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { shared, typography } from '@/styles';
 import { COLORS } from '@/constants';
@@ -18,7 +24,9 @@ interface MuseumDisplay {
 }
 
 function extractCollectionSize(description: string): string {
-  const match = description.match(/([\d,]+[MKB]?\+)\s*(?:artworks|objects|paintings)/i);
+  const match = description.match(
+    /([\d,]+[MKB]?\+)\s*(?:artworks|objects|paintings)/i,
+  );
   return match ? match[1] : '';
 }
 
@@ -43,15 +51,24 @@ export function MuseumBrowser() {
   const renderMuseum = ({ item }: { item: MuseumDisplay }) => (
     <TouchableOpacity
       style={styles.museumCard}
-      onPress={() => navigation.navigate(Paths.MuseumCollection, { museumId: item.id, visitId } )}
+      onPress={() =>
+        navigation.navigate(Paths.MuseumCollection, {
+          museumId: item.id,
+          visitId,
+        })
+      }
     >
       <View style={[styles.badge, { backgroundColor: item.color }]}>
         <Text style={styles.badgeText}>{item.shortName}</Text>
       </View>
-      
+
       <View style={styles.museumInfo}>
-        <Text style={[typography.h3, { color: COLORS.black }]}>{item.name}</Text>
-        <Text style={[typography.caption, { color: COLORS.black + 'AA' }]}>{item.location}</Text>
+        <Text style={[typography.h3, { color: COLORS.black }]}>
+          {item.name}
+        </Text>
+        <Text style={[typography.caption, { color: COLORS.black + 'AA' }]}>
+          {item.location}
+        </Text>
         <Text style={[typography.caption, styles.collectionSize]}>
           {item.collectionSize} artworks
         </Text>
@@ -64,10 +81,15 @@ export function MuseumBrowser() {
       <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
       <View style={[shared.container, { backgroundColor: COLORS.cream }]}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+          >
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
-          <Text style={[typography.artDecoTitle, { color: COLORS.gold }]}>CHOOSE MUSEUM</Text>
+          <Text style={[typography.artDecoTitle, { color: COLORS.gold }]}>
+            CHOOSE MUSEUM
+          </Text>
         </View>
 
         <FlatList

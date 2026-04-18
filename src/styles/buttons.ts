@@ -23,7 +23,7 @@ export const buttons = StyleSheet.create({
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
-  
+
   // Secondary button (outlined)
   secondary: {
     backgroundColor: 'transparent',
@@ -42,7 +42,7 @@ export const buttons = StyleSheet.create({
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
-  
+
   // Icon button
   iconButton: {
     width: 44,
@@ -52,7 +52,7 @@ export const buttons = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  
+
   // Small button
   small: {
     paddingVertical: SPACING.sm,

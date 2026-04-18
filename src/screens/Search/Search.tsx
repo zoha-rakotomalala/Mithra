@@ -19,98 +19,120 @@ import { getMuseumBadgeInfo } from '@/services/unifiedMuseumService';
 import { useSearch } from '@/hooks/domain/museum/useSearch';
 import { museumImageSource } from '@/utils/imageSource';
 
-const GridItem = React.memo(({
-  collectionStatus,
-  inCollection,
-  isLiked,
-  onPress,
-  onToggleLike,
-  painting
-}: {
-  readonly collectionStatus?: { isSeen: boolean; wantToVisit: boolean };
-  readonly inCollection: boolean;
-  readonly isLiked?: boolean;
-  readonly onPress: () => void;
-  readonly onToggleLike?: () => void;
-  readonly painting: Painting;
-}) => {
-  const [imageLoading, setImageLoading] = React.useState(true);
-  const [imageError, setImageError] = React.useState(false);
-  const badgeInfo = getMuseumBadgeInfo(painting);
+const GridItem = React.memo(
+  ({
+    collectionStatus,
+    inCollection,
+    isLiked,
+    onPress,
+    onToggleLike,
+    painting,
+  }: {
+    readonly collectionStatus?: { isSeen: boolean; wantToVisit: boolean };
+    readonly inCollection: boolean;
+    readonly isLiked?: boolean;
+    readonly onPress: () => void;
+    readonly onToggleLike?: () => void;
+    readonly painting: Painting;
+  }) => {
+    const [imageLoading, setImageLoading] = React.useState(true);
+    const [imageError, setImageError] = React.useState(false);
+    const badgeInfo = getMuseumBadgeInfo(painting);
 
-  return (
-    <TouchableOpacity
-      activeOpacity={0.7}
-      onPress={onPress}
-      style={styles.resultCard}
-    >
-      <View style={styles.imageContainer}>
-        {painting.imageUrl || painting.thumbnailUrl ? (
-          <>
-            {imageLoading && !imageError && (
-              <View style={styles.imageLoadingOverlay}>
-                <ActivityIndicator color={COLORS.gold} size="small" />
-              </View>
-            )}
-            <FastImage
-              onError={() => {
-                setImageLoading(false);
-                setImageError(true);
+    return (
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={onPress}
+        style={styles.resultCard}
+      >
+        <View style={styles.imageContainer}>
+          {painting.imageUrl || painting.thumbnailUrl ? (
+            <>
+              {imageLoading && !imageError && (
+                <View style={styles.imageLoadingOverlay}>
+                  <ActivityIndicator color={COLORS.gold} size="small" />
+                </View>
+              )}
+              <FastImage
+                onError={() => {
+                  setImageLoading(false);
+                  setImageError(true);
+                }}
+                onLoadEnd={() => setImageLoading(false)}
+                onLoadStart={() => setImageLoading(true)}
+                resizeMode={FastImage.resizeMode.cover}
+                source={museumImageSource(
+                  painting.thumbnailUrl || painting.imageUrl,
+                )}
+                style={styles.resultImage}
+              />
+            </>
+          ) : (
+            <View
+              style={[
+                styles.placeholderImage,
+                { backgroundColor: painting.color },
+              ]}
+            >
+              <Text style={styles.placeholderIcon}>🎨</Text>
+            </View>
+          )}
+
+          {imageError && (
+            <View
+              style={[
+                styles.placeholderImage,
+                { backgroundColor: painting.color },
+              ]}
+            >
+              <Text style={styles.placeholderIcon}>🖼️</Text>
+            </View>
+          )}
+
+          {inCollection && collectionStatus && (
+            <View style={styles.statusBadge}>
+              {collectionStatus.isSeen && (
+                <Text style={styles.badgeTextSeen}>S</Text>
+              )}
+              {collectionStatus.wantToVisit && (
+                <Text style={styles.badgeTextWant}>W</Text>
+              )}
+            </View>
+          )}
+
+          <View
+            style={[styles.museumBadge, { backgroundColor: badgeInfo.color }]}
+          >
+            <Text style={styles.museumBadgeText}>{badgeInfo.shortName}</Text>
+          </View>
+
+          {onToggleLike && (
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation?.();
+                onToggleLike();
               }}
-              onLoadEnd={() => setImageLoading(false)}
-              onLoadStart={() => setImageLoading(true)}
-              resizeMode={FastImage.resizeMode.cover}
-              source={museumImageSource(painting.thumbnailUrl || painting.imageUrl)}
-              style={styles.resultImage}
-            />
-          </>
-        ) : (
-          <View style={[styles.placeholderImage, { backgroundColor: painting.color }]}>
-            <Text style={styles.placeholderIcon}>🎨</Text>
-          </View>
-        )}
-
-        {imageError && (
-          <View style={[styles.placeholderImage, { backgroundColor: painting.color }]}>
-            <Text style={styles.placeholderIcon}>🖼️</Text>
-          </View>
-        )}
-
-        {inCollection && collectionStatus && (
-          <View style={styles.statusBadge}>
-            {collectionStatus.isSeen && <Text style={styles.badgeTextSeen}>S</Text>}
-            {collectionStatus.wantToVisit && <Text style={styles.badgeTextWant}>W</Text>}
-          </View>
-        )}
-
-        <View style={[styles.museumBadge, { backgroundColor: badgeInfo.color }]}>
-          <Text style={styles.museumBadgeText}>{badgeInfo.shortName}</Text>
+              style={styles.likeButton}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={styles.likeButtonText}>{isLiked ? '♥' : '♡'}</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
-        {onToggleLike && (
-          <TouchableOpacity
-            onPress={(e) => {
-              e.stopPropagation?.();
-              onToggleLike();
-            }}
-            style={styles.likeButton}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Text style={styles.likeButtonText}>{isLiked ? '♥' : '♡'}</Text>
-          </TouchableOpacity>
+        <Text numberOfLines={2} style={styles.resultTitle}>
+          {painting.title}
+        </Text>
+        <Text numberOfLines={1} style={styles.resultArtist}>
+          {painting.artist}
+        </Text>
+        {painting.year && (
+          <Text style={styles.resultYear}>{painting.year}</Text>
         )}
-      </View>
-
-      <Text numberOfLines={2} style={styles.resultTitle}>
-        {painting.title}
-      </Text>
-      <Text numberOfLines={1} style={styles.resultArtist}>
-        {painting.artist}
-      </Text>
-      {painting.year && <Text style={styles.resultYear}>{painting.year}</Text>}
-    </TouchableOpacity>
-  );
-});
+      </TouchableOpacity>
+    );
+  },
+);
 
 export function Search() {
   const {
@@ -139,21 +161,33 @@ export function Search() {
     hasVisitId,
   } = useSearch();
 
-  const renderItem = useCallback(({ item }: { readonly item: Painting }) => {
-    const collectionInfo = isAlreadyInCollection(item);
-    return (
-      <GridItem
-        collectionStatus={collectionInfo.status}
-        inCollection={collectionInfo.inCollection}
-        isLiked={activeVisitId ? isLiked(item) : undefined}
-        onPress={() => handlePaintingPress(item)}
-        onToggleLike={activeVisitId ? () => handleLike(item) : undefined}
-        painting={item}
-      />
-    );
-  }, [handlePaintingPress, isAlreadyInCollection, activeVisitId, isLiked, handleLike]);
+  const renderItem = useCallback(
+    ({ item }: { readonly item: Painting }) => {
+      const collectionInfo = isAlreadyInCollection(item);
+      return (
+        <GridItem
+          collectionStatus={collectionInfo.status}
+          inCollection={collectionInfo.inCollection}
+          isLiked={activeVisitId ? isLiked(item) : undefined}
+          onPress={() => handlePaintingPress(item)}
+          onToggleLike={activeVisitId ? () => handleLike(item) : undefined}
+          painting={item}
+        />
+      );
+    },
+    [
+      handlePaintingPress,
+      isAlreadyInCollection,
+      activeVisitId,
+      isLiked,
+      handleLike,
+    ],
+  );
 
-  const keyExtractor = useCallback((item: Painting) => `painting-${item.id}`, []);
+  const keyExtractor = useCallback(
+    (item: Painting) => `painting-${item.id}`,
+    [],
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -163,7 +197,10 @@ export function Search() {
         <View style={styles.header}>
           <View style={styles.headerTop}>
             {hasVisitId && (
-              <TouchableOpacity onPress={() => goBack()} style={styles.backButton}>
+              <TouchableOpacity
+                onPress={() => goBack()}
+                style={styles.backButton}
+              >
                 <Text style={styles.backText}>←</Text>
               </TouchableOpacity>
             )}
@@ -178,13 +215,16 @@ export function Search() {
                 onPress={() => setSearchType('artist')}
                 style={[
                   styles.searchTypeButton,
-                  searchType === 'artist' && styles.searchTypeButtonActive
+                  searchType === 'artist' && styles.searchTypeButtonActive,
                 ]}
               >
-                <Text style={[
-                  styles.searchTypeButtonText,
-                  searchType === 'artist' && styles.searchTypeButtonTextActive
-                ]}>
+                <Text
+                  style={[
+                    styles.searchTypeButtonText,
+                    searchType === 'artist' &&
+                      styles.searchTypeButtonTextActive,
+                  ]}
+                >
                   Artist
                 </Text>
               </TouchableOpacity>
@@ -192,13 +232,15 @@ export function Search() {
                 onPress={() => setSearchType('title')}
                 style={[
                   styles.searchTypeButton,
-                  searchType === 'title' && styles.searchTypeButtonActive
+                  searchType === 'title' && styles.searchTypeButtonActive,
                 ]}
               >
-                <Text style={[
-                  styles.searchTypeButtonText,
-                  searchType === 'title' && styles.searchTypeButtonTextActive
-                ]}>
+                <Text
+                  style={[
+                    styles.searchTypeButtonText,
+                    searchType === 'title' && styles.searchTypeButtonTextActive,
+                  ]}
+                >
                   Title
                 </Text>
               </TouchableOpacity>
@@ -214,7 +256,11 @@ export function Search() {
                 autoCorrect={false}
                 onChangeText={setSearchQuery}
                 onSubmitEditing={handleSearch}
-                placeholder={searchType === 'artist' ? 'Artist name...' : 'Painting title...'}
+                placeholder={
+                  searchType === 'artist'
+                    ? 'Artist name...'
+                    : 'Painting title...'
+                }
                 placeholderTextColor={COLORS.textMuted}
                 returnKeyType="search"
                 style={styles.searchInput}
@@ -233,7 +279,10 @@ export function Search() {
             <TouchableOpacity
               disabled={!searchQuery.trim() || isLoadingCache}
               onPress={handleSearch}
-              style={[styles.searchButton, !searchQuery.trim() && styles.searchButtonDisabled]}
+              style={[
+                styles.searchButton,
+                !searchQuery.trim() && styles.searchButtonDisabled,
+              ]}
             >
               <Text style={styles.searchButtonText}>→</Text>
             </TouchableOpacity>
@@ -283,7 +332,7 @@ export function Search() {
           data={searchResults}
           initialNumToRender={15}
           keyExtractor={keyExtractor}
-          ListEmptyComponent={() => (
+          ListEmptyComponent={() =>
             !isLoadingCache && !hasSearched ? (
               <View style={styles.emptyState}>
                 {searchType === 'artist' && popularArtists.length > 0 && (
@@ -303,7 +352,8 @@ export function Search() {
                   </>
                 )}
                 <Text style={styles.emptyHint}>
-                  {selectedMuseums.length} museum{selectedMuseums.length > 1 ? 's' : ''} • 2.5M+ artworks
+                  {selectedMuseums.length} museum
+                  {selectedMuseums.length > 1 ? 's' : ''} • 2.5M+ artworks
                 </Text>
               </View>
             ) : isLoadingCache ? (
@@ -312,7 +362,7 @@ export function Search() {
                 <Text style={styles.loadingText}>Searching...</Text>
               </View>
             ) : null
-          )}
+          }
           maxToRenderPerBatch={15}
           numColumns={3}
           columnWrapperStyle={styles.gridRow}
