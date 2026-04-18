@@ -32,14 +32,14 @@ export function ArtistProfile() {
 
   // Get all paintings by this artist
   const artistPaintings = useMemo(() => {
-    return paintings.filter(p => p.artist === artistName);
+    return paintings.filter((p) => p.artist === artistName);
   }, [paintings, artistName]);
 
   // Calculate stats
   const stats = useMemo(() => {
     const total = artistPaintings.length;
-    const seen = artistPaintings.filter(p => p.isSeen).length;
-    const wantToVisit = artistPaintings.filter(p => p.wantToVisit).length;
+    const seen = artistPaintings.filter((p) => p.isSeen).length;
+    const wantToVisit = artistPaintings.filter((p) => p.wantToVisit).length;
 
     // Group by museum
     const museums = new Map<string, number>();
@@ -56,10 +56,15 @@ export function ArtistProfile() {
   };
 
   const handleAddAllToWantToVisit = () => {
-    const unseenPaintings = artistPaintings.filter(p => !p.isSeen && !p.wantToVisit);
+    const unseenPaintings = artistPaintings.filter(
+      (p) => !p.isSeen && !p.wantToVisit,
+    );
 
     if (unseenPaintings.length === 0) {
-      Alert.alert('Already Added', 'All paintings are already in your collection.');
+      Alert.alert(
+        'Already Added',
+        'All paintings are already in your collection.',
+      );
       return;
     }
 
@@ -77,18 +82,23 @@ export function ArtistProfile() {
                 wantToVisit: true,
               });
             }
-            Alert.alert('Success', `Added ${unseenPaintings.length} paintings to Want to Visit`);
+            Alert.alert(
+              'Success',
+              `Added ${unseenPaintings.length} paintings to Want to Visit`,
+            );
           },
           text: 'Add All',
         },
-      ]
+      ],
     );
   };
 
   const renderPainting = ({ item }: { item: Painting }) => (
     <TouchableOpacity
       activeOpacity={0.7}
-      onPress={() => { handlePaintingPress(item); }}
+      onPress={() => {
+        handlePaintingPress(item);
+      }}
       style={styles.paintingCard}
     >
       <View style={styles.imageContainer}>
@@ -99,27 +109,35 @@ export function ArtistProfile() {
             style={styles.paintingImage}
           />
         ) : (
-          <View style={[styles.placeholderImage, { backgroundColor: item.color }]}>
+          <View
+            style={[styles.placeholderImage, { backgroundColor: item.color }]}
+          >
             <Text style={styles.placeholderIcon}>🎨</Text>
           </View>
         )}
 
         {/* Status badges */}
-        {item.isSeen ? <View style={styles.seenBadge}>
+        {item.isSeen ? (
+          <View style={styles.seenBadge}>
             <Text style={styles.badgeText}>S</Text>
-          </View> : null}
-        {item.wantToVisit ? <View style={styles.wantBadge}>
+          </View>
+        ) : null}
+        {item.wantToVisit ? (
+          <View style={styles.wantBadge}>
             <Text style={styles.badgeText}>W</Text>
-          </View> : null}
+          </View>
+        ) : null}
       </View>
 
       <Text numberOfLines={2} style={styles.paintingTitle}>
         {item.title}
       </Text>
       {item.year ? <Text style={styles.paintingYear}>{item.year}</Text> : null}
-      {item.museum ? <Text numberOfLines={1} style={styles.paintingMuseum}>
+      {item.museum ? (
+        <Text numberOfLines={1} style={styles.paintingMuseum}>
           {item.museum}
-        </Text> : null}
+        </Text>
+      ) : null}
     </TouchableOpacity>
   );
 
@@ -130,7 +148,9 @@ export function ArtistProfile() {
         {/* Art Deco Header */}
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => { navigation.goBack(); }}
+            onPress={() => {
+              navigation.goBack();
+            }}
             style={styles.backButton}
           >
             <Text style={styles.backIcon}>←</Text>
@@ -161,14 +181,18 @@ export function ArtistProfile() {
               <Text style={styles.statDividerText}>◆</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statNumber, styles.seenNumber]}>{stats.seen}</Text>
+              <Text style={[styles.statNumber, styles.seenNumber]}>
+                {stats.seen}
+              </Text>
               <Text style={styles.statLabel}>SEEN</Text>
             </View>
             <View style={styles.statDivider}>
               <Text style={styles.statDividerText}>◆</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statNumber, styles.wantNumber]}>{stats.wantToVisit}</Text>
+              <Text style={[styles.statNumber, styles.wantNumber]}>
+                {stats.wantToVisit}
+              </Text>
               <Text style={styles.statLabel}>WANT TO VISIT</Text>
             </View>
           </View>
@@ -176,7 +200,10 @@ export function ArtistProfile() {
           {/* Museums with Art Deco styling */}
           {stats.museums.size > 0 && (
             <View style={styles.museumsSection}>
-              <SectionHeader title="MUSEUMS" titleStyle={styles.museumsSectionTitle} />
+              <SectionHeader
+                title="MUSEUMS"
+                titleStyle={styles.museumsSectionTitle}
+              />
               {[...stats.museums.entries()].map(([museum, count]) => (
                 <View key={museum} style={styles.museumRow}>
                   <Text numberOfLines={1} style={styles.museumName}>
@@ -198,7 +225,9 @@ export function ArtistProfile() {
               onPress={handleAddAllToWantToVisit}
               style={styles.actionButton}
             >
-              <Text style={styles.actionButtonText}>ADD ALL TO WANT TO VISIT</Text>
+              <Text style={styles.actionButtonText}>
+                ADD ALL TO WANT TO VISIT
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -207,7 +236,7 @@ export function ArtistProfile() {
         <FlatList
           contentContainerStyle={styles.gridContent}
           data={artistPaintings}
-          keyExtractor={item => `artist-painting-${item.id}`}
+          keyExtractor={(item) => `artist-painting-${item.id}`}
           ListEmptyComponent={() => (
             <EmptyState
               icon="🎨"

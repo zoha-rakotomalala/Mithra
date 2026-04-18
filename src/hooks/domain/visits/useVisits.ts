@@ -45,7 +45,7 @@ export function useVisits() {
     await createVisit(
       newVisit.museumId,
       newVisit.visitDate,
-      newVisit.notes || undefined
+      newVisit.notes || undefined,
     );
 
     setShowAddModal(false);

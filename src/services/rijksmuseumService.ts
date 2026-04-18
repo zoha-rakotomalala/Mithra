@@ -37,7 +37,7 @@ interface RijksSearchResult {
  * Search Rijksmuseum collection using Linked Art API
  */
 export async function searchRijksmuseum(
-  params: RijksSearchParams
+  params: RijksSearchParams,
 ): Promise<RijksSearchResult> {
   try {
     const { query, limit = 10 } = params;
@@ -66,7 +66,7 @@ export async function searchRijksmuseum(
 
     const rawItems = Array.isArray(data.orderedItems) ? data.orderedItems : [];
     const validItems = rawItems.filter(
-      (item: any) => item && typeof item.id === 'string'
+      (item: any) => item && typeof item.id === 'string',
     );
 
     if (validItems.length === 0) {
@@ -74,7 +74,9 @@ export async function searchRijksmuseum(
     }
 
     const objectIds = validItems.slice(0, limit).map((item: any) => item.id);
-    console.log(`🇳🇱 Rijks search: ${rawItems.length} raw → ${objectIds.length} to resolve`);
+    console.log(
+      `🇳🇱 Rijks search: ${rawItems.length} raw → ${objectIds.length} to resolve`,
+    );
 
     const paintings = await resolveObjects(objectIds);
     console.log(`🇳🇱 Rijksmuseum: ${paintings.length} paintings resolved`);
@@ -95,7 +97,9 @@ async function resolveObjects(objectIds: string[]): Promise<Painting[]> {
 
   for (let i = 0; i < objectIds.length; i += concurrency) {
     const batch = objectIds.slice(i, i + concurrency);
-    const batchResults = await Promise.all(batch.map(id => resolveObject(id)));
+    const batchResults = await Promise.all(
+      batch.map((id) => resolveObject(id)),
+    );
     results.push(...batchResults);
   }
 
@@ -107,10 +111,12 @@ async function resolveObjects(objectIds: string[]): Promise<Painting[]> {
  */
 async function resolveObject(objectId: string): Promise<Painting | null> {
   try {
-    const data = await museumApi.get(objectId, {
-      headers: { Accept: 'application/ld+json' },
-      timeout: 15000,
-    }).json<any>();
+    const data = await museumApi
+      .get(objectId, {
+        headers: { Accept: 'application/ld+json' },
+        timeout: 15000,
+      })
+      .json<any>();
     return parseLinkedArtObject(data);
   } catch (error) {
     console.error(`Error resolving Rijks object ${objectId}:`, error);
@@ -192,18 +198,22 @@ async function resolveImageUrl(data: any): Promise<string | null> {
   if (!visualItemUrl) return null;
 
   try {
-    const visualItem = await museumApi.get(visualItemUrl, {
-      headers: { Accept: 'application/ld+json' },
-      timeout: 12000,
-    }).json<any>();
+    const visualItem = await museumApi
+      .get(visualItemUrl, {
+        headers: { Accept: 'application/ld+json' },
+        timeout: 12000,
+      })
+      .json<any>();
 
     const digitalObjectUrl = extractFirstId(visualItem.digitally_shown_by);
     if (!digitalObjectUrl) return null;
 
-    const digitalObject = await museumApi.get(digitalObjectUrl, {
-      headers: { Accept: 'application/ld+json' },
-      timeout: 12000,
-    }).json<any>();
+    const digitalObject = await museumApi
+      .get(digitalObjectUrl, {
+        headers: { Accept: 'application/ld+json' },
+        timeout: 12000,
+      })
+      .json<any>();
 
     const iiifUrl = extractFirstId(digitalObject.access_point);
     if (!iiifUrl) return null;
@@ -227,7 +237,9 @@ async function resolveImageUrl(data: any): Promise<string | null> {
  */
 function extractInlineImage(data: any): string | null {
   if (data.representation) {
-    const reps = Array.isArray(data.representation) ? data.representation : [data.representation];
+    const reps = Array.isArray(data.representation)
+      ? data.representation
+      : [data.representation];
     for (const rep of reps) {
       if (rep.access_point?.[0]?.id) return rep.access_point[0].id;
       if (rep.digitally_shown_by?.[0]?.access_point?.[0]?.id) {
@@ -247,9 +259,11 @@ function extractFirstId(field: any): string | null {
 function extractTitle(data: any): string {
   if (data._label) return data._label;
   const names = data.identified_by || [];
-  const title = names.find((item: any) =>
-    item.type === 'Name' &&
-    (item.classified_as?.[0]?._label === 'Primary Name' || !item.classified_as)
+  const title = names.find(
+    (item: any) =>
+      item.type === 'Name' &&
+      (item.classified_as?.[0]?._label === 'Primary Name' ||
+        !item.classified_as),
   );
   return title?.content || 'Untitled';
 }
@@ -260,7 +274,9 @@ function extractArtist(data: any): string {
       ? data.produced_by.carried_out_by
       : [data.produced_by.carried_out_by];
     const artist = creators[0];
-    return artist?._label || artist?.identified_by?.[0]?.content || 'Unknown Artist';
+    return (
+      artist?._label || artist?.identified_by?.[0]?.content || 'Unknown Artist'
+    );
   }
   return 'Unknown Artist';
 }
@@ -273,7 +289,9 @@ function extractYear(data: any): number | undefined {
     if (match) return parseInt(match[0]);
   }
   if (timespan.identified_by) {
-    const dateLabel = timespan.identified_by.find((id: any) => id.type === 'Name');
+    const dateLabel = timespan.identified_by.find(
+      (id: any) => id.type === 'Name',
+    );
     if (dateLabel?.content) {
       const match = dateLabel.content.match(/\d{4}/);
       if (match) return parseInt(match[0]);
@@ -284,12 +302,14 @@ function extractYear(data: any): number | undefined {
 
 function extractDimensions(data: any): string | undefined {
   if (!data.dimension) return undefined;
-  const dims = Array.isArray(data.dimension) ? data.dimension : [data.dimension];
+  const dims = Array.isArray(data.dimension)
+    ? data.dimension
+    : [data.dimension];
   const height = dims.find((d: any) =>
-    d.classified_as?.[0]?._label?.toLowerCase().includes('height')
+    d.classified_as?.[0]?._label?.toLowerCase().includes('height'),
   );
   const width = dims.find((d: any) =>
-    d.classified_as?.[0]?._label?.toLowerCase().includes('width')
+    d.classified_as?.[0]?._label?.toLowerCase().includes('width'),
   );
   if (height?.value && width?.value) {
     const unit = height.unit?._label || 'cm';
@@ -328,7 +348,11 @@ export function getPopularRijksmuseumArtists(): string[] {
   ];
 }
 
-import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import type {
+  MuseumServiceAdapter,
+  MuseumSearchParams,
+  MuseumSearchResult,
+} from './types/museumAdapter';
 import { registerAdapter } from './museumAdapterRegistry';
 
 export const rijksmuseumAdapter: MuseumServiceAdapter = {

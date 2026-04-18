@@ -21,7 +21,7 @@ interface SmithsonianSearchResult {
  * Search Smithsonian Institution collection
  */
 export async function searchSmithsonian(
-  params: SmithsonianSearchParams
+  params: SmithsonianSearchParams,
 ): Promise<SmithsonianSearchResult> {
   try {
     const { query, limit = 20 } = params;
@@ -64,17 +64,27 @@ export async function searchSmithsonian(
 function parseSmithsonianObject(row: any): Painting | null {
   try {
     const content = row.content;
-    const title = content?.descriptiveNonRepeating?.title?.content || row.title || 'Untitled';
+    const title =
+      content?.descriptiveNonRepeating?.title?.content ||
+      row.title ||
+      'Untitled';
 
     // freetext.name entries have { label: 'Artist' | 'Sitter' | ..., content: 'Name' }
     const freetextNames = content?.freetext?.name || [];
-    const artistEntry = freetextNames.find((n: any) =>
-      n.label === 'Artist' || n.label === 'Maker' || n.label === 'Creator'
-    ) || freetextNames.find((n: any) => n.label === 'Author');
-    const artistRaw = artistEntry?.content
-      || (Array.isArray(content?.indexedStructured?.name) ? content.indexedStructured.name[0] : content?.indexedStructured?.name)
-      || 'Unknown Artist';
-    const artist = cleanArtistName(typeof artistRaw === 'string' ? artistRaw : 'Unknown Artist');
+    const artistEntry =
+      freetextNames.find(
+        (n: any) =>
+          n.label === 'Artist' || n.label === 'Maker' || n.label === 'Creator',
+      ) || freetextNames.find((n: any) => n.label === 'Author');
+    const artistRaw =
+      artistEntry?.content ||
+      (Array.isArray(content?.indexedStructured?.name)
+        ? content.indexedStructured.name[0]
+        : content?.indexedStructured?.name) ||
+      'Unknown Artist';
+    const artist = cleanArtistName(
+      typeof artistRaw === 'string' ? artistRaw : 'Unknown Artist',
+    );
 
     const media = content?.descriptiveNonRepeating?.online_media?.media;
     const imageUrl = media?.[0]?.content;
@@ -90,7 +100,8 @@ function parseSmithsonianObject(row: any): Painting | null {
     }
 
     const medium = content?.freetext?.physicalDescription?.[0]?.content;
-    const museumName = content?.freetext?.setName?.[0]?.content || 'Smithsonian Institution';
+    const museumName =
+      content?.freetext?.setName?.[0]?.content || 'Smithsonian Institution';
     const places = content?.indexedStructured?.place || [];
 
     return {
@@ -115,7 +126,11 @@ function parseSmithsonianObject(row: any): Painting | null {
   }
 }
 
-import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import type {
+  MuseumServiceAdapter,
+  MuseumSearchParams,
+  MuseumSearchResult,
+} from './types/museumAdapter';
 import { registerAdapter } from './museumAdapterRegistry';
 
 export const smithsonianAdapter: MuseumServiceAdapter = {

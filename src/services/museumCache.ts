@@ -32,7 +32,9 @@ export async function getMuseumMap(): Promise<Record<string, Museum>> {
 }
 
 /** Resolve a legacy short code (e.g. "MET") to a museum UUID. */
-export async function resolveMuseumId(legacyId: string): Promise<string | null> {
+export async function resolveMuseumId(
+  legacyId: string,
+): Promise<string | null> {
   const map = await getMuseumMap();
   return map[legacyId]?.id ?? null;
 }

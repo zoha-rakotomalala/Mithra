@@ -23,10 +23,10 @@ export interface Visit {
 }
 
 export interface Painting {
-  id: string;          // UUID
-  museum_id: string;   // UUID FK to museums.id
+  id: string; // UUID
+  museum_id: string; // UUID FK to museums.id
   external_id: string; // Original text ID portion (e.g. "12345" from "met-12345")
-  legacy_id?: string;  // Original full text ID (e.g. "met-12345"), preserved from migration
+  legacy_id?: string; // Original full text ID (e.g. "met-12345"), preserved from migration
   title: string;
   artist: string;
   year?: string;
@@ -59,7 +59,7 @@ export interface VisitPalettePainting {
   id: string;
   palette_id: string;
   painting_id: string; // UUID FK to paintings.id
-  position: number;    // 0-7
+  position: number; // 0-7
   added_at: string;
 }
 

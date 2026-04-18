@@ -24,14 +24,16 @@ describe('Navigation Types', () => {
       Paths.Search,
     ];
 
-    rootStackPaths.forEach(path => {
+    rootStackPaths.forEach((path) => {
       expect(typeof path).toBe('string');
       expect(path.length).toBeGreaterThan(0);
     });
   });
 
   it('PaintingDetail requires paintingId param', () => {
-    const params: RootStackParamList['paintingDetail'] = { paintingId: 'test-uuid' };
+    const params: RootStackParamList['paintingDetail'] = {
+      paintingId: 'test-uuid',
+    };
     expect(params.paintingId).toBe('test-uuid');
   });
 
@@ -46,7 +48,10 @@ describe('Navigation Types', () => {
   });
 
   it('Search accepts optional museumId and visitId params', () => {
-    const withParams: RootStackParamList['search'] = { museumId: 'MET', visitId: 'v1' };
+    const withParams: RootStackParamList['search'] = {
+      museumId: 'MET',
+      visitId: 'v1',
+    };
     const withoutParams: RootStackParamList['search'] = undefined;
     expect(withParams!.museumId).toBe('MET');
     expect(withoutParams).toBeUndefined();

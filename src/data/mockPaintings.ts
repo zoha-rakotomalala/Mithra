@@ -23,7 +23,8 @@ export const mockPaintings: Painting[] = [
   {
     artist: 'Vincent van Gogh',
     color: '#FF6B6B',
-    description: 'The Starry Night is an oil-on-canvas painting by Dutch Post-Impressionist painter Vincent van Gogh.',
+    description:
+      'The Starry Night is an oil-on-canvas painting by Dutch Post-Impressionist painter Vincent van Gogh.',
     dimensions: '73.7 cm × 92.1 cm',
     id: '1',
     isInPalette: true,
@@ -37,7 +38,8 @@ export const mockPaintings: Painting[] = [
   {
     artist: 'Edvard Munch',
     color: '#4ECDC4',
-    description: 'An iconic image of modern art, depicting an agonized figure against a tumultuous orange sky.',
+    description:
+      'An iconic image of modern art, depicting an agonized figure against a tumultuous orange sky.',
     dimensions: '91 cm × 73.5 cm',
     id: '2',
     isInPalette: true,
@@ -51,7 +53,8 @@ export const mockPaintings: Painting[] = [
   {
     artist: 'Johannes Vermeer',
     color: '#45B7D1',
-    description: 'Often referred to as the "Mona Lisa of the North" or the "Dutch Mona Lisa".',
+    description:
+      'Often referred to as the "Mona Lisa of the North" or the "Dutch Mona Lisa".',
     dimensions: '44.5 cm × 39 cm',
     id: '3',
     isInPalette: true,
@@ -65,7 +68,8 @@ export const mockPaintings: Painting[] = [
   {
     artist: 'Gustav Klimt',
     color: '#F38181',
-    description: 'A masterpiece of the early modern period and Klimt\'s most popular work.',
+    description:
+      "A masterpiece of the early modern period and Klimt's most popular work.",
     dimensions: '180 cm × 180 cm',
     id: '5',
     isInPalette: true,
@@ -79,21 +83,23 @@ export const mockPaintings: Painting[] = [
   {
     artist: 'Claude Monet',
     color: '#AA96DA',
-    description: 'Part of a series of approximately 250 oil paintings depicting Monet\'s flower garden at Giverny.',
+    description:
+      "Part of a series of approximately 250 oil paintings depicting Monet's flower garden at Giverny.",
     dimensions: '200 cm × 180 cm',
     id: '6',
     isInPalette: true,
     isSeen: false,
     location: 'Paris, France',
     medium: 'Oil on canvas',
-    museum: 'Musée de l\'Orangerie',
+    museum: "Musée de l'Orangerie",
     title: 'Water Lilies',
     year: 1916,
   },
   {
     artist: 'Sandro Botticelli',
     color: '#FCBAD3',
-    description: 'Depicts the goddess Venus arriving at the shore after her birth, fully grown.',
+    description:
+      'Depicts the goddess Venus arriving at the shore after her birth, fully grown.',
     dimensions: '172.5 cm × 278.9 cm',
     id: '7',
     isInPalette: true,
@@ -107,7 +113,8 @@ export const mockPaintings: Painting[] = [
   {
     artist: 'Grant Wood',
     color: '#FFFFD2',
-    description: 'One of the most familiar images in 20th-century American art.',
+    description:
+      'One of the most familiar images in 20th-century American art.',
     dimensions: '78 cm × 65.3 cm',
     id: '8',
     isInPalette: true,
@@ -121,10 +128,12 @@ export const mockPaintings: Painting[] = [
   {
     artist: 'Salvador Dalí',
     color: '#E8B86D',
-    description: 'One of the most recognizable works of Surrealism, featuring melting clocks.',
+    description:
+      'One of the most recognizable works of Surrealism, featuring melting clocks.',
     dimensions: '24 cm × 33 cm',
     id: '9',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/en/d/dd/The_Persistence_of_Memory.jpg',
+    imageUrl:
+      'https://upload.wikimedia.org/wikipedia/en/d/dd/The_Persistence_of_Memory.jpg',
     isInPalette: true,
     isSeen: true,
     location: 'New York City, USA',

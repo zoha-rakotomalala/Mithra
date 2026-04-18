@@ -26,11 +26,7 @@ export function Startup({ navigation }: RootScreenProps<Paths.Startup>) {
 
   return (
     <View style={[shared.container, shared.centered, styles.container]}>
-      <Image
-        source={logo}
-        style={styles.logo}
-        resizeMode="contain"
-      />
+      <Image source={logo} style={styles.logo} resizeMode="contain" />
 
       {isFetching && (
         <ActivityIndicator
@@ -40,11 +36,7 @@ export function Startup({ navigation }: RootScreenProps<Paths.Startup>) {
         />
       )}
 
-      {isError && (
-        <Text style={styles.errorText}>
-          Loading error occurred
-        </Text>
-      )}
+      {isError && <Text style={styles.errorText}>Loading error occurred</Text>}
     </View>
   );
 }

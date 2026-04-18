@@ -16,14 +16,14 @@ export const shared = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.backgroundDark,
   },
-  
+
   // Centered content
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  
+
   // Padding
   paddingHorizontal: {
     paddingHorizontal: SPACING.lg,
@@ -34,7 +34,7 @@ export const shared = StyleSheet.create({
   padding: {
     padding: SPACING.md,
   },
-  
+
   // Shadows (Art Deco subtle shadows)
   shadowLight: {
     shadowColor: COLORS.black,
@@ -50,7 +50,7 @@ export const shared = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  
+
   // Borders
   borderTop: {
     borderTopWidth: 1,
@@ -60,14 +60,14 @@ export const shared = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
-  
+
   // Art Deco divider
   artDecoDivider: {
     height: 1,
     backgroundColor: COLORS.gold,
     marginVertical: SPACING.md,
   },
-  
+
   // Flex helpers
   row: {
     flexDirection: 'row',
@@ -81,7 +81,7 @@ export const shared = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  
+
   // Gaps
   gap4: { gap: 4 },
   gap8: { gap: 8 },

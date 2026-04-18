@@ -43,10 +43,7 @@ export class SyncService {
   /**
    * Enqueues an operation to the offline queue for later replay.
    */
-  private enqueueOperation(
-    type: QueuedOperation['type'],
-    payload: any,
-  ): void {
+  private enqueueOperation(type: QueuedOperation['type'], payload: any): void {
     const operation: QueuedOperation = {
       id: generateId(),
       type,
@@ -74,7 +71,11 @@ export class SyncService {
       updated_at: entry.updated_at || now,
     };
 
-    updateCollectionTimestamp(this.storage, entry.painting_id, entryWithTimestamp.updated_at);
+    updateCollectionTimestamp(
+      this.storage,
+      entry.painting_id,
+      entryWithTimestamp.updated_at,
+    );
 
     // If currently syncing, queue the write instead of sending to Supabase
     if (this._isSyncing) {
@@ -87,28 +88,29 @@ export class SyncService {
 
     // Attempt to write to Supabase — painting_id is already a UUID
     try {
-      const { error } = await supabase
-        .from('user_collection')
-        .upsert(
-          {
-            user_id: userId,
-            painting_id: entry.painting_id,
-            is_seen: entry.is_seen,
-            want_to_visit: entry.want_to_visit,
-            seen_date: entry.seen_date,
-            date_added: entry.date_added,
-            notes: entry.notes,
-            updated_at: entryWithTimestamp.updated_at,
-          },
-          { onConflict: 'user_id,painting_id' },
-        );
+      const { error } = await supabase.from('user_collection').upsert(
+        {
+          user_id: userId,
+          painting_id: entry.painting_id,
+          is_seen: entry.is_seen,
+          want_to_visit: entry.want_to_visit,
+          seen_date: entry.seen_date,
+          date_added: entry.date_added,
+          notes: entry.notes,
+          updated_at: entryWithTimestamp.updated_at,
+        },
+        { onConflict: 'user_id,painting_id' },
+      );
 
       if (error) {
         throw error;
       }
     } catch (err: any) {
       // Network failure or Supabase error — log and enqueue for later
-      console.error(`[SyncService] upsertCollectionEntry failed for painting ${entry.painting_id}:`, err?.message || err);
+      console.error(
+        `[SyncService] upsertCollectionEntry failed for painting ${entry.painting_id}:`,
+        err?.message || err,
+      );
       this.enqueueOperation('upsert_collection', {
         userId,
         entry: entryWithTimestamp,
@@ -164,10 +166,7 @@ export class SyncService {
    *
    * Requirements: 3.2, 3.3, 6.1
    */
-  async upsertPalette(
-    userId: string,
-    paintingIds: string[],
-  ): Promise<void> {
+  async upsertPalette(userId: string, paintingIds: string[]): Promise<void> {
     // Write to MMKV immediately
     writeLocalPaletteIds(this.storage, paintingIds);
 
@@ -187,16 +186,14 @@ export class SyncService {
     }
 
     try {
-      const { error } = await supabase
-        .from('user_palette')
-        .upsert(
-          {
-            user_id: userId,
-            painting_ids: paintingIds,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'user_id' },
-        );
+      const { error } = await supabase.from('user_palette').upsert(
+        {
+          user_id: userId,
+          painting_ids: paintingIds,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' },
+      );
 
       if (error) {
         throw error;
@@ -218,237 +215,232 @@ export class SyncService {
   }
 
   /**
-     * Syncs data on app launch by fetching remote data and merging with local cache.
-     *
-     * Flow:
-     * 1. Set isSyncing to true (writes during sync are queued)
-     * 2. Fetch user_collection and user_palette from Supabase
-     * 3. Read local MMKV data
-     * 4. Merge remote + local using timestamp-based conflict resolution
-     * 5. Write merged state to MMKV
-     * 6. Replay queued operations on top of merged data
-     * 7. Set isSyncing to false
-     *
-     * On fetch failure: set isSyncing to false, fall back to MMKV data, surface error.
-     *
-     * Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7
-     */
-    async syncOnLaunch(userId: string): Promise<void> {
-      this.setSyncing(true);
+   * Syncs data on app launch by fetching remote data and merging with local cache.
+   *
+   * Flow:
+   * 1. Set isSyncing to true (writes during sync are queued)
+   * 2. Fetch user_collection and user_palette from Supabase
+   * 3. Read local MMKV data
+   * 4. Merge remote + local using timestamp-based conflict resolution
+   * 5. Write merged state to MMKV
+   * 6. Replay queued operations on top of merged data
+   * 7. Set isSyncing to false
+   *
+   * On fetch failure: set isSyncing to false, fall back to MMKV data, surface error.
+   *
+   * Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7
+   */
+  async syncOnLaunch(userId: string): Promise<void> {
+    this.setSyncing(true);
 
-      try {
-        // Fetch remote data from Supabase
-        const [collectionResult, paletteResult] = await Promise.all([
-          supabase
-            .from('user_collection')
-            .select('*')
-            .eq('user_id', userId),
-          supabase
-            .from('user_palette')
-            .select('*')
-            .eq('user_id', userId)
-            .maybeSingle(),
-        ]);
+    try {
+      // Fetch remote data from Supabase
+      const [collectionResult, paletteResult] = await Promise.all([
+        supabase.from('user_collection').select('*').eq('user_id', userId),
+        supabase
+          .from('user_palette')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle(),
+      ]);
 
-        if (collectionResult.error) {
-          throw collectionResult.error;
-        }
-        if (paletteResult.error) {
-          throw paletteResult.error;
-        }
-
-        const remoteCollection: UserCollectionEntry[] = collectionResult.data ?? [];
-        const remotePalette: UserPalette | null = paletteResult.data ?? null;
-
-        // Read local MMKV data — these are Painting[] objects, NOT UserCollectionEntry[]
-        const localPaintings = readLocalCollection(this.storage);
-
-        // Build a set of local painting IDs (as strings) for quick lookup
-        const localIdSet = new Set(localPaintings.map((p: any) => String(p.id)));
-
-        if (remoteCollection.length > 0) {
-          // Map remote entries by painting_id (UUID) for metadata merge
-          const remoteByUuid = new Map<string, UserCollectionEntry>();
-          for (const entry of remoteCollection) {
-            remoteByUuid.set(entry.painting_id, entry);
-          }
-
-          // Fetch the actual painting records from the paintings table for all remote entries
-          const remoteUuids = remoteCollection.map(e => e.painting_id);
-          const { data: remotePaintingRows } = await supabase
-            .from('paintings')
-            .select('*')
-            .in('id', remoteUuids);
-
-          // Build a map of UUID → painting row for quick lookup
-          const remotePaintingRowMap = new Map<string, any>();
-          for (const row of (remotePaintingRows || [])) {
-            remotePaintingRowMap.set(row.id, row);
-          }
-
-          // 1. Update metadata on paintings that exist locally (match by UUID directly)
-          for (const painting of localPaintings) {
-            const remoteEntry = remoteByUuid.get(String(painting.id));
-            if (remoteEntry) {
-              painting.isSeen = remoteEntry.is_seen;
-              painting.wantToVisit = remoteEntry.want_to_visit;
-              painting.seenDate = remoteEntry.seen_date || undefined;
-              painting.notes = remoteEntry.notes || undefined;
-            }
-          }
-
-          // 2. Add remote-only paintings to local collection
-          for (const row of (remotePaintingRows || [])) {
-            if (!localIdSet.has(row.id)) {
-              const remoteEntry = remoteByUuid.get(row.id);
-              const m = row.metadata || {};
-              let imageUrl = row.image_url;
-              let thumbnailUrl = row.thumbnail_url;
-              if (!imageUrl && m.image_id) {
-                imageUrl = `https://www.artic.edu/iiif/2/${m.image_id}/full/843,/0/default.jpg`;
-                thumbnailUrl = `https://www.artic.edu/iiif/2/${m.image_id}/full/200,/0/default.jpg`;
-              }
-              localPaintings.push({
-                id: row.id,
-                title: row.title,
-                artist: row.artist,
-                year: row.year,
-                imageUrl,
-                thumbnailUrl,
-                color: row.color,
-                museum: m.museum || row.museum_id,
-                description: m.description,
-                medium: m.medium || row.medium,
-                dimensions: m.dimensions || row.dimensions,
-                location: m.location,
-                objectURL: m.objectURL,
-                period: m.period,
-                culture: m.culture,
-                department: m.department,
-                dateAdded: remoteEntry?.date_added || new Date().toISOString(),
-                isSeen: remoteEntry?.is_seen || false,
-                wantToVisit: remoteEntry?.want_to_visit || false,
-                seenDate: remoteEntry?.seen_date || undefined,
-                notes: remoteEntry?.notes || undefined,
-              });
-              localIdSet.add(row.id);
-            }
-          }
-        }
-
-        // Write updated local paintings back to MMKV (preserving the Painting[] shape)
-        writeLocalCollection(this.storage, localPaintings);
-
-        // Palette sync: store remote palette UUIDs directly in local storage
-        if (remotePalette && remotePalette.painting_ids.length > 0) {
-          // Remote palette painting_ids are already UUIDs — store directly
-          writeLocalPaletteIds(this.storage, remotePalette.painting_ids);
-        }
-
-        // Record last sync time
-        const now = new Date().toISOString();
-        this.storage.set(STORAGE_KEYS.LAST_SYNC_AT, now);
-
-        // Set isSyncing to false before replaying queue so replayed ops go directly to Supabase
-        this.setSyncing(false);
-
-        // Replay queued operations on top of merged data (Req 4.6, 4.7)
-        // These are operations that were enqueued during the sync window
-        await this.replayQueue();
-      } catch (_error) {
-        // Fetch failure: fall back to MMKV data (already in place), surface non-blocking error
-        this.setSyncing(false);
-
-        // Re-throw so the caller (PaintingsContext) can surface the error as a non-blocking notification
-        throw _error;
+      if (collectionResult.error) {
+        throw collectionResult.error;
       }
+      if (paletteResult.error) {
+        throw paletteResult.error;
+      }
+
+      const remoteCollection: UserCollectionEntry[] =
+        collectionResult.data ?? [];
+      const remotePalette: UserPalette | null = paletteResult.data ?? null;
+
+      // Read local MMKV data — these are Painting[] objects, NOT UserCollectionEntry[]
+      const localPaintings = readLocalCollection(this.storage);
+
+      // Build a set of local painting IDs (as strings) for quick lookup
+      const localIdSet = new Set(localPaintings.map((p: any) => String(p.id)));
+
+      if (remoteCollection.length > 0) {
+        // Map remote entries by painting_id (UUID) for metadata merge
+        const remoteByUuid = new Map<string, UserCollectionEntry>();
+        for (const entry of remoteCollection) {
+          remoteByUuid.set(entry.painting_id, entry);
+        }
+
+        // Fetch the actual painting records from the paintings table for all remote entries
+        const remoteUuids = remoteCollection.map((e) => e.painting_id);
+        const { data: remotePaintingRows } = await supabase
+          .from('paintings')
+          .select('*')
+          .in('id', remoteUuids);
+
+        // Build a map of UUID → painting row for quick lookup
+        const remotePaintingRowMap = new Map<string, any>();
+        for (const row of remotePaintingRows || []) {
+          remotePaintingRowMap.set(row.id, row);
+        }
+
+        // 1. Update metadata on paintings that exist locally (match by UUID directly)
+        for (const painting of localPaintings) {
+          const remoteEntry = remoteByUuid.get(String(painting.id));
+          if (remoteEntry) {
+            painting.isSeen = remoteEntry.is_seen;
+            painting.wantToVisit = remoteEntry.want_to_visit;
+            painting.seenDate = remoteEntry.seen_date || undefined;
+            painting.notes = remoteEntry.notes || undefined;
+          }
+        }
+
+        // 2. Add remote-only paintings to local collection
+        for (const row of remotePaintingRows || []) {
+          if (!localIdSet.has(row.id)) {
+            const remoteEntry = remoteByUuid.get(row.id);
+            const m = row.metadata || {};
+            let imageUrl = row.image_url;
+            let thumbnailUrl = row.thumbnail_url;
+            if (!imageUrl && m.image_id) {
+              imageUrl = `https://www.artic.edu/iiif/2/${m.image_id}/full/843,/0/default.jpg`;
+              thumbnailUrl = `https://www.artic.edu/iiif/2/${m.image_id}/full/200,/0/default.jpg`;
+            }
+            localPaintings.push({
+              id: row.id,
+              title: row.title,
+              artist: row.artist,
+              year: row.year,
+              imageUrl,
+              thumbnailUrl,
+              color: row.color,
+              museum: m.museum || row.museum_id,
+              description: m.description,
+              medium: m.medium || row.medium,
+              dimensions: m.dimensions || row.dimensions,
+              location: m.location,
+              objectURL: m.objectURL,
+              period: m.period,
+              culture: m.culture,
+              department: m.department,
+              dateAdded: remoteEntry?.date_added || new Date().toISOString(),
+              isSeen: remoteEntry?.is_seen || false,
+              wantToVisit: remoteEntry?.want_to_visit || false,
+              seenDate: remoteEntry?.seen_date || undefined,
+              notes: remoteEntry?.notes || undefined,
+            });
+            localIdSet.add(row.id);
+          }
+        }
+      }
+
+      // Write updated local paintings back to MMKV (preserving the Painting[] shape)
+      writeLocalCollection(this.storage, localPaintings);
+
+      // Palette sync: store remote palette UUIDs directly in local storage
+      if (remotePalette && remotePalette.painting_ids.length > 0) {
+        // Remote palette painting_ids are already UUIDs — store directly
+        writeLocalPaletteIds(this.storage, remotePalette.painting_ids);
+      }
+
+      // Record last sync time
+      const now = new Date().toISOString();
+      this.storage.set(STORAGE_KEYS.LAST_SYNC_AT, now);
+
+      // Set isSyncing to false before replaying queue so replayed ops go directly to Supabase
+      this.setSyncing(false);
+
+      // Replay queued operations on top of merged data (Req 4.6, 4.7)
+      // These are operations that were enqueued during the sync window
+      await this.replayQueue();
+    } catch (_error) {
+      // Fetch failure: fall back to MMKV data (already in place), surface non-blocking error
+      this.setSyncing(false);
+
+      // Re-throw so the caller (PaintingsContext) can surface the error as a non-blocking notification
+      throw _error;
     }
+  }
 
   /**
    * Replays all queued offline operations to Supabase.
    */
   async replayQueue(): Promise<void> {
-      const MAX_RETRIES = 3;
+    const MAX_RETRIES = 3;
 
-      let operation = offlineQueue.peek();
-      while (operation) {
-
-        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-          try {
-            await this.executeOperation(operation);
-            break;
-          } catch (error) {
-            if (attempt === MAX_RETRIES) {
-              console.error(
-                `[SyncService] Permanent failure for operation ${operation.id} (type: ${operation.type}) after ${MAX_RETRIES} retries:`,
-                error,
-              );
-            }
+    let operation = offlineQueue.peek();
+    while (operation) {
+      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          await this.executeOperation(operation);
+          break;
+        } catch (error) {
+          if (attempt === MAX_RETRIES) {
+            console.error(
+              `[SyncService] Permanent failure for operation ${operation.id} (type: ${operation.type}) after ${MAX_RETRIES} retries:`,
+              error,
+            );
           }
         }
-
-        // Remove from queue regardless — on permanent failure we retain MMKV state
-        offlineQueue.remove(operation.id);
-
-        operation = offlineQueue.peek();
       }
-    }
 
-    private async executeOperation(operation: QueuedOperation): Promise<void> {
-      switch (operation.type) {
-        case 'upsert_collection': {
-          const { userId, entry } = operation.payload;
-          // painting_id is already a UUID — no resolution needed
-          const { error } = await supabase
-            .from('user_collection')
-            .upsert(
-              {
-                user_id: userId,
-                painting_id: entry.painting_id,
-                is_seen: entry.is_seen,
-                want_to_visit: entry.want_to_visit,
-                seen_date: entry.seen_date,
-                date_added: entry.date_added,
-                notes: entry.notes,
-                updated_at: entry.updated_at,
-              },
-              { onConflict: 'user_id,painting_id' },
-            );
-          if (error) throw error;
-          break;
-        }
-        case 'delete_collection': {
-          const { userId, paintingId } = operation.payload;
-          // paintingId is already a UUID — no resolution needed
-          const { error } = await supabase
-            .from('user_collection')
-            .delete()
-            .eq('user_id', userId)
-            .eq('painting_id', paintingId);
-          if (error) throw error;
-          break;
-        }
-        case 'upsert_palette': {
-          const { userId, paintingIds } = operation.payload;
-          // paintingIds are already UUIDs — no resolution needed
-          if (paintingIds.length === 0) return;
-          const { error } = await supabase
-            .from('user_palette')
-            .upsert(
-              {
-                user_id: userId,
-                painting_ids: paintingIds,
-                updated_at: new Date().toISOString(),
-              },
-              { onConflict: 'user_id' },
-            );
-          if (error) throw error;
-          break;
-        }
-        default:
-          console.warn(`[SyncService] Unknown operation type: ${(operation as any).type}`);
-      }
+      // Remove from queue regardless — on permanent failure we retain MMKV state
+      offlineQueue.remove(operation.id);
+
+      operation = offlineQueue.peek();
     }
+  }
+
+  private async executeOperation(operation: QueuedOperation): Promise<void> {
+    switch (operation.type) {
+      case 'upsert_collection': {
+        const { userId, entry } = operation.payload;
+        // painting_id is already a UUID — no resolution needed
+        const { error } = await supabase.from('user_collection').upsert(
+          {
+            user_id: userId,
+            painting_id: entry.painting_id,
+            is_seen: entry.is_seen,
+            want_to_visit: entry.want_to_visit,
+            seen_date: entry.seen_date,
+            date_added: entry.date_added,
+            notes: entry.notes,
+            updated_at: entry.updated_at,
+          },
+          { onConflict: 'user_id,painting_id' },
+        );
+        if (error) throw error;
+        break;
+      }
+      case 'delete_collection': {
+        const { userId, paintingId } = operation.payload;
+        // paintingId is already a UUID — no resolution needed
+        const { error } = await supabase
+          .from('user_collection')
+          .delete()
+          .eq('user_id', userId)
+          .eq('painting_id', paintingId);
+        if (error) throw error;
+        break;
+      }
+      case 'upsert_palette': {
+        const { userId, paintingIds } = operation.payload;
+        // paintingIds are already UUIDs — no resolution needed
+        if (paintingIds.length === 0) return;
+        const { error } = await supabase.from('user_palette').upsert(
+          {
+            user_id: userId,
+            painting_ids: paintingIds,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' },
+        );
+        if (error) throw error;
+        break;
+      }
+      default:
+        console.warn(
+          `[SyncService] Unknown operation type: ${(operation as any).type}`,
+        );
+    }
+  }
 }
 
 /**

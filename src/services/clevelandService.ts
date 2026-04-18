@@ -8,18 +8,18 @@ type ClevelandSearchParameters = {
   limit?: number;
   query: string;
   skip?: number;
-}
+};
 
 type ClevelandSearchResult = {
   paintings: Painting[];
   totalResults: number;
-}
+};
 
 /**
  * Search Cleveland Museum of Art collection
  */
 export async function searchCleveland(
-  parameters: ClevelandSearchParameters
+  parameters: ClevelandSearchParameters,
 ): Promise<ClevelandSearchResult> {
   try {
     const { limit = 30, query, skip = 0 } = parameters;
@@ -140,9 +140,11 @@ export function getPopularClevelandArtists(): string[] {
   ];
 }
 
-
-
-import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import type {
+  MuseumServiceAdapter,
+  MuseumSearchParams,
+  MuseumSearchResult,
+} from './types/museumAdapter';
 import { registerAdapter } from './museumAdapterRegistry';
 
 export const clevelandAdapter: MuseumServiceAdapter = {

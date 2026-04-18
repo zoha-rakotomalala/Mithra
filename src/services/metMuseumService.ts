@@ -8,18 +8,18 @@ const objectCache = new Map<string, any>();
 export type MetSearchParams = {
   hasImages?: boolean;
   query: string;
-}
+};
 
 export type MetSearchResult = {
   paintings: Painting[];
   totalResults: number;
-}
+};
 
 /**
  * Search Met Museum collection
  */
 export async function searchMetMuseum(
-  parameters: MetSearchParams
+  parameters: MetSearchParams,
 ): Promise<MetSearchResult> {
   try {
     const { hasImages = true, query } = parameters;
@@ -50,7 +50,7 @@ export async function searchMetMuseum(
 
     // Filter to paintings only, remove nulls
     const paintingsOnly = paintings
-      .filter(p => p !== null && isPainting(p))
+      .filter((p) => p !== null && isPainting(p))
       .slice(0, 30) as Painting[];
 
     return {
@@ -67,7 +67,7 @@ export async function searchMetMuseum(
  * Search by artist name
  */
 export async function searchMetByArtist(
-  artistName: string
+  artistName: string,
 ): Promise<MetSearchResult> {
   return searchMetMuseum({
     hasImages: true,
@@ -78,14 +78,16 @@ export async function searchMetByArtist(
 /**
  * Fetch details for multiple object IDs
  */
-async function fetchObjectDetails(objectIDs: number[]): Promise<(null | Painting)[]> {
+async function fetchObjectDetails(
+  objectIDs: number[],
+): Promise<(null | Painting)[]> {
   const BATCH_SIZE = 10;
   const results: (null | Painting)[] = [];
 
   for (let index = 0; index < objectIDs.length; index += BATCH_SIZE) {
     const batch = objectIDs.slice(index, index + BATCH_SIZE);
     const batchResults = await Promise.all(
-      batch.map(id => fetchObjectDetail(id))
+      batch.map((id) => fetchObjectDetail(id)),
     );
     results.push(...batchResults);
   }
@@ -159,7 +161,7 @@ function parseMetObject(data: any, objectID: number): null | Painting {
       description,
       dimensions,
       id: `met-${objectID}`,
-      imageUrl: images.full,        // Full resolution for detail view
+      imageUrl: images.full, // Full resolution for detail view
       isSeen: false,
       location: 'New York City, USA',
       medium,
@@ -281,8 +283,6 @@ function extractDescription(data: any): string | undefined {
   return parts.length > 0 ? parts.join('. ') : undefined;
 }
 
-
-
 /**
  * Get popular artists for quick search
  */
@@ -306,7 +306,11 @@ export function getPopularMetArtists(): string[] {
   ];
 }
 
-import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import type {
+  MuseumServiceAdapter,
+  MuseumSearchParams,
+  MuseumSearchResult,
+} from './types/museumAdapter';
 import { registerAdapter } from './museumAdapterRegistry';
 
 export const metMuseumAdapter: MuseumServiceAdapter = {

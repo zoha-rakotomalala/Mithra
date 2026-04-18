@@ -3,6 +3,7 @@ import 'react-native-url-polyfill/auto';
 import 'react-native-get-random-values';
 
 import { enableScreens } from 'react-native-screens';
+
 enableScreens();
 
 import { AppRegistry } from 'react-native';

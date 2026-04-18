@@ -68,19 +68,33 @@ const NAVIGATION_TARGETS: { target: string; from: string }[] = [
 // Paths that exist in the enum but are not registered in any navigator.
 // These are legacy/unused values — add here only with justification.
 const UNUSED_PATHS = new Set([
-  Paths.Example,    // template/example screen, never registered
+  Paths.Example, // template/example screen, never registered
   Paths.Collection, // Collection tab uses Paths.Home instead
 ]);
 
 describe('Screen Registry', () => {
   it('every Paths enum value is registered in at least one navigator (or explicitly marked unused)', () => {
     const allPaths = [
-      Paths.Example, Paths.Startup, Paths.Home, Paths.Palette, Paths.Settings,
-      Paths.Search, Paths.PaintingDetail, Paths.Collection, Paths.ArtistProfile,
-      Paths.Visits, Paths.VisitDetail, Paths.MuseumCollection, Paths.LikedPaintings,
-      Paths.VisitPalette, Paths.ViewPalette, Paths.Auth,
+      Paths.Example,
+      Paths.Startup,
+      Paths.Home,
+      Paths.Palette,
+      Paths.Settings,
+      Paths.Search,
+      Paths.PaintingDetail,
+      Paths.Collection,
+      Paths.ArtistProfile,
+      Paths.Visits,
+      Paths.VisitDetail,
+      Paths.MuseumCollection,
+      Paths.LikedPaintings,
+      Paths.VisitPalette,
+      Paths.ViewPalette,
+      Paths.Auth,
     ];
-    const unregistered = allPaths.filter(p => !ALL_REGISTERED.has(p) && !UNUSED_PATHS.has(p));
+    const unregistered = allPaths.filter(
+      (p) => !ALL_REGISTERED.has(p) && !UNUSED_PATHS.has(p),
+    );
     expect(unregistered).toEqual([]);
   });
 
@@ -95,17 +109,17 @@ describe('Screen Registry', () => {
     // These screens are navigated to with params from the root stack level.
     // They MUST be in the root stack, not just in tabs.
     const requiresRootStack = [
-      Paths.PaintingDetail,   // navigated from many screens with { paintingId }
-      Paths.ArtistProfile,    // navigated from PaintingDetail with { artistName }
-      Paths.VisitDetail,      // navigated from Visits with { visitId }
+      Paths.PaintingDetail, // navigated from many screens with { paintingId }
+      Paths.ArtistProfile, // navigated from PaintingDetail with { artistName }
+      Paths.VisitDetail, // navigated from Visits with { visitId }
       Paths.MuseumCollection, // navigated from MuseumBrowser with { museumId, visitId }
-      Paths.LikedPaintings,   // navigated from VisitDetail with { visitId }
-      Paths.VisitPalette,     // navigated from VisitDetail with { visitId }
-      Paths.ViewPalette,      // navigated from VisitDetail with { visitId }
-      Paths.Search,           // navigated from VisitDetail with { museumId, visitId }
+      Paths.LikedPaintings, // navigated from VisitDetail with { visitId }
+      Paths.VisitPalette, // navigated from VisitDetail with { visitId }
+      Paths.ViewPalette, // navigated from VisitDetail with { visitId }
+      Paths.Search, // navigated from VisitDetail with { museumId, visitId }
     ];
 
-    const missing = requiresRootStack.filter(p => !ROOT_STACK_SCREENS.has(p));
+    const missing = requiresRootStack.filter((p) => !ROOT_STACK_SCREENS.has(p));
     expect(missing).toEqual([]);
   });
 });

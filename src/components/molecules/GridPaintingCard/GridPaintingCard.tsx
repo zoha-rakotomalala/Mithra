@@ -7,17 +7,21 @@ import { getMuseumBadge } from '@/constants/museums';
 import { museumImageSource } from '@/utils/imageSource';
 import type { GridPaintingCardProps } from './types';
 
-export function GridPaintingCard({ 
-  painting, 
-  variant = 'minimal', 
-  onPress 
+export function GridPaintingCard({
+  painting,
+  variant = 'minimal',
+  onPress,
 }: GridPaintingCardProps) {
   const [imageLoading, setImageLoading] = useState(true);
 
   const museumInfo = getMuseumBadge(painting.museum || 'UNKNOWN');
 
   return (
-    <TouchableOpacity style={cards.gridCard} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={cards.gridCard}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
       <View style={cards.imageContainer}>
         {painting.imageUrl ? (
           <>
@@ -27,7 +31,9 @@ export function GridPaintingCard({
               </View>
             )}
             <FastImage
-              source={museumImageSource(painting.thumbnailUrl || painting.imageUrl)}
+              source={museumImageSource(
+                painting.thumbnailUrl || painting.imageUrl,
+              )}
               style={cards.image}
               resizeMode={FastImage.resizeMode.cover}
               onLoadStart={() => setImageLoading(true)}
@@ -35,14 +41,21 @@ export function GridPaintingCard({
             />
           </>
         ) : (
-          <View style={[cards.imagePlaceholder, { backgroundColor: painting.color }]}>
+          <View
+            style={[
+              cards.imagePlaceholder,
+              { backgroundColor: painting.color },
+            ]}
+          >
             <Text style={cards.imagePlaceholderIcon}>🎨</Text>
           </View>
         )}
 
         {/* Museum badge variant (Search screen) */}
         {variant === 'museum' && (
-          <View style={[badges.museumBadge, { backgroundColor: museumInfo.color }]}>
+          <View
+            style={[badges.museumBadge, { backgroundColor: museumInfo.color }]}
+          >
             <Text style={badges.museumBadgeText}>{museumInfo.shortName}</Text>
           </View>
         )}
@@ -56,7 +69,13 @@ export function GridPaintingCard({
               </View>
             )}
             {painting.wantToVisit && (
-              <View style={[badges.statusBadge, badges.statusBadgeWant, { right: painting.isSeen ? 32 : 4 }]}>
+              <View
+                style={[
+                  badges.statusBadge,
+                  badges.statusBadgeWant,
+                  { right: painting.isSeen ? 32 : 4 },
+                ]}
+              >
                 <Text style={badges.statusBadgeText}>W</Text>
               </View>
             )}
@@ -72,9 +91,7 @@ export function GridPaintingCard({
       <Text style={cards.cardArtist} numberOfLines={1}>
         {painting.artist}
       </Text>
-      {painting.year && (
-        <Text style={cards.cardYear}>{painting.year}</Text>
-      )}
+      {painting.year && <Text style={cards.cardYear}>{painting.year}</Text>}
     </TouchableOpacity>
   );
 }

@@ -5,7 +5,9 @@ import type { Painting as CachedPainting } from '@/types/database';
 /**
  * Get a painting from the cache by UUID, falling back to legacy_id.
  */
-export async function getCachedPainting(paintingId: string): Promise<CachedPainting | null> {
+export async function getCachedPainting(
+  paintingId: string,
+): Promise<CachedPainting | null> {
   const { data, error } = await supabase
     .from('paintings')
     .select('*')
@@ -50,7 +52,10 @@ export async function cachePainting(painting: {
 }): Promise<CachedPainting | null> {
   const museumUuid = await resolveMuseumId(painting.museumLegacyId);
   if (!museumUuid) {
-    console.error('Error caching painting: museum not found for:', painting.museumLegacyId);
+    console.error(
+      'Error caching painting: museum not found for:',
+      painting.museumLegacyId,
+    );
     return null;
   }
 
@@ -71,7 +76,7 @@ export async function cachePainting(painting: {
         color: painting.color,
         metadata: painting.metadata,
       },
-      { onConflict: 'museum_id,external_id' }
+      { onConflict: 'museum_id,external_id' },
     )
     .select()
     .single();
@@ -87,7 +92,9 @@ export async function cachePainting(painting: {
 /**
  * Get multiple paintings from the cache by their UUIDs.
  */
-export async function getCachedPaintings(paintingUuids: string[]): Promise<CachedPainting[]> {
+export async function getCachedPaintings(
+  paintingUuids: string[],
+): Promise<CachedPainting[]> {
   const { data, error } = await supabase
     .from('paintings')
     .select('*')

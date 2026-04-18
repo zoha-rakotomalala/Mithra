@@ -1,5 +1,12 @@
 import React, { useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StatusBar,
+  ActivityIndicator,
+} from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { GridPaintingCard, EmptyState } from '@/components/molecules';
 import { shared, typography } from '@/styles';
@@ -34,35 +41,42 @@ export function LikedPaintings() {
   const { visitId } = route.params as { visitId: string };
   const { user } = useAuth();
 
-  const { paintings, loading, count, museumName, visitDate } = useLikedPaintings(visitId);
+  const { paintings, loading, count, museumName, visitDate } =
+    useLikedPaintings(visitId);
 
   const uiPaintings = paintings.map(toUIPainting);
 
-  const onPaintingPress = useCallback((item: Painting) => {
-    // Guard: skip upsert if painting_id is falsy
-    if (item.id && user?.id) {
-      const now = new Date().toISOString();
-      const entry: UserCollectionEntry = {
-        id: '',
-        user_id: user.id,
-        painting_id: item.id,
-        is_seen: true,
-        want_to_visit: false,
-        seen_date: visitDate || null,
-        date_added: now,
-        notes: null,
-        created_at: now,
-        updated_at: now,
-      };
+  const onPaintingPress = useCallback(
+    (item: Painting) => {
+      // Guard: skip upsert if painting_id is falsy
+      if (item.id && user?.id) {
+        const now = new Date().toISOString();
+        const entry: UserCollectionEntry = {
+          id: '',
+          user_id: user.id,
+          painting_id: item.id,
+          is_seen: true,
+          want_to_visit: false,
+          seen_date: visitDate || null,
+          date_added: now,
+          notes: null,
+          created_at: now,
+          updated_at: now,
+        };
 
-      const syncService = createSyncService(storage);
-      syncService.upsertCollectionEntry(user.id, entry).catch(err => {
-        console.error('[LikedPaintings] Failed to upsert collection entry:', err?.message || err);
-      });
-    }
+        const syncService = createSyncService(storage);
+        syncService.upsertCollectionEntry(user.id, entry).catch((err) => {
+          console.error(
+            '[LikedPaintings] Failed to upsert collection entry:',
+            err?.message || err,
+          );
+        });
+      }
 
-    navigation.navigate(Paths.PaintingDetail, { paintingId: item.id });
-  }, [user, museumName, visitDate, navigation]);
+      navigation.navigate(Paths.PaintingDetail, { paintingId: item.id });
+    },
+    [user, museumName, visitDate, navigation],
+  );
 
   const renderPainting = ({ item }: { item: Painting }) => (
     <GridPaintingCard
@@ -76,7 +90,10 @@ export function LikedPaintings() {
     return (
       <View style={shared.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+          >
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
           <Text style={typography.artDecoTitle}>LIKED ARTWORKS</Text>
@@ -94,7 +111,10 @@ export function LikedPaintings() {
       <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
       <View style={shared.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+          >
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
           <Text style={typography.artDecoTitle}>LIKED ARTWORKS</Text>

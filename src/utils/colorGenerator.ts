@@ -5,9 +5,21 @@
  */
 export function generateColorFromString(input: string): string {
   const colors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#95E1D3', '#F38181',
-    '#AA96DA', '#FCBAD3', '#FFFFD2', '#A8D8EA', '#E8B86D',
-    '#F4976C', '#4A5F7A', '#2C3639', '#D4AF37', '#7FB3D5',
+    '#FF6B6B',
+    '#4ECDC4',
+    '#45B7D1',
+    '#95E1D3',
+    '#F38181',
+    '#AA96DA',
+    '#FCBAD3',
+    '#FFFFD2',
+    '#A8D8EA',
+    '#E8B86D',
+    '#F4976C',
+    '#4A5F7A',
+    '#2C3639',
+    '#D4AF37',
+    '#7FB3D5',
   ];
 
   let hash = 0;

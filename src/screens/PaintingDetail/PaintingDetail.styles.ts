@@ -1,5 +1,11 @@
 import { StyleSheet } from 'react-native';
-import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS, TOUCHABLE_HEIGHT } from '@/constants';
+import {
+  COLORS,
+  SPACING,
+  FONT_SIZE,
+  BORDER_RADIUS,
+  TOUCHABLE_HEIGHT,
+} from '@/constants';
 
 /**
  * Painting Detail Screen Styles

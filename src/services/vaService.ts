@@ -8,18 +8,18 @@ type VASearchParameters = {
   page?: number;
   pageSize?: number;
   query: string;
-}
+};
 
 type VASearchResult = {
   paintings: Painting[];
   totalResults: number;
-}
+};
 
 /**
  * Search Victoria and Albert Museum collection
  */
 export async function searchVA(
-  parameters: VASearchParameters
+  parameters: VASearchParameters,
 ): Promise<VASearchResult> {
   try {
     const { page = 1, pageSize = 30, query } = parameters;
@@ -68,9 +68,10 @@ function parseVAObject(object: any): null | Painting {
     const title = object._primaryTitle || object.objectType || 'Untitled';
 
     // Extract artist
-    const artist = object._primaryMaker?.name ||
-                   object._primaryMaker?.association ||
-                   'Unknown Artist';
+    const artist =
+      object._primaryMaker?.name ||
+      object._primaryMaker?.association ||
+      'Unknown Artist';
 
     // V&A uses IIIF for images
     const images = object._images;
@@ -79,8 +80,8 @@ function parseVAObject(object: any): null | Painting {
     // Construct image URLs using IIIF
     const baseUrl = images._iiif_image_base_url;
     const imageUrl = `${baseUrl}/full/!800,800/0/default.jpg`;
-    const thumbnailUrl = images._primary_thumbnail ||
-                        `${baseUrl}/full/!400,400/0/default.jpg`;
+    const thumbnailUrl =
+      images._primary_thumbnail || `${baseUrl}/full/!400,400/0/default.jpg`;
 
     // Extract year
     let year: number | undefined;
@@ -131,9 +132,11 @@ export function getPopularVAArtists(): string[] {
   ];
 }
 
-
-
-import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import type {
+  MuseumServiceAdapter,
+  MuseumSearchParams,
+  MuseumSearchResult,
+} from './types/museumAdapter';
 import { registerAdapter } from './museumAdapterRegistry';
 
 export const vaAdapter: MuseumServiceAdapter = {

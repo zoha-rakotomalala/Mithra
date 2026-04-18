@@ -67,7 +67,7 @@ export function usePaintingDetail() {
   } = usePaintings();
 
   const inCollection = isInCollection(paintingId);
-  const collectionPainting = paintings.find(p => p.id === paintingId);
+  const collectionPainting = paintings.find((p) => p.id === paintingId);
 
   const [remotePainting, setRemotePainting] = useState<Painting | null>(null);
   const [loading, setLoading] = useState(!collectionPainting);
@@ -76,24 +76,31 @@ export function usePaintingDetail() {
   useEffect(() => {
     if (collectionPainting) return;
     setLoading(true);
-    getCachedPainting(paintingId).then(data => {
+    getCachedPainting(paintingId).then((data) => {
       if (data) setRemotePainting(dbToUIPainting(data));
       setLoading(false);
     });
   }, [paintingId, collectionPainting]);
 
-  const currentPainting: Painting = collectionPainting || remotePainting || {
-    id: paintingId,
-    title: 'Loading...',
-    artist: '',
-    color: '#1a1a1a',
-  };
+  const currentPainting: Painting = collectionPainting ||
+    remotePainting || {
+      id: paintingId,
+      title: 'Loading...',
+      artist: '',
+      color: '#1a1a1a',
+    };
 
   const isInPalette = isPaintingInPalette(currentPainting.id);
 
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
-  const [visitInfo, setVisitInfo] = useState<Array<{ visit_id: string; visit_date: string; museum_name: string }>>([]);
+  const [visitInfo, setVisitInfo] = useState<
+    Array<{
+      visit_id: string;
+      visit_date: string;
+      museum_name: string;
+    }>
+  >([]);
 
   useEffect(() => {
     getVisitsForPainting(paintingId).then(setVisitInfo);
@@ -127,7 +134,9 @@ export function usePaintingDetail() {
     } else {
       const success = addToPalette(currentPainting.id);
       if (!success) {
-        Alert.alert('Palette Full', 'Your palette can only hold 8 paintings.', [{ text: 'OK' }]);
+        Alert.alert('Palette Full', 'Your palette can only hold 8 paintings.', [
+          { text: 'OK' },
+        ]);
       }
     }
   };
@@ -144,14 +153,16 @@ export function usePaintingDetail() {
             navigation.goBack();
           },
           style: 'destructive',
-          text: 'Remove'
+          text: 'Remove',
         },
-      ]
+      ],
     );
   };
 
   const navigateToArtist = () => {
-    navigation.navigate(Paths.ArtistProfile, { artistName: currentPainting.artist });
+    navigation.navigate(Paths.ArtistProfile, {
+      artistName: currentPainting.artist,
+    });
   };
 
   const navigateToVisit = (visitId: string) => {

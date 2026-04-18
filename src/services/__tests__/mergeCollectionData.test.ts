@@ -22,7 +22,9 @@ jest.mock('../supabase', () => ({
 
 import { mergeCollectionData, mergePaletteData } from '../syncService';
 
-function makeEntry(overrides: Partial<UserCollectionEntry> = {}): UserCollectionEntry {
+function makeEntry(
+  overrides: Partial<UserCollectionEntry> = {},
+): UserCollectionEntry {
   return {
     id: overrides.id ?? 'entry-1',
     user_id: overrides.user_id ?? 'user-1',
@@ -53,20 +55,38 @@ describe('mergeCollectionData', () => {
   });
 
   it('returns remote entries when local is empty', () => {
-    const remote = [makeEntry({ painting_id: 'p1' }), makeEntry({ painting_id: 'p2' })];
+    const remote = [
+      makeEntry({ painting_id: 'p1' }),
+      makeEntry({ painting_id: 'p2' }),
+    ];
     const result = mergeCollectionData([], remote);
     expect(result).toEqual(remote);
   });
 
   it('returns local entries when remote is empty', () => {
-    const local = [makeEntry({ painting_id: 'p1' }), makeEntry({ painting_id: 'p2' })];
+    const local = [
+      makeEntry({ painting_id: 'p1' }),
+      makeEntry({ painting_id: 'p2' }),
+    ];
     const result = mergeCollectionData(local, []);
     expect(result).toEqual(local);
   });
 
   it('keeps the entry with the more recent updated_at when present in both', () => {
-    const local = [makeEntry({ painting_id: 'p1', updated_at: '2025-06-01T00:00:00Z', notes: 'local' })];
-    const remote = [makeEntry({ painting_id: 'p1', updated_at: '2025-05-01T00:00:00Z', notes: 'remote' })];
+    const local = [
+      makeEntry({
+        painting_id: 'p1',
+        updated_at: '2025-06-01T00:00:00Z',
+        notes: 'local',
+      }),
+    ];
+    const remote = [
+      makeEntry({
+        painting_id: 'p1',
+        updated_at: '2025-05-01T00:00:00Z',
+        notes: 'remote',
+      }),
+    ];
 
     const result = mergeCollectionData(local, remote);
     expect(result).toHaveLength(1);
@@ -74,8 +94,20 @@ describe('mergeCollectionData', () => {
   });
 
   it('remote wins when timestamps are equal (tie-breaking)', () => {
-    const local = [makeEntry({ painting_id: 'p1', updated_at: '2025-06-01T00:00:00Z', notes: 'local' })];
-    const remote = [makeEntry({ painting_id: 'p1', updated_at: '2025-06-01T00:00:00Z', notes: 'remote' })];
+    const local = [
+      makeEntry({
+        painting_id: 'p1',
+        updated_at: '2025-06-01T00:00:00Z',
+        notes: 'local',
+      }),
+    ];
+    const remote = [
+      makeEntry({
+        painting_id: 'p1',
+        updated_at: '2025-06-01T00:00:00Z',
+        notes: 'remote',
+      }),
+    ];
 
     const result = mergeCollectionData(local, remote);
     expect(result).toHaveLength(1);
@@ -89,24 +121,32 @@ describe('mergeCollectionData', () => {
     const result = mergeCollectionData(local, remote);
     expect(result).toHaveLength(2);
 
-    const ids = result.map(e => e.painting_id).sort();
+    const ids = result.map((e) => e.painting_id).sort();
     expect(ids).toEqual(['p1', 'p2']);
   });
 
   it('handles a mix of conflicts, local-only, and remote-only entries', () => {
     const local = [
-      makeEntry({ painting_id: 'shared', updated_at: '2025-06-01T00:00:00Z', notes: 'local-newer' }),
+      makeEntry({
+        painting_id: 'shared',
+        updated_at: '2025-06-01T00:00:00Z',
+        notes: 'local-newer',
+      }),
       makeEntry({ painting_id: 'local-only', notes: 'only-local' }),
     ];
     const remote = [
-      makeEntry({ painting_id: 'shared', updated_at: '2025-05-01T00:00:00Z', notes: 'remote-older' }),
+      makeEntry({
+        painting_id: 'shared',
+        updated_at: '2025-05-01T00:00:00Z',
+        notes: 'remote-older',
+      }),
       makeEntry({ painting_id: 'remote-only', notes: 'only-remote' }),
     ];
 
     const result = mergeCollectionData(local, remote);
     expect(result).toHaveLength(3);
 
-    const byId = new Map(result.map(e => [e.painting_id, e]));
+    const byId = new Map(result.map((e) => [e.painting_id, e]));
     expect(byId.get('shared')!.notes).toBe('local-newer');
     expect(byId.get('local-only')!.notes).toBe('only-local');
     expect(byId.get('remote-only')!.notes).toBe('only-remote');
@@ -137,24 +177,42 @@ describe('mergePaletteData', () => {
   });
 
   it('keeps the palette with the more recent updated_at', () => {
-    const local = makePalette({ updated_at: '2025-06-01T00:00:00Z', painting_ids: ['local'] });
-    const remote = makePalette({ updated_at: '2025-05-01T00:00:00Z', painting_ids: ['remote'] });
+    const local = makePalette({
+      updated_at: '2025-06-01T00:00:00Z',
+      painting_ids: ['local'],
+    });
+    const remote = makePalette({
+      updated_at: '2025-05-01T00:00:00Z',
+      painting_ids: ['remote'],
+    });
 
     const result = mergePaletteData(local, remote);
     expect(result!.painting_ids).toEqual(['local']);
   });
 
   it('remote wins when timestamps are equal (tie-breaking)', () => {
-    const local = makePalette({ updated_at: '2025-06-01T00:00:00Z', painting_ids: ['local'] });
-    const remote = makePalette({ updated_at: '2025-06-01T00:00:00Z', painting_ids: ['remote'] });
+    const local = makePalette({
+      updated_at: '2025-06-01T00:00:00Z',
+      painting_ids: ['local'],
+    });
+    const remote = makePalette({
+      updated_at: '2025-06-01T00:00:00Z',
+      painting_ids: ['remote'],
+    });
 
     const result = mergePaletteData(local, remote);
     expect(result!.painting_ids).toEqual(['remote']);
   });
 
   it('keeps local palette when local is strictly newer', () => {
-    const local = makePalette({ updated_at: '2025-07-01T00:00:00Z', painting_ids: ['a', 'b'] });
-    const remote = makePalette({ updated_at: '2025-06-01T00:00:00Z', painting_ids: ['c'] });
+    const local = makePalette({
+      updated_at: '2025-07-01T00:00:00Z',
+      painting_ids: ['a', 'b'],
+    });
+    const remote = makePalette({
+      updated_at: '2025-06-01T00:00:00Z',
+      painting_ids: ['c'],
+    });
 
     const result = mergePaletteData(local, remote);
     expect(result!.painting_ids).toEqual(['a', 'b']);

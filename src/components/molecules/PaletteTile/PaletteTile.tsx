@@ -1,5 +1,12 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Image } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  Image,
+} from 'react-native';
 import { COLORS, SPACING } from '@/constants';
 
 const { width } = Dimensions.get('window');
@@ -30,7 +37,11 @@ export function PaletteTile({
       style={[styles.container, { width: size, height: size * 1.3 }]}
     >
       {imageUrl ? (
-        <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
+        <Image
+          source={{ uri: imageUrl }}
+          style={styles.image}
+          resizeMode="cover"
+        />
       ) : (
         <View style={styles.placeholder}>
           <Text style={styles.placeholderIcon}>🎨</Text>
@@ -38,8 +49,16 @@ export function PaletteTile({
       )}
       {(artist || title) && (
         <View style={styles.overlay}>
-          {title && <Text style={styles.title} numberOfLines={1}>{title}</Text>}
-          {artist && <Text style={styles.artist} numberOfLines={1}>{artist}</Text>}
+          {title && (
+            <Text style={styles.title} numberOfLines={1}>
+              {title}
+            </Text>
+          )}
+          {artist && (
+            <Text style={styles.artist} numberOfLines={1}>
+              {artist}
+            </Text>
+          )}
         </View>
       )}
       {badge && (
@@ -55,7 +74,9 @@ export type EmptyPaletteTileProps = {
   readonly size?: number;
 };
 
-export function EmptyPaletteTile({ size = DEFAULT_SIZE }: EmptyPaletteTileProps) {
+export function EmptyPaletteTile({
+  size = DEFAULT_SIZE,
+}: EmptyPaletteTileProps) {
   return (
     <View style={[styles.emptyContainer, { width: size, height: size * 1.3 }]}>
       <Text style={styles.emptyIcon}>+</Text>

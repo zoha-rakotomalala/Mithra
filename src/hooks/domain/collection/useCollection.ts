@@ -10,15 +10,16 @@ type GroupedSection = {
 };
 
 export function useCollection() {
-  const { getPaintingsByArtist, getPaintingsByMuseum, paintings } = usePaintings();
+  const { getPaintingsByArtist, getPaintingsByMuseum, paintings } =
+    usePaintings();
 
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [sortBy, setSortBy] = useState<SortType>('recentlyAdded');
 
   const stats = useMemo(() => {
     const total = paintings.length;
-    const seen = paintings.filter(p => p.isSeen).length;
-    const wantToVisit = paintings.filter(p => p.wantToVisit).length;
+    const seen = paintings.filter((p) => p.isSeen).length;
+    const wantToVisit = paintings.filter((p) => p.wantToVisit).length;
     return { seen, total, wantToVisit };
   }, [paintings]);
 
@@ -43,11 +44,11 @@ export function useCollection() {
 
     switch (activeFilter) {
       case 'seen': {
-        filtered = filtered.filter(p => p.isSeen);
+        filtered = filtered.filter((p) => p.isSeen);
         break;
       }
       case 'wantToVisit': {
-        filtered = filtered.filter(p => p.wantToVisit);
+        filtered = filtered.filter((p) => p.wantToVisit);
         break;
       }
     }
@@ -76,7 +77,13 @@ export function useCollection() {
     }
 
     return [{ data: filtered, title: '' }];
-  }, [paintings, activeFilter, sortBy, getPaintingsByArtist, getPaintingsByMuseum]);
+  }, [
+    paintings,
+    activeFilter,
+    sortBy,
+    getPaintingsByArtist,
+    getPaintingsByMuseum,
+  ]);
 
   const isGroupedView = activeFilter === 'artist' || activeFilter === 'museum';
 

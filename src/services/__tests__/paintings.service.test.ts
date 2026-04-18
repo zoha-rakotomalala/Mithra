@@ -16,7 +16,11 @@ jest.mock('../museumCache', () => ({
   resolveMuseumId: jest.fn(),
 }));
 
-import { getCachedPainting, cachePainting, getCachedPaintings } from '../paintings.service';
+import {
+  getCachedPainting,
+  cachePainting,
+  getCachedPaintings,
+} from '../paintings.service';
 import { supabase } from '../supabase';
 import { resolveMuseumId } from '../museumCache';
 
@@ -28,7 +32,7 @@ beforeEach(() => {
 function mockChain(overrides: Record<string, jest.Mock> = {}) {
   const chain: any = {};
   const methods = ['select', 'eq', 'in', 'single', 'upsert'];
-  methods.forEach(m => {
+  methods.forEach((m) => {
     chain[m] = overrides[m] || jest.fn().mockReturnValue(chain);
   });
   (supabase.from as jest.Mock).mockReturnValue(chain);
@@ -37,8 +41,14 @@ function mockChain(overrides: Record<string, jest.Mock> = {}) {
 
 describe('getCachedPainting', () => {
   it('returns painting when found by UUID', async () => {
-    const mockPainting = { id: 'uuid-1', title: 'Starry Night', artist: 'Van Gogh' };
-    const single = jest.fn().mockResolvedValue({ data: mockPainting, error: null });
+    const mockPainting = {
+      id: 'uuid-1',
+      title: 'Starry Night',
+      artist: 'Van Gogh',
+    };
+    const single = jest
+      .fn()
+      .mockResolvedValue({ data: mockPainting, error: null });
     mockChain({ single });
 
     const result = await getCachedPainting('uuid-1');
@@ -55,11 +65,13 @@ describe('getCachedPainting', () => {
       const chain: any = {};
       chain.select = jest.fn().mockReturnValue(chain);
       chain.eq = jest.fn().mockReturnValue(chain);
-      chain.single = jest.fn().mockResolvedValue(
-        callCount === 1
-          ? { data: null, error: { code: 'PGRST116' } }
-          : { data: mockPainting, error: null },
-      );
+      chain.single = jest
+        .fn()
+        .mockResolvedValue(
+          callCount === 1
+            ? { data: null, error: { code: 'PGRST116' } }
+            : { data: mockPainting, error: null },
+        );
       return chain;
     });
 
@@ -73,7 +85,9 @@ describe('getCachedPainting', () => {
       const chain: any = {};
       chain.select = jest.fn().mockReturnValue(chain);
       chain.eq = jest.fn().mockReturnValue(chain);
-      chain.single = jest.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } });
+      chain.single = jest
+        .fn()
+        .mockResolvedValue({ data: null, error: { code: 'PGRST116' } });
       return chain;
     });
 
@@ -83,7 +97,12 @@ describe('getCachedPainting', () => {
 
   it('returns null and logs on unexpected error', async () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-    const single = jest.fn().mockResolvedValue({ data: null, error: { code: 'UNEXPECTED', message: 'db down' } });
+    const single = jest
+      .fn()
+      .mockResolvedValue({
+        data: null,
+        error: { code: 'UNEXPECTED', message: 'db down' },
+      });
     mockChain({ single });
 
     const result = await getCachedPainting('uuid-1');
@@ -114,7 +133,9 @@ describe('cachePainting', () => {
     (resolveMuseumId as jest.Mock).mockResolvedValue('museum-uuid');
 
     const upsert = jest.fn();
-    const single = jest.fn().mockResolvedValue({ data: mockResult, error: null });
+    const single = jest
+      .fn()
+      .mockResolvedValue({ data: mockResult, error: null });
     const select = jest.fn().mockReturnValue({ single });
     upsert.mockReturnValue({ select });
     (supabase.from as jest.Mock).mockReturnValue({ upsert });
@@ -142,7 +163,9 @@ describe('cachePainting', () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
     (resolveMuseumId as jest.Mock).mockResolvedValue('museum-uuid');
 
-    const single = jest.fn().mockResolvedValue({ data: null, error: { message: 'conflict' } });
+    const single = jest
+      .fn()
+      .mockResolvedValue({ data: null, error: { message: 'conflict' } });
     const select = jest.fn().mockReturnValue({ single });
     const upsert = jest.fn().mockReturnValue({ select });
     (supabase.from as jest.Mock).mockReturnValue({ upsert });
@@ -166,7 +189,9 @@ describe('getCachedPaintings', () => {
       { id: 'uuid-1', title: 'A' },
       { id: 'uuid-2', title: 'B' },
     ];
-    const inMock = jest.fn().mockResolvedValue({ data: mockPaintings, error: null });
+    const inMock = jest
+      .fn()
+      .mockResolvedValue({ data: mockPaintings, error: null });
     const select = jest.fn().mockReturnValue({ in: inMock });
     (supabase.from as jest.Mock).mockReturnValue({ select });
 
@@ -176,7 +201,9 @@ describe('getCachedPaintings', () => {
 
   it('returns empty array on error', async () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-    const inMock = jest.fn().mockResolvedValue({ data: null, error: { message: 'fail' } });
+    const inMock = jest
+      .fn()
+      .mockResolvedValue({ data: null, error: { message: 'fail' } });
     const select = jest.fn().mockReturnValue({ in: inMock });
     (supabase.from as jest.Mock).mockReturnValue({ select });
 

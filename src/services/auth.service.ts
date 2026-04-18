@@ -9,7 +9,9 @@ export interface UserProfile {
 
 export const authService = {
   async getCurrentUser() {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     return user;
   },
 
@@ -37,7 +39,7 @@ export const authService = {
           email,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-        }
+        },
       ])
       .select()
       .single();

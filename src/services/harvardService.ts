@@ -23,7 +23,7 @@ interface HarvardSearchResult {
  * Search Harvard Art Museums collection
  */
 export async function searchHarvard(
-  params: HarvardSearchParams
+  params: HarvardSearchParams,
 ): Promise<HarvardSearchResult> {
   try {
     const { query, page = 1, size = 20 } = params;
@@ -34,7 +34,7 @@ export async function searchHarvard(
 
     // Use the correct endpoint: /object (not /v1/object)
     const queryParams = new URLSearchParams({
-      apikey: API_KEY || "",
+      apikey: API_KEY || '',
       q: query.trim(),
       classification: 'Paintings',
       hasimage: '1',
@@ -72,15 +72,15 @@ function parseHarvardObject(obj: any): Painting | null {
     const title = obj.title || 'Untitled';
 
     // Extract and clean artist
-    const artistDisplay = obj.people?.[0]?.name ||
-                          obj.culture ||
-                          'Unknown Artist';
+    const artistDisplay =
+      obj.people?.[0]?.name || obj.culture || 'Unknown Artist';
     const artist = cleanArtistName(artistDisplay);
 
     // Image URLs — use primaryimageurl directly (nrs.harvard.edu); ids.lib.harvard.edu aggressively rate-limits (429)
     const imageUrl = obj.primaryimageurl;
     if (!imageUrl) return null;
-    const thumbnailUrl = imageUrl + (imageUrl.includes('?') ? '&' : '?') + 'height=400&width=400';
+    const thumbnailUrl =
+      imageUrl + (imageUrl.includes('?') ? '&' : '?') + 'height=400&width=400';
 
     // Extract year
     let year: number | undefined;
@@ -96,9 +96,10 @@ function parseHarvardObject(obj: any): Painting | null {
     if (obj.technique) descParts.push(obj.technique);
 
     // Extract color
-    const color = obj.colors && obj.colors.length > 0
-      ? `#${obj.colors[0].color}`
-      : generateColorFromString(title);
+    const color =
+      obj.colors && obj.colors.length > 0
+        ? `#${obj.colors[0].color}`
+        : generateColorFromString(title);
 
     return {
       id: `harvard-${obj.id}`,
@@ -136,9 +137,11 @@ export function getPopularHarvardArtists(): string[] {
   ];
 }
 
-
-
-import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import type {
+  MuseumServiceAdapter,
+  MuseumSearchParams,
+  MuseumSearchResult,
+} from './types/museumAdapter';
 import { registerAdapter } from './museumAdapterRegistry';
 
 export const harvardAdapter: MuseumServiceAdapter = {

@@ -14,7 +14,11 @@ export type AssetByVariantProps = {
 
 const images = getAssetsContext('images');
 
-function AssetByVariant({ extension = 'png', path, ...props }: AssetByVariantProps) {
+function AssetByVariant({
+  extension = 'png',
+  path,
+  ...props
+}: AssetByVariantProps) {
   const { variant } = useTheme();
 
   const image = useMemo(() => {

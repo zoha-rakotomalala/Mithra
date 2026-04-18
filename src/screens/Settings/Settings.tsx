@@ -24,7 +24,7 @@ export function Settings() {
   const { user, signOut } = useAuth();
 
   const [curatorName, setCuratorName] = useState(
-    storage.getString('curator_name') ?? ''
+    storage.getString('curator_name') ?? '',
   );
 
   const saveCuratorName = (name: string) => {
@@ -45,12 +45,15 @@ export function Settings() {
         {
           onPress: () => {
             storage.clearAll();
-            Alert.alert('Archive Cleared', 'Restart the app to reload default data.');
+            Alert.alert(
+              'Archive Cleared',
+              'Restart the app to reload default data.',
+            );
           },
           style: 'destructive',
           text: 'Clear',
         },
-      ]
+      ],
     );
   };
 
@@ -58,9 +61,9 @@ export function Settings() {
     Alert.alert(
       'Archive Status',
       `Paintings: ${paintings.length}\n` +
-        `Seen: ${paintings.filter(p => p.isSeen).length}\n` +
+        `Seen: ${paintings.filter((p) => p.isSeen).length}\n` +
         `Palette: ${palettePaintingIds.length}/8`,
-      [{ text: 'OK' }]
+      [{ text: 'OK' }],
     );
   };
 
@@ -81,27 +84,27 @@ export function Settings() {
         style={[shared.container, styles.scrollView]}
         contentContainerStyle={styles.scrollContent}
       >
-        <Text style={[typography.h1, styles.title]}>
-          SETTINGS
-        </Text>
+        <Text style={[typography.h1, styles.title]}>SETTINGS</Text>
         <View style={shared.artDecoDivider} />
 
         <View style={styles.sectionGroup}>
-          <Text style={[typography.label, styles.sectionLabel]}>
-            ACCOUNT
-          </Text>
+          <Text style={[typography.label, styles.sectionLabel]}>ACCOUNT</Text>
 
           {user ? (
             <>
               <View style={[shared.row, shared.rowBetween, styles.row]}>
-                <Text style={[typography.body, styles.bodyTextCream]}>Logged in as</Text>
+                <Text style={[typography.body, styles.bodyTextCream]}>
+                  Logged in as
+                </Text>
                 <Text style={[typography.bodySmall, styles.bodyTextCreamMuted]}>
                   {user.email || `User ${user.id.substring(0, 8)}`}
                 </Text>
               </View>
 
               <View style={styles.curatorNameRow}>
-                <Text style={[typography.body, styles.curatorNameLabel]}>Curator Name</Text>
+                <Text style={[typography.body, styles.curatorNameLabel]}>
+                  Curator Name
+                </Text>
                 <TextInput
                   style={styles.curatorNameInput}
                   value={curatorName}
@@ -117,7 +120,9 @@ export function Settings() {
                 onPress={handleSignOut}
                 style={[shared.row, shared.rowBetween, styles.dangerRow]}
               >
-                <Text style={[typography.body, styles.dangerText]}>Sign Out</Text>
+                <Text style={[typography.body, styles.dangerText]}>
+                  Sign Out
+                </Text>
                 <Text style={styles.dangerText}>→</Text>
               </TouchableOpacity>
             </>
@@ -126,22 +131,24 @@ export function Settings() {
               onPress={() => navigation.navigate(Paths.Auth)}
               style={[shared.row, shared.rowBetween, styles.row]}
             >
-              <Text style={[typography.body, styles.bodyTextCream]}>Sign In / Sign Up</Text>
+              <Text style={[typography.body, styles.bodyTextCream]}>
+                Sign In / Sign Up
+              </Text>
               <Text style={[typography.body, styles.goldChevron]}>›</Text>
             </TouchableOpacity>
           )}
         </View>
 
         <View style={styles.sectionGroup}>
-          <Text style={[typography.label, styles.sectionLabel]}>
-            ARCHIVE
-          </Text>
+          <Text style={[typography.label, styles.sectionLabel]}>ARCHIVE</Text>
 
           <TouchableOpacity
             onPress={handleShowStorageInfo}
             style={[shared.row, shared.rowBetween, styles.row]}
           >
-            <Text style={[typography.body, styles.bodyTextCream]}>Archive Status</Text>
+            <Text style={[typography.body, styles.bodyTextCream]}>
+              Archive Status
+            </Text>
             <Text style={[typography.body, styles.goldChevron]}>›</Text>
           </TouchableOpacity>
 
@@ -149,23 +156,27 @@ export function Settings() {
             onPress={handleClearStorage}
             style={[shared.row, shared.rowBetween, styles.dangerRow]}
           >
-            <Text style={[typography.body, styles.dangerText]}>Clear Archive</Text>
+            <Text style={[typography.body, styles.dangerText]}>
+              Clear Archive
+            </Text>
             <Text style={styles.dangerText}>×</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.sectionGroup}>
-          <Text style={[typography.label, styles.sectionLabel]}>
-            SYSTEM
-          </Text>
+          <Text style={[typography.label, styles.sectionLabel]}>SYSTEM</Text>
 
           <View style={[shared.row, shared.rowBetween, styles.row]}>
             <Text style={[typography.body, styles.bodyTextCream]}>Version</Text>
-            <Text style={[typography.bodySmall, styles.bodyTextCreamMuted]}>1.0.0</Text>
+            <Text style={[typography.bodySmall, styles.bodyTextCreamMuted]}>
+              1.0.0
+            </Text>
           </View>
 
           <View style={[shared.row, shared.rowBetween, styles.row]}>
-            <Text style={[typography.body, styles.bodyTextCream]}>Data Version</Text>
+            <Text style={[typography.body, styles.bodyTextCream]}>
+              Data Version
+            </Text>
             <Text style={[typography.bodySmall, styles.bodyTextCreamMuted]}>
               {storage.getString('palette_data_version') || '—'}
             </Text>

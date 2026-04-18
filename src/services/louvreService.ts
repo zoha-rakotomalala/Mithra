@@ -7,7 +7,7 @@ const WIKIDATA_ENDPOINT = 'https://query.wikidata.org/sparql';
 const LOUVRE_DATA_BASE = 'https://collections.louvre.fr/ark:/53355';
 
 const SPARQL_HEADERS = {
-  'Accept': 'application/json',
+  Accept: 'application/json',
   'Content-Type': 'application/x-www-form-urlencoded',
   'User-Agent': 'PaletteApp/1.0 (art collection mobile app)',
 };
@@ -25,7 +25,10 @@ interface LouvreSearchResult {
 /**
  * Convert a Wikimedia Commons image URL to a thumbnail URL
  */
-function getWikimediaThumbnail(imageUrl: string, width = 400): string | undefined {
+function getWikimediaThumbnail(
+  imageUrl: string,
+  width = 400,
+): string | undefined {
   if (!imageUrl?.includes('upload.wikimedia.org')) return undefined;
   const match = imageUrl.match(/\/commons\/(.+\/([^/]+))$/);
   if (!match) return undefined;
@@ -36,7 +39,7 @@ function getWikimediaThumbnail(imageUrl: string, width = 400): string | undefine
  * Search Musée du Louvre via Wikidata SPARQL (paintings located at the Louvre)
  */
 export async function searchLouvre(
-  params: LouvreSearchParams
+  params: LouvreSearchParams,
 ): Promise<LouvreSearchResult> {
   try {
     const { query, limit = 20 } = params;
@@ -77,17 +80,19 @@ export async function searchLouvre(
 
     console.log('🇫🇷 Searching Louvre via Wikidata');
 
-    const data = await museumApi.post(WIKIDATA_ENDPOINT, {
-      body: `query=${encodeURIComponent(sparqlQuery)}`,
-      headers: SPARQL_HEADERS,
-      timeout: 20000,
-    }).json<any>();
+    const data = await museumApi
+      .post(WIKIDATA_ENDPOINT, {
+        body: `query=${encodeURIComponent(sparqlQuery)}`,
+        headers: SPARQL_HEADERS,
+        timeout: 20000,
+      })
+      .json<any>();
 
     const bindings = data.results?.bindings || [];
 
     // Try to enrich with Louvre JSON for items that have a louvreId
     const paintings = await Promise.all(
-      bindings.map((item: any) => parseLouvreResult(item))
+      bindings.map((item: any) => parseLouvreResult(item)),
     );
 
     const filtered = paintings.filter((p): p is Painting => p !== null);
@@ -116,7 +121,9 @@ async function parseLouvreResult(item: any): Promise<Painting | null> {
     // Try to fetch richer data from Louvre JSON
     if (louvreId) {
       try {
-        const louvreData = await museumApi.get(`${LOUVRE_DATA_BASE}/${louvreId}.json`).json<any>();
+        const louvreData = await museumApi
+          .get(`${LOUVRE_DATA_BASE}/${louvreId}.json`)
+          .json<any>();
         if (louvreData.image) {
           imageUrl = louvreData.image;
           thumbnailUrl = thumbnailUrl || louvreData.image;
@@ -153,7 +160,11 @@ async function parseLouvreResult(item: any): Promise<Painting | null> {
   }
 }
 
-import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import type {
+  MuseumServiceAdapter,
+  MuseumSearchParams,
+  MuseumSearchResult,
+} from './types/museumAdapter';
 import { registerAdapter } from './museumAdapterRegistry';
 
 export const louvreAdapter: MuseumServiceAdapter = {

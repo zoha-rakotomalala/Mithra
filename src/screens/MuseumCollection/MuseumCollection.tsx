@@ -1,5 +1,13 @@
 import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, StatusBar, ActivityIndicator, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StatusBar,
+  ActivityIndicator,
+  TextInput,
+} from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { GridPaintingCard } from '@/components/molecules';
 import { shared, typography } from '@/styles';
@@ -11,7 +19,10 @@ import type { Painting } from '@/types/painting';
 export function MuseumCollection() {
   const navigation = useNavigation();
   const route = useRoute();
-  const { museumId, visitId } = route.params as { museumId: string; visitId: string };
+  const { museumId, visitId } = route.params as {
+    museumId: string;
+    visitId: string;
+  };
 
   const {
     paintings,
@@ -48,10 +59,15 @@ export function MuseumCollection() {
       <View style={shared.container}>
         <View style={styles.header}>
           <View style={styles.headerRow}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
+            >
               <Text style={styles.backText}>←</Text>
             </TouchableOpacity>
-            <Text style={typography.artDecoTitle}>{`${museumId} COLLECTION`}</Text>
+            <Text
+              style={typography.artDecoTitle}
+            >{`${museumId} COLLECTION`}</Text>
           </View>
         </View>
 
@@ -66,7 +82,10 @@ export function MuseumCollection() {
             returnKeyType="search"
           />
           <TouchableOpacity
-            style={[styles.searchButton, loading && styles.searchButtonDisabled]}
+            style={[
+              styles.searchButton,
+              loading && styles.searchButtonDisabled,
+            ]}
             onPress={searchCollection}
             disabled={loading}
           >
@@ -81,8 +100,7 @@ export function MuseumCollection() {
             <Text style={[typography.body, styles.emptyText]}>
               {searchQuery.trim()
                 ? 'No results found. Try a different search term.'
-                : `Enter a search term to explore the ${museumId} collection`
-              }
+                : `Enter a search term to explore the ${museumId} collection`}
             </Text>
             <Text style={[typography.caption, styles.emptyHint]}>
               Try searching for artists, movements, or subjects
@@ -91,13 +109,16 @@ export function MuseumCollection() {
         ) : loading ? (
           <View style={styles.loading}>
             <ActivityIndicator size="large" color={COLORS.gold} />
-            <Text style={typography.body}>Searching for quality artworks...</Text>
+            <Text style={typography.body}>
+              Searching for quality artworks...
+            </Text>
           </View>
         ) : (
           <>
             <View style={styles.resultsHeader}>
               <Text style={typography.caption}>
-                {paintings.length} result{paintings.length !== 1 ? 's' : ''} found
+                {paintings.length} result{paintings.length !== 1 ? 's' : ''}{' '}
+                found
               </Text>
             </View>
             <FlatList
@@ -108,11 +129,11 @@ export function MuseumCollection() {
               columnWrapperStyle={{
                 justifyContent: 'space-between',
                 paddingHorizontal: GRID.margin,
-                marginBottom: GRID.gutter
+                marginBottom: GRID.gutter,
               }}
               contentContainerStyle={{
                 paddingTop: GRID.margin,
-                paddingBottom: GRID.margin
+                paddingBottom: GRID.margin,
               }}
             />
           </>

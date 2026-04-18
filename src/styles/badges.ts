@@ -31,7 +31,7 @@ export const badges = StyleSheet.create({
     fontWeight: '700',
     color: COLORS.textInverse,
   },
-  
+
   // Museum badges
   museumBadge: {
     position: 'absolute',
@@ -49,7 +49,7 @@ export const badges = StyleSheet.create({
     color: COLORS.textInverse,
     letterSpacing: 0.5,
   },
-  
+
   // Combined badges container (when both status badges present)
   statusBadgeContainer: {
     position: 'absolute',

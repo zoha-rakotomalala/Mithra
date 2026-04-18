@@ -1,0 +1,147 @@
+[
+  [
+    "Map",
+    1,
+    2,
+    9,
+    10
+  ],
+  "meta::meta",
+  [
+    "Map",
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "astro-version",
+  "5.18.1",
+  "content-config-digest",
+  "b4dd613d4800f504",
+  "astro-config-digest",
+  "{\"root\":{},\"srcDir\":{},\"publicDir\":{},\"outDir\":{},\"cacheDir\":{},\"site\":\"https://zoha-rakotomalala.github.io\",\"compressHTML\":true,\"base\":\"/Mithra/\",\"trailingSlash\":\"ignore\",\"output\":\"static\",\"scopedStyleStrategy\":\"attribute\",\"build\":{\"format\":\"directory\",\"client\":{},\"server\":{},\"assets\":\"_assets\",\"serverEntry\":\"entry.mjs\",\"redirects\":true,\"inlineStylesheets\":\"auto\",\"concurrency\":1},\"server\":{\"open\":false,\"host\":false,\"port\":4321,\"streaming\":true,\"allowedHosts\":[]},\"redirects\":{},\"image\":{\"endpoint\":{\"route\":\"/_image\"},\"service\":{\"entrypoint\":\"astro/assets/services/sharp\",\"config\":{}},\"domains\":[],\"remotePatterns\":[],\"responsiveStyles\":false},\"devToolbar\":{\"enabled\":true},\"markdown\":{\"syntaxHighlight\":{\"type\":\"shiki\",\"excludeLangs\":[\"math\"]},\"shikiConfig\":{\"langs\":[],\"langAlias\":{},\"theme\":\"github-dark\",\"themes\":{},\"wrap\":false,\"transformers\":[]},\"remarkPlugins\":[],\"rehypePlugins\":[],\"remarkRehype\":{},\"gfm\":true,\"smartypants\":true},\"security\":{\"checkOrigin\":true,\"allowedDomains\":[],\"actionBodySizeLimit\":1048576},\"env\":{\"schema\":{},\"validateSecrets\":false},\"experimental\":{\"clientPrerender\":false,\"contentIntellisense\":false,\"headingIdCompat\":false,\"preserveScriptOrder\":false,\"liveContentCollections\":false,\"csp\":false,\"staticImportMetaEnv\":false,\"chromeDevtoolsWorkspace\":false,\"failOnPrerenderConflict\":false,\"svgo\":false},\"legacy\":{\"collections\":false}}",
+  "blog",
+  [
+    "Map",
+    11,
+    12,
+    35,
+    36
+  ],
+  "the-concert",
+  {
+    "id": 11,
+    "data": 13,
+    "body": 22,
+    "filePath": 23,
+    "digest": 24,
+    "rendered": 25
+  },
+  {
+    "title": 14,
+    "date": 15,
+    "description": 16,
+    "image": 17,
+    "tags": 18
+  },
+  "The Concert — The Painting That Started Everything",
+  [
+    "Date",
+    "2026-04-14T00:00:00.000Z"
+  ],
+  "How a Baroque painting by Gerrit van Honthorst in a Parisian museum set me on a path I never expected.",
+  "https://upload.wikimedia.org/wikipedia/commons/e/ee/Gerrit_van_honthorst%2C_il_concerto%2C_1620-27%2C_01.jpg",
+  [
+    19,
+    20,
+    21
+  ],
+  "paintings",
+  "honthorst",
+  "baroque",
+  "There's a painting by Gerrit van Honthorst called *The Concert*, from 1626. It shows musicians gathered around a table in warm candlelight — a scene that feels intimate, alive, like you could hear the music if you leaned in close enough.\n\nI first saw his work at the Musée Jacquemart-André in Paris. It was a piece on loan from the Galleria Borghese. I didn't know anything about Honthorst at the time. I just stood there, drawn in by the light.\n\nThen, months later, I found more of his paintings in Utrecht. He's Dutch, so it makes sense, but I was surprised. That moment of recognition — seeing a thread connecting experiences across cities and museums — is what Palette was initially about.\n\nIt's a small thing, maybe. But that thread changed how I move through museums. I'm no longer just looking. I'm connecting. And that connection is what makes art feel personal, even when you're new to it.\n\nHonthorst was a master of chiaroscuro, the dramatic contrast between light and dark. His candlelit scenes have a warmth that feels modern even though they're four hundred years old. If you ever get the chance to see one in person, take it.",
+  "src/content/blog/the-concert.md",
+  "85673b9095d286da",
+  {
+    "html": 26,
+    "metadata": 27
+  },
+  "\u003Cp>There’s a painting by Gerrit van Honthorst called \u003Cem>The Concert\u003C/em>, from 1626. It shows musicians gathered around a table in warm candlelight — a scene that feels intimate, alive, like you could hear the music if you leaned in close enough.\u003C/p>\n\u003Cp>I first saw his work at the Musée Jacquemart-André in Paris. It was a piece on loan from the Galleria Borghese. I didn’t know anything about Honthorst at the time. I just stood there, drawn in by the light.\u003C/p>\n\u003Cp>Then, months later, I found more of his paintings in Utrecht. He’s Dutch, so it makes sense, but I was surprised. That moment of recognition — seeing a thread connecting experiences across cities and museums — is what Palette was initially about.\u003C/p>\n\u003Cp>It’s a small thing, maybe. But that thread changed how I move through museums. I’m no longer just looking. I’m connecting. And that connection is what makes art feel personal, even when you’re new to it.\u003C/p>\n\u003Cp>Honthorst was a master of chiaroscuro, the dramatic contrast between light and dark. His candlelit scenes have a warmth that feels modern even though they’re four hundred years old. If you ever get the chance to see one in person, take it.\u003C/p>",
+  {
+    "headings": 28,
+    "localImagePaths": 29,
+    "remoteImagePaths": 30,
+    "frontmatter": 31,
+    "imagePaths": 34
+  },
+  [],
+  [],
+  [],
+  {
+    "title": 14,
+    "date": 32,
+    "description": 16,
+    "image": 17,
+    "tags": 33
+  },
+  [
+    "Date",
+    "2026-04-14T00:00:00.000Z"
+  ],
+  [
+    19,
+    20,
+    21
+  ],
+  [],
+  "welcome",
+  {
+    "id": 35,
+    "data": 37,
+    "body": 41,
+    "filePath": 42,
+    "digest": 43,
+    "rendered": 44
+  },
+  {
+    "title": 38,
+    "date": 39,
+    "description": 40
+  },
+  "Welcome to the Palette Journal",
+  [
+    "Date",
+    "2026-04-14T00:00:00.000Z"
+  ],
+  "A space to share thoughts on art, museums, and the paintings that move us.",
+  "This is where I'll share my journey through art.\n\nI started Palette as a way to track the paintings I was discovering across museums. What began as a simple tool became something more personal — a way to document how art was changing the way I see the world.\n\nThis journal is an extension of that. A place to write about the pieces that stop me in my tracks, the museums that surprise me, and the slow process of building a relationship with art when you didn't grow up with it.\n\nMore soon.",
+  "src/content/blog/welcome.md",
+  "ca0d5f29898770b8",
+  {
+    "html": 45,
+    "metadata": 46
+  },
+  "\u003Cp>This is where I’ll share my journey through art.\u003C/p>\n\u003Cp>I started Palette as a way to track the paintings I was discovering across museums. What began as a simple tool became something more personal — a way to document how art was changing the way I see the world.\u003C/p>\n\u003Cp>This journal is an extension of that. A place to write about the pieces that stop me in my tracks, the museums that surprise me, and the slow process of building a relationship with art when you didn’t grow up with it.\u003C/p>\n\u003Cp>More soon.\u003C/p>",
+  {
+    "headings": 47,
+    "localImagePaths": 48,
+    "remoteImagePaths": 49,
+    "frontmatter": 50,
+    "imagePaths": 52
+  },
+  [],
+  [],
+  [],
+  {
+    "title": 38,
+    "date": 51,
+    "description": 40
+  },
+  [
+    "Date",
+    "2026-04-14T00:00:00.000Z"
+  ],
+  []
+]

@@ -1,5 +1,12 @@
 import { StyleSheet, Dimensions } from 'react-native';
-import { COLORS, SPACING, ANDROID_STATUS_BAR_PADDING, FONT_SIZE, BORDER_RADIUS, TOUCHABLE_HEIGHT } from '@/constants';
+import {
+  COLORS,
+  SPACING,
+  ANDROID_STATUS_BAR_PADDING,
+  FONT_SIZE,
+  BORDER_RADIUS,
+  TOUCHABLE_HEIGHT,
+} from '@/constants';
 
 const { width } = Dimensions.get('window');
 const CARD_SIZE = (width - 48) / 3; // 3 columns with proper padding

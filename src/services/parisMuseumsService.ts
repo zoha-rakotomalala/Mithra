@@ -11,18 +11,18 @@ type ParisSearchParameters = {
   limit?: number;
   offset?: number;
   query: string;
-}
+};
 
 type ParisSearchResult = {
   paintings: Painting[];
   totalResults: number;
-}
+};
 
 /**
  * Search Paris Museums collection (14 museums, 250,000+ artworks)
  */
 export async function searchParisMuseums(
-  parameters: ParisSearchParameters
+  parameters: ParisSearchParameters,
 ): Promise<ParisSearchResult> {
   try {
     const { limit = 30, offset = 0, query } = parameters;
@@ -87,19 +87,21 @@ export async function searchParisMuseums(
       }
     `;
 
-    const data = await museumApi.post(PARIS_API_BASE, {
-      json: {
-        query: graphqlQuery,
-        variables: {
-          limit,
-          offset,
-          query: `%${query.trim()}%`,
+    const data = await museumApi
+      .post(PARIS_API_BASE, {
+        json: {
+          query: graphqlQuery,
+          variables: {
+            limit,
+            offset,
+            query: `%${query.trim()}%`,
+          },
         },
-      },
-      headers: {
-        'Authorization': `Bearer ${API_KEY}`,
-      },
-    }).json<any>();
+        headers: {
+          Authorization: `Bearer ${API_KEY}`,
+        },
+      })
+      .json<any>();
     const nodeQuery = data.data?.nodeQuery;
 
     if (!nodeQuery) {
@@ -132,9 +134,10 @@ function parseParisObject(object: any): null | Painting {
 
     // Extract artist
     const artists = object.fieldAuteurs || [];
-    const artist = artists.length > 0 && artists[0].entity
-      ? artists[0].entity.name
-      : 'Unknown Artist';
+    const artist =
+      artists.length > 0 && artists[0].entity
+        ? artists[0].entity.name
+        : 'Unknown Artist';
 
     // Extract image URLs
     const visualEntity = object.fieldVisuel?.entity;
@@ -191,9 +194,11 @@ export function getPopularParisArtists(): string[] {
   ];
 }
 
-
-
-import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import type {
+  MuseumServiceAdapter,
+  MuseumSearchParams,
+  MuseumSearchResult,
+} from './types/museumAdapter';
 import { registerAdapter } from './museumAdapterRegistry';
 
 export const parisMuseumsAdapter: MuseumServiceAdapter = {

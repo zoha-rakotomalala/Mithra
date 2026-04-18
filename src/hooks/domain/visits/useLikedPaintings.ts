@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
-import { getLikedPaintingsForVisit, getCachedPaintings, getVisitById } from '@/services';
+import {
+  getLikedPaintingsForVisit,
+  getCachedPaintings,
+  getVisitById,
+} from '@/services';
 import type { Painting as CachedPainting } from '@/types/database';
 
 interface UseLikedPaintingsOptions {
@@ -7,7 +11,10 @@ interface UseLikedPaintingsOptions {
   visitDate?: string;
 }
 
-export function useLikedPaintings(visitId: string, options?: UseLikedPaintingsOptions) {
+export function useLikedPaintings(
+  visitId: string,
+  options?: UseLikedPaintingsOptions,
+) {
   const [paintings, setPaintings] = useState<CachedPainting[]>([]);
   const [loading, setLoading] = useState(true);
   const [museumName, setMuseumName] = useState(options?.museumName ?? '');
@@ -35,7 +42,7 @@ export function useLikedPaintings(visitId: string, options?: UseLikedPaintingsOp
 
     const likes = await getLikedPaintingsForVisit(visitId);
     if (likes.length > 0) {
-      const paintingIds = likes.map(l => l.painting_id);
+      const paintingIds = likes.map((l) => l.painting_id);
       const data = await getCachedPaintings(paintingIds);
       setPaintings(data);
     } else {

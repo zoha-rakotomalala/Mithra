@@ -1,0 +1,49 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog')).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
+const base = import.meta.env.BASE_URL;
+---
+<BaseLayout title="Journal — Palette">
+    <Nav />
+    <section class="blog-listing">
+        <div class="wrap">
+            <h1 class="section-title">Journal</h1>
+            <p class="blog-listing-intro">Thoughts on art, museums, and the paintings that move us.</p>
+            <ul class="blog-list">
+                {posts.map(post => (
+                    <li class="blog-list-item">
+                        <a href={`${base}blog/${post.id}/`}>
+                            {post.data.image && <img class="blog-list-image" src={post.data.image} alt={post.data.title} loading="lazy" />}
+                            <div class="blog-list-text">
+                                <h2>{post.data.title}</h2>
+                                <time datetime={post.data.date.toISOString()}>{post.data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</time>
+                                <p>{post.data.description}</p>
+                            </div>
+                        </a>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    </section>
+    <Footer />
+</BaseLayout>
+
+<style is:global>
+    .blog-listing{padding:8rem 2rem 4rem;background:var(--cream);min-height:80vh}
+    .blog-listing-intro{font-size:1rem;color:rgba(26,26,26,.6);margin-bottom:3rem}
+    .blog-list{list-style:none;padding:0}
+    .blog-list-item{margin-bottom:2rem;padding-bottom:2rem;border-bottom:1px solid rgba(26,26,26,.08)}
+    .blog-list-item a{text-decoration:none;display:flex;gap:1.5rem;align-items:flex-start}
+    .blog-list-image{width:160px;height:120px;object-fit:cover;border-radius:6px;flex-shrink:0}
+    .blog-list-text{flex:1}
+    .blog-list-item h2{font-size:1.25rem;color:var(--dark);margin-bottom:.25rem}
+    .blog-list-item time{font-size:.8rem;color:rgba(26,26,26,.4);display:block;margin-bottom:.5rem}
+    .blog-list-item p{font-size:.9rem;color:rgba(26,26,26,.6);line-height:1.6}
+    .blog-list-item a:hover h2{color:var(--gold)}
+</style>

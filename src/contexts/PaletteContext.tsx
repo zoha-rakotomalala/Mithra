@@ -1,7 +1,14 @@
 import type { Painting } from '@/types/painting';
 import type { MMKV } from 'react-native-mmkv';
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import { mockPaintings } from '@/data/mockPaintings';
 import { useAuth } from '@/contexts/AuthContext';
@@ -43,9 +50,9 @@ export function PaletteProvider({ children, storage }: PaletteProviderProps) {
         setPalettePaintingIds(JSON.parse(savedPaletteIds));
       } else {
         const initialPalette = mockPaintings
-          .filter(p => p.isSeen)
+          .filter((p) => p.isSeen)
           .slice(0, 5)
-          .map(p => p.id);
+          .map((p) => p.id);
         setPalettePaintingIds(initialPalette);
       }
       setIsLoaded(true);
@@ -59,7 +66,10 @@ export function PaletteProvider({ children, storage }: PaletteProviderProps) {
   useEffect(() => {
     if (isLoaded) {
       try {
-        storage.set(STORAGE_KEYS.PALETTE_IDS, JSON.stringify(palettePaintingIds));
+        storage.set(
+          STORAGE_KEYS.PALETTE_IDS,
+          JSON.stringify(palettePaintingIds),
+        );
       } catch (error) {
         console.error('Error saving palette to storage:', error);
       }
@@ -78,56 +88,73 @@ export function PaletteProvider({ children, storage }: PaletteProviderProps) {
     }
   }, [storage]);
 
-  const addToPalette = useCallback((paintingId: string): boolean => {
-    if (palettePaintingIds.includes(paintingId)) return true;
-    if (palettePaintingIds.length >= 8) return false;
+  const addToPalette = useCallback(
+    (paintingId: string): boolean => {
+      if (palettePaintingIds.includes(paintingId)) return true;
+      if (palettePaintingIds.length >= 8) return false;
 
-    const newIds = [...palettePaintingIds, paintingId];
-    setPalettePaintingIds(newIds);
+      const newIds = [...palettePaintingIds, paintingId];
+      setPalettePaintingIds(newIds);
 
-    if (user?.id) {
-      syncService.upsertPalette(user.id, newIds).catch(err => {
-        reportSyncError(err?.message || 'Failed to sync palette');
-      });
-    }
+      if (user?.id) {
+        syncService.upsertPalette(user.id, newIds).catch((err) => {
+          reportSyncError(err?.message || 'Failed to sync palette');
+        });
+      }
 
-    return true;
-  }, [palettePaintingIds, user, syncService, reportSyncError]);
+      return true;
+    },
+    [palettePaintingIds, user, syncService, reportSyncError],
+  );
 
-  const removeFromPalette = useCallback((paintingId: string) => {
-    const newIds = palettePaintingIds.filter(id => id !== paintingId);
-    setPalettePaintingIds(newIds);
+  const removeFromPalette = useCallback(
+    (paintingId: string) => {
+      const newIds = palettePaintingIds.filter((id) => id !== paintingId);
+      setPalettePaintingIds(newIds);
 
-    if (user?.id) {
-      syncService.upsertPalette(user.id, newIds).catch(err => {
-        reportSyncError(err?.message || 'Failed to sync palette');
-      });
-    }
-  }, [palettePaintingIds, user, syncService, reportSyncError]);
+      if (user?.id) {
+        syncService.upsertPalette(user.id, newIds).catch((err) => {
+          reportSyncError(err?.message || 'Failed to sync palette');
+        });
+      }
+    },
+    [palettePaintingIds, user, syncService, reportSyncError],
+  );
 
-  const isPaintingInPalette = useCallback((paintingId: string): boolean => {
-    return palettePaintingIds.includes(paintingId);
-  }, [palettePaintingIds]);
+  const isPaintingInPalette = useCallback(
+    (paintingId: string): boolean => {
+      return palettePaintingIds.includes(paintingId);
+    },
+    [palettePaintingIds],
+  );
 
   const getPalettePaintings = useCallback((): Painting[] => {
     return palettePaintingIds
-      .map(id => paintings.find(p => p.id === id))
+      .map((id) => paintings.find((p) => p.id === id))
       .filter((p): p is Painting => p !== undefined);
   }, [palettePaintingIds, paintings]);
 
-  const value = useMemo(() => ({
-    palettePaintingIds,
-    addToPalette,
-    removeFromPalette,
-    isPaintingInPalette,
-    getPalettePaintings,
-    _refreshFromStorage,
-  }), [palettePaintingIds, addToPalette, removeFromPalette, isPaintingInPalette, getPalettePaintings, _refreshFromStorage]);
+  const value = useMemo(
+    () => ({
+      palettePaintingIds,
+      addToPalette,
+      removeFromPalette,
+      isPaintingInPalette,
+      getPalettePaintings,
+      _refreshFromStorage,
+    }),
+    [
+      palettePaintingIds,
+      addToPalette,
+      removeFromPalette,
+      isPaintingInPalette,
+      getPalettePaintings,
+      _refreshFromStorage,
+    ],
+  );
 
   return (
-    <PaletteContext.Provider value={value}>
-      {children}
-    </PaletteContext.Provider>
+    <PaletteContext.Provider value={value}>{children}</PaletteContext.Provider>
   );
 }
 

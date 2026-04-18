@@ -35,12 +35,12 @@ export function Auth() {
       if (error) {
         Alert.alert(
           isSigningUp ? 'Sign Up Failed' : 'Sign In Failed',
-          error.message
+          error.message,
         );
       } else if (isSigningUp) {
         Alert.alert(
           'Check Your Email',
-          'A confirmation link has been sent to your email. Please verify your address.'
+          'A confirmation link has been sent to your email. Please verify your address.',
         );
       }
     } catch (err) {
@@ -59,7 +59,9 @@ export function Auth() {
       <View style={shared.artDecoDivider} />
 
       <Text style={[typography.body, authStyles.subtitle]}>
-        {isSigningUp ? 'Start tracking your visits' : 'Sign in to access your archive'}
+        {isSigningUp
+          ? 'Start tracking your visits'
+          : 'Sign in to access your archive'}
       </Text>
 
       <View style={authStyles.formContainer}>
@@ -105,12 +107,10 @@ export function Auth() {
           <Text style={authStyles.switchText}>
             {isSigningUp
               ? 'Already have an account? Sign In'
-              : "Don't have an account? Sign Up"
-            }
+              : "Don't have an account? Sign Up"}
           </Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
-

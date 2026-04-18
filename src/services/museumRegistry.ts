@@ -12,7 +12,7 @@ export type MuseumConfig = {
   requiresApiKey: boolean;
   shortName: string;
   tier: 1 | 2 | 3; // 1 = Default, 2 = Optional, 3 = Advanced
-}
+};
 
 export const MUSEUMS: Record<string, MuseumConfig> = {
   CHICAGO: {
@@ -172,7 +172,7 @@ export const MUSEUMS: Record<string, MuseumConfig> = {
 };
 
 export function getAllMuseums(): MuseumConfig[] {
-  return Object.values(MUSEUMS).filter(m => m.enabled);
+  return Object.values(MUSEUMS).filter((m) => m.enabled);
 }
 
 export function getMuseumById(id: string): MuseumConfig | undefined {
@@ -180,17 +180,21 @@ export function getMuseumById(id: string): MuseumConfig | undefined {
 }
 
 export function getMuseumsByIds(ids: string[]): MuseumConfig[] {
-  return ids
-    .map(id => MUSEUMS[id])
-    .filter(Boolean);
+  return ids.map((id) => MUSEUMS[id]).filter(Boolean);
 }
 
 export function getMuseumsByTier(tier: 1 | 2 | 3): MuseumConfig[] {
-  return Object.values(MUSEUMS)
-    .filter(m => m.enabled && m.tier === tier);
+  return Object.values(MUSEUMS).filter((m) => m.enabled && m.tier === tier);
 }
 
 // Quick access to commonly used museum groups
 export const TIER_1_MUSEUMS = ['MET', 'RIJKS', 'CHICAGO', 'CLEVELAND']; // Best 4
-export const TIER_2_MUSEUMS = ['HARVARD', 'VA', 'NG', 'SMK', 'LOUVRE', 'SMITHSONIAN']; // Optional
+export const TIER_2_MUSEUMS = [
+  'HARVARD',
+  'VA',
+  'NG',
+  'SMK',
+  'LOUVRE',
+  'SMITHSONIAN',
+]; // Optional
 export const TIER_3_MUSEUMS = ['EUROPEANA', 'PARIS', 'JOCONDE', 'WIKIDATA']; // Advanced

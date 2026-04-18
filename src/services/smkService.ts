@@ -19,7 +19,7 @@ interface SMKSearchResult {
  * Search SMK (National Gallery of Denmark) collection
  */
 export async function searchSMK(
-  params: SMKSearchParams
+  params: SMKSearchParams,
 ): Promise<SMKSearchResult> {
   try {
     const { query, limit = 20 } = params;
@@ -105,7 +105,11 @@ function parseSMKObject(item: any): Painting | null {
   }
 }
 
-import type { MuseumServiceAdapter, MuseumSearchParams, MuseumSearchResult } from './types/museumAdapter';
+import type {
+  MuseumServiceAdapter,
+  MuseumSearchParams,
+  MuseumSearchResult,
+} from './types/museumAdapter';
 import { registerAdapter } from './museumAdapterRegistry';
 
 export const smkAdapter: MuseumServiceAdapter = {

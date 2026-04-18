@@ -9,9 +9,11 @@ import type { Visit } from '@/types/database';
 export async function createVisit(
   museumLegacyId: string,
   visitDate: string,
-  notes?: string
+  notes?: string,
 ): Promise<Visit | null> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) {
     console.error('Error creating visit: User is not logged in.');
     return null;
@@ -19,7 +21,10 @@ export async function createVisit(
 
   const museumUuid = await resolveMuseumId(museumLegacyId);
   if (!museumUuid) {
-    console.error('Error creating visit: Museum not found for legacy ID:', museumLegacyId);
+    console.error(
+      'Error creating visit: Museum not found for legacy ID:',
+      museumLegacyId,
+    );
     return null;
   }
 
@@ -82,7 +87,7 @@ export async function getVisitById(visitId: string): Promise<Visit | null> {
  */
 export async function updateVisit(
   visitId: string,
-  updates: Partial<Pick<Visit, 'visit_date' | 'notes'>>
+  updates: Partial<Pick<Visit, 'visit_date' | 'notes'>>,
 ): Promise<Visit | null> {
   const { data, error } = await supabase
     .from('visits')
@@ -103,10 +108,7 @@ export async function updateVisit(
  * Delete a visit.
  */
 export async function deleteVisit(visitId: string): Promise<boolean> {
-  const { error } = await supabase
-    .from('visits')
-    .delete()
-    .eq('id', visitId);
+  const { error } = await supabase.from('visits').delete().eq('id', visitId);
 
   if (error) {
     console.error('Error deleting visit:', error);

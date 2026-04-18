@@ -50,7 +50,11 @@ export function writeLocalPaletteIds(storage: MMKV, ids: string[]): void {
 /**
  * Updates the collection updated_at tracking map in MMKV.
  */
-export function updateCollectionTimestamp(storage: MMKV, paintingId: string, updatedAt: string): void {
+export function updateCollectionTimestamp(
+  storage: MMKV,
+  paintingId: string,
+  updatedAt: string,
+): void {
   const raw = storage.getString(STORAGE_KEYS.COLLECTION_UPDATED_AT);
   let map: Record<string, string> = {};
   if (raw) {
@@ -67,7 +71,10 @@ export function updateCollectionTimestamp(storage: MMKV, paintingId: string, upd
 /**
  * Removes a painting from the collection updated_at tracking map.
  */
-export function removeCollectionTimestamp(storage: MMKV, paintingId: string): void {
+export function removeCollectionTimestamp(
+  storage: MMKV,
+  paintingId: string,
+): void {
   const raw = storage.getString(STORAGE_KEYS.COLLECTION_UPDATED_AT);
   if (!raw) return;
   try {
