@@ -97,12 +97,10 @@ describe('getCachedPainting', () => {
 
   it('returns null and logs on unexpected error', async () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-    const single = jest
-      .fn()
-      .mockResolvedValue({
-        data: null,
-        error: { code: 'UNEXPECTED', message: 'db down' },
-      });
+    const single = jest.fn().mockResolvedValue({
+      data: null,
+      error: { code: 'UNEXPECTED', message: 'db down' },
+    });
     mockChain({ single });
 
     const result = await getCachedPainting('uuid-1');

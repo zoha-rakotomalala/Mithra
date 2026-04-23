@@ -3,7 +3,7 @@ title: 'The Painting That Started Everything'
 date: 2026-04-19
 description: 'How a painting by Gerrit van Honthorst in a Parisian museum set me on a path I never expected.'
 image: 'https://www.arts-in-the-city.com/wp-content/uploads/2024/07/vue-de-lexposition-chefs-doeuvre-de-la-galerie-borghese-reouverture-du-musee-jacquemart-andre-3-3200x0.jpg'
-tags: [ 'paintings', 'honthorst', 'baroque' ]
+tags: ['paintings', 'honthorst', 'baroque']
 ---
 
 I remember it so clearly. The day I made the decision of going to Museum Jacquemart-André for their
