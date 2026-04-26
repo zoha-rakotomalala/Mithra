@@ -1,7 +1,7 @@
 ---
 title: 'Book review: Homegoing by Yaa Gyasi'
 date: 2026-04-26
-description: 'We are already diverging from visual arts I know. I felt like there was a lot to be said about this book'
+description: 'We are already diverging from visual arts I know. I felt like there was a lot to be said about this book.'
 image: 'https://miro.medium.com/v2/resize:fit:1400/1*Sr53xO8U7ChlAIwKLo0D6w.png'
 ---
 
