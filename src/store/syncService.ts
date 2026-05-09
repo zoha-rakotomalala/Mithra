@@ -146,7 +146,13 @@ export async function syncOnLaunch(userId: string): Promise<void> {
         .select('*')
         .in('id', remoteUuids);
 
-      // Update metadata on paintings that exist locally
+      // Build a map of painting rows for image URL lookups
+      const remotePaintingRowMap = new Map<string, any>();
+      for (const row of remotePaintingRows || []) {
+        remotePaintingRowMap.set(row.id, row);
+      }
+
+      // Update metadata and fill missing image URLs on paintings that exist locally
       for (const painting of localPaintings) {
         const remoteEntry = remoteByUuid.get(String(painting.id));
         if (remoteEntry) {
@@ -154,6 +160,24 @@ export async function syncOnLaunch(userId: string): Promise<void> {
           painting.wantToVisit = remoteEntry.want_to_visit;
           painting.seenDate = remoteEntry.seen_date || undefined;
           painting.notes = remoteEntry.notes || undefined;
+        }
+
+        // Fill missing image URLs from the paintings table
+        if (!painting.imageUrl || !painting.thumbnailUrl) {
+          const row = remotePaintingRowMap.get(String(painting.id));
+          if (row) {
+            const m = row.metadata || {};
+            if (!painting.imageUrl) {
+              painting.imageUrl = row.image_url || (m.image_id
+                ? `https://www.artic.edu/iiif/2/${m.image_id}/full/843,/0/default.jpg`
+                : undefined);
+            }
+            if (!painting.thumbnailUrl) {
+              painting.thumbnailUrl = row.thumbnail_url || (m.image_id
+                ? `https://www.artic.edu/iiif/2/${m.image_id}/full/200,/0/default.jpg`
+                : undefined);
+            }
+          }
         }
       }
 
