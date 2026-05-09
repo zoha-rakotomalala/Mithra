@@ -113,7 +113,6 @@ graph LR
 ```
 
 **Design decision:** Zustand over React Context because:
-
 - Selector-based subscriptions (components only re-render when their slice changes)
 - No provider nesting required
 - State accessible outside React (sync service reads/writes directly)
@@ -357,7 +356,6 @@ flowchart LR
 ### 4.5 Dead Letter Queue
 
 Operations that fail after 5 retries with exponential backoff are moved to a dead-letter queue:
-
 - Persisted in MMKV (`sync_dead_letter_queue` key)
 - Visible in Settings screen with item count
 - User can "Retry All" or "Discard"
@@ -406,7 +404,6 @@ stateDiagram-v2
 ### 5.4 Account Deletion
 
 Calls `supabase.rpc('delete_user')` which:
-
 1. Deletes all rows from `user_collection`, `user_palette`, `user_painting_likes`, `visits`
 2. Deletes the `auth.users` row (ends session permanently)
 

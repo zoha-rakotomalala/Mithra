@@ -27,15 +27,17 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 function extractAuthParams(url: string): { code?: string; accessToken?: string; refreshToken?: string } | null {
-  if (!url.includes('auth/callback')) {
+  if (!url.startsWith('palette://')) {
     return null;
   }
   try {
+    // PKCE flow: code is in query params
     const codeMatch = url.match(/[?&#]code=([^&#]+)/);
     if (codeMatch) return { code: codeMatch[1] };
 
-    const accessTokenMatch = url.match(/[#&]access_token=([^&#]+)/);
-    const refreshTokenMatch = url.match(/[#&]refresh_token=([^&#]+)/);
+    // Implicit flow: tokens are in URL fragment (#)
+    const accessTokenMatch = url.match(/[#&?]access_token=([^&#]+)/);
+    const refreshTokenMatch = url.match(/[#&?]refresh_token=([^&#]+)/);
     if (accessTokenMatch && refreshTokenMatch) {
       return { accessToken: accessTokenMatch[1], refreshToken: refreshTokenMatch[1] };
     }
@@ -81,8 +83,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const handleDeepLink = async (url: string) => {
+    if (!url.startsWith('palette://')) return;
+
     const params = extractAuthParams(url);
-    if (!params) return;
+    if (!params) {
+      // Last resort: try passing the full URL to Supabase's session handler
+      // Some OAuth flows encode params in ways our regex doesn't catch
+      if (url.includes('access_token') || url.includes('code')) {
+        try {
+          // Extract everything after the scheme as a query/fragment string
+          const fragment = url.split('#')[1] || url.split('?')[1];
+          if (fragment) {
+            const searchParams = new URLSearchParams(fragment);
+            const accessToken = searchParams.get('access_token');
+            const refreshToken = searchParams.get('refresh_token');
+            const code = searchParams.get('code');
+
+            if (code) {
+              const { error } = await supabase.auth.exchangeCodeForSession(code);
+              if (error) Alert.alert('Authentication Error', error.message);
+              return;
+            }
+            if (accessToken && refreshToken) {
+              const { error } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+              });
+              if (error) Alert.alert('Authentication Error', error.message);
+              return;
+            }
+          }
+        } catch {
+          // fall through
+        }
+      }
+      return;
+    }
 
     try {
       let error: any = null;
