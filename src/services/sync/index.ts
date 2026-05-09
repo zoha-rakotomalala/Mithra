@@ -1,4 +1,3 @@
-export { SyncService, createSyncService } from './syncStrategy';
 export { mergeCollectionData, mergePaletteData } from './conflictResolver';
 export {
   STORAGE_KEYS,

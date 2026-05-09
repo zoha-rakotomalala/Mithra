@@ -5,7 +5,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Collection } from '@/screens/Collection/Collection';
 import { Palette } from '@/screens/Palette/Palette';
 import { Search } from '@/screens/Search/Search';
-import { Settings } from '@/screens/Settings/Settings';
 import { Visits } from '@/screens/Visits/Visits';
 import { Paths } from '@/navigation/paths';
 import { COLORS } from '@/constants/colors';
@@ -75,16 +74,6 @@ export function TabNavigator() {
           tabBarLabel: 'PALETTE',
           tabBarIcon: ({ color }) => (
             <Text style={[styles.tabBarIcon, { color }]}>◆</Text>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name={Paths.Settings}
-        component={Settings}
-        options={{
-          tabBarLabel: 'SETTINGS',
-          tabBarIcon: ({ color }) => (
-            <Text style={[styles.tabBarIcon, { color }]}>⚙︎</Text>
           ),
         }}
       />

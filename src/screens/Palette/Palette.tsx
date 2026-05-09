@@ -23,7 +23,6 @@ import { ProfileCard } from '@/components/molecules/ProfileCard/ProfileCard';
 import { SyncErrorBanner } from '@/components/molecules';
 import { usePaintings } from '@/contexts/PaintingsContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { storage } from '@/App';
 import { Paths } from '@/navigation/paths';
 import { COLORS } from '@/constants';
 import { paletteStyles as styles } from './Palette.styles';
@@ -41,15 +40,12 @@ export function Palette() {
     syncError,
     removeFromPalette,
   } = usePaintings();
-  const { user } = useAuth();
+  const { user, curatorName, avatarUrl } = useAuth();
   const viewShotRef = useRef<ViewShot>(null);
   const [editing, setEditing] = useState(false);
 
   const palettePaintings = getPalettePaintings();
-  const username =
-    storage.getString('curator_name') ||
-    user?.email?.split('@')[0] ||
-    'curator';
+  const username = curatorName || user?.email?.split('@')[0] || 'curator';
 
   const userProfile: UserProfile = {
     username,
@@ -158,9 +154,10 @@ export function Palette() {
                     return (
                       <ProfileCard
                         key="profile"
+                        avatarUrl={avatarUrl}
                         profile={userProfile}
                         isFlipped={false}
-                        onPress={() => {}}
+                        onPress={() => navigation.navigate(Paths.Settings)}
                       />
                     );
                   }

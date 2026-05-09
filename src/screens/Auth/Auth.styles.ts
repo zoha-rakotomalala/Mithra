@@ -1,11 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { COLORS, SPACING } from '@/constants';
 
-/**
- * Auth Screen Styles
- * Art Deco styling for authentication forms
- */
-
 export const authStyles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.cream,
@@ -45,7 +40,7 @@ export const authStyles = StyleSheet.create({
     backgroundColor: COLORS.cream,
     borderWidth: 1,
     borderColor: COLORS.gold,
-    borderRadius: 0, // Art Deco geometric
+    borderRadius: 0,
     padding: SPACING.md,
     marginBottom: SPACING.md,
     fontSize: 16,
@@ -66,5 +61,42 @@ export const authStyles = StyleSheet.create({
     fontSize: 14,
     letterSpacing: 1,
     textTransform: 'uppercase',
+  },
+
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: SPACING.lg,
+  },
+
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: COLORS.gold + '60',
+  },
+
+  dividerText: {
+    color: COLORS.black + '80',
+    paddingHorizontal: SPACING.md,
+    fontSize: 12,
+    letterSpacing: 2,
+    fontWeight: '600',
+  },
+
+  oauthButton: {
+    backgroundColor: COLORS.black,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.black,
+  },
+
+  oauthButtonText: {
+    color: COLORS.white,
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
 });

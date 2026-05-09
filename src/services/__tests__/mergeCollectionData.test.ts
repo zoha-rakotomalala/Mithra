@@ -1,26 +1,6 @@
 import type { UserCollectionEntry, UserPalette } from '@/types/database';
 
-// Mock MMKV since syncService imports it at module level
-jest.mock('react-native-mmkv', () => ({
-  MMKV: jest.fn().mockImplementation(() => ({
-    getString: jest.fn(),
-    set: jest.fn(),
-    delete: jest.fn(),
-  })),
-}));
-
-// Mock supabase since syncService imports it at module level
-jest.mock('../supabase', () => ({
-  supabase: {
-    from: jest.fn().mockReturnValue({
-      upsert: jest.fn(),
-      delete: jest.fn(),
-      select: jest.fn(),
-    }),
-  },
-}));
-
-import { mergeCollectionData, mergePaletteData } from '../syncService';
+import { mergeCollectionData, mergePaletteData } from '../sync/conflictResolver';
 
 function makeEntry(
   overrides: Partial<UserCollectionEntry> = {},

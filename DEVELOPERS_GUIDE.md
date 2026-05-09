@@ -48,19 +48,20 @@ codebase. It's built for people who love visiting museums and want to:
 
 ### Tech Stack at a Glance
 
-| Layer         | Technology                  | What It Does                                |
-|---------------|-----------------------------|---------------------------------------------|
-| Language      | **TypeScript**              | JavaScript with type safety                 |
-| Framework     | **React Native 0.80**       | Build iOS + Android apps from one codebase  |
-| Navigation    | **React Navigation**        | Screen routing (stack + tabs)               |
-| Server State  | **TanStack React Query v5** | Caching and fetching remote data            |
-| Local Storage | **MMKV**                    | Blazing-fast key-value storage on the phone |
-| Backend       | **Supabase**                | Cloud database + authentication             |
-| HTTP Client   | **ky**                      | Makes API calls to museum servers           |
-| Translations  | **i18next**                 | Multi-language support (English, French)    |
-| Validation    | **Zod v4**                  | Runtime data validation                     |
-| Images        | **React Native Fast Image** | Optimized image loading                     |
-| Sharing       | **View Shot + RN Share**    | Capture palette as image and share          |
+| Layer         | Technology                  | What It Does                                  |
+|---------------|-----------------------------|-----------------------------------------------|
+| Language      | **TypeScript**              | JavaScript with type safety                   |
+| Framework     | **React Native 0.80**       | Build iOS + Android apps from one codebase    |
+| Navigation    | **React Navigation**        | Screen routing (stack + tabs)                 |
+| State Mgmt    | **Zustand**                 | Lightweight store with selector subscriptions |
+| Server State  | **TanStack React Query v5** | Caching and fetching remote data              |
+| Local Storage | **MMKV**                    | Blazing-fast key-value storage on the phone   |
+| Backend       | **Supabase**                | Cloud database + authentication + OAuth       |
+| HTTP Client   | **ky**                      | Makes API calls to museum servers             |
+| Translations  | **i18next**                 | Multi-language support (English, French)      |
+| Validation    | **Zod v4**                  | Runtime data validation                       |
+| Images        | **React Native Fast Image** | Optimized image loading                       |
+| Sharing       | **View Shot + RN Share**    | Capture palette as image and share            |
 
 ### Design Language
 
@@ -256,8 +257,18 @@ Here's the complete folder layout with explanations of what each piece does:
 
 ```
 src/
-├── App.tsx                          # Root component — sets up all providers
+├── App.tsx                          # Root component — sets up providers + store
 ├── reactotron.config.ts             # Dev tools configuration
+│
+├── store/                           # Zustand state management
+│   ├── index.ts                     # Store creation + convenience selectors
+│   ├── types.ts                     # Store type definitions
+│   ├── storage.ts                   # MMKV instances + storage keys
+│   ├── collectionSlice.ts           # Painting collection state + actions
+│   ├── paletteSlice.ts              # 8-painting palette state + actions
+│   ├── syncSlice.ts                 # Sync status + dead-letter queue
+│   ├── syncService.ts               # Sync engine (Supabase ↔ MMKV)
+│   └── useSync.ts                   # Sync hooks (launch sync, sync actions)
 │
 ├── navigation/                      # Screen routing (which screen shows when)
 │   ├── Application.tsx              # Auth-gated root navigator
@@ -266,7 +277,7 @@ src/
 │   └── types.ts                     # TypeScript route param types
 │
 ├── screens/                         # 15 full-page views
-│   ├── Auth/                        # Login / signup
+│   ├── Auth/                        # Login / signup / OAuth / forgot password
 │   ├── Search/                      # Multi-museum painting search
 │   ├── Collection/                  # User's painting collection
 │   ├── Palette/                     # 8-painting curated display
@@ -279,7 +290,7 @@ src/
 │   ├── VisitPalette/                # Create visit palette (select 8)
 │   ├── ViewPalette/                 # View / share visit palette
 │   ├── ArtistProfile/               # Artist page with all works
-│   ├── Settings/                    # Account & app settings
+│   ├── Settings/                    # Account, sync issues, app settings
 │   └── Startup/                     # Loading splash screen
 │
 ├── components/                      # Reusable UI pieces (Atomic Design)
@@ -288,12 +299,9 @@ src/
 │   ├── organisms/                   # Complex pieces (ErrorBoundary, MuseumSelector)
 │   └── templates/                   # Page layouts (SafeScreen, LoadingScreen)
 │
-├── contexts/                        # Global state management
-│   ├── AuthContext.tsx               # User authentication state
-│   ├── CollectionContext.tsx         # Painting collection CRUD
-│   ├── PaletteContext.tsx            # 8-painting palette state
-│   ├── SyncContext.tsx               # Cloud sync engine
-│   └── PaintingsContext.tsx          # Facade combining Collection+Palette+Sync
+├── contexts/                        # React contexts (only auth remains here)
+│   ├── AuthContext.tsx               # User auth (email, OAuth, password reset)
+│   └── PaintingsContext.tsx          # Facade hook for backward compatibility
 │
 ├── hooks/                           # Custom React hooks
 │   └── domain/                      # Business logic hooks
@@ -304,8 +312,7 @@ src/
 │
 ├── services/                        # API calls & data layer
 │   ├── supabase.ts                  # Supabase client setup
-│   ├── sync/                        # Sync engine
-│   │   ├── syncStrategy.ts          # Bidirectional sync logic
+│   ├── sync/                        # Sync utilities
 │   │   ├── conflictResolver.ts      # Merge conflicts (timestamp-based)
 │   │   └── offlineStorage.ts        # MMKV read/write helpers
 │   ├── offlineQueue.ts              # Queue for failed operations
@@ -313,7 +320,7 @@ src/
 │   ├── paintingCacheService.ts      # Supabase painting cache
 │   ├── museumRegistry.ts            # Museum metadata registry
 │   ├── museumAdapterRegistry.ts     # Adapter pattern registry
-│   ├── museumApiClient.ts           # Shared HTTP client (ky)
+│   ├── museumApiClient.ts           # Shared HTTP client (ky) + timeout utility
 │   ├── museumCache.ts               # Legacy ID → UUID mapping
 │   ├── metMuseumService.ts          # Metropolitan Museum adapter
 │   ├── chicagoService.ts            # Art Institute of Chicago adapter
@@ -389,21 +396,22 @@ flowchart TD
     E --> F["App.tsx renders"]
 
     F --> G["GestureHandlerRootView\n(enables swipe gestures)"]
-    G --> H["QueryClientProvider\n(TanStack React Query)"]
+    G --> EB["ErrorBoundary\n(catches fatal crashes)"]
+    EB --> H["QueryClientProvider\n(TanStack React Query)"]
     H --> I["ThemeProvider\n(dark/light mode from MMKV)"]
-    I --> J["AuthProvider\n(Supabase auth session)"]
-    J --> K["PaintingsProvider\n(Collection + Palette + Sync)"]
+    I --> J["AuthProvider\n(Supabase auth + OAuth)"]
+    J --> K["StoreInitializer\n(loads MMKV → Zustand)"]
     K --> L["ApplicationNavigator"]
 
     L --> M{Has authenticated\nuser?}
-    M -->|No| N["🔐 Auth Screen\n(login / signup)"]
+    M -->|No| N["🔐 Auth Screen\n(email / Apple / Google)"]
     M -->|Yes| O["Startup Screen\n(splash + loading)"]
 
     O --> P["Run init query\n(useQuery)"]
-    P --> Q["SyncContext runs\nsyncOnLaunch()"]
+    P --> Q["useSyncOnLaunch hook\nruns syncOnLaunch()"]
     Q --> R["Fetch remote data\nfrom Supabase"]
     R --> S["Merge local ↔ remote\n(timestamp-based)"]
-    S --> T["Refresh contexts\n(Collection + Palette)"]
+    S --> T["Update Zustand store\n(triggers only affected subscribers)"]
     T --> U["🏠 Navigate to Main\n(Tab Navigator)"]
 
     N -->|"User logs in"| O
@@ -413,21 +421,22 @@ flowchart TD
     style N fill:#c13333,color:#ffffff
 ```
 
-### What Each Provider Does
+### What Each Layer Does
 
-The providers wrap around each other like Russian nesting dolls. Each one makes something available
-to all the components inside it:
+The app has a flat provider tree (no deep nesting):
 
-1. **GestureHandlerRootView** — Enables swipe gestures (like swiping back to the previous screen)
-2. **QueryClientProvider** — Sets up TanStack React Query for caching API responses
-3. **ThemeProvider** — Reads the user's theme preference from MMKV and provides it to all components
-4. **AuthProvider** — Connects to Supabase auth, tracks login state, provides `signIn`/`signUp`/
-   `signOut`
-5. **PaintingsProvider** — The big one! Combines three sub-providers:
-   - **SyncProvider** — Manages the sync engine
-   - **CollectionProvider** — Manages the user's painting collection
-   - **PaletteProvider** — Manages the 8-painting palette
-6. **ApplicationNavigator** — The navigation tree that decides which screen to show
+1. **ErrorBoundary** — Catches fatal React errors and shows a recovery UI instead of crashing
+2. **GestureHandlerRootView** — Enables swipe gestures (like swiping back to the previous screen)
+3. **QueryClientProvider** — Sets up TanStack React Query for caching API responses
+4. **ThemeProvider** — Reads the user's theme preference from MMKV and provides it to all components
+5. **AuthProvider** — Connects to Supabase auth (email, Apple, Google), tracks login state, manages
+   curator profile
+6. **StoreInitializer** — Loads persisted data from MMKV into the Zustand store on mount
+7. **ApplicationNavigator** — The navigation tree that decides which screen to show
+
+State (collection, palette, sync status) lives in the **Zustand store** (`src/store/`), not in
+React contexts. Components subscribe to specific slices of state — only re-rendering when their
+slice changes.
 
 ### The Startup Screen
 
@@ -435,7 +444,7 @@ The Startup screen is a brief splash screen that:
 
 1. Shows the Palette logo and a loading spinner
 2. Runs an initialization query via `useQuery`
-3. Waits for `syncOnLaunch()` to complete (merging local and remote data)
+3. `useSyncOnLaunch()` runs `syncOnLaunch()` in the background (merging local and remote data)
 4. Resets the navigation stack to the Main tab navigator
 
 ---
@@ -579,32 +588,39 @@ When a user interacts with their collection or palette:
 ```mermaid
 flowchart LR
     USER["👤 User Action\n(tap 'Add to Collection')"]
-    CTX["📦 Context\n(CollectionContext)"]
+    STORE["📦 Zustand Store\n(collectionSlice)"]
     MMKV["⚡ MMKV\n(instant local save)"]
-    SYNC["🔄 SyncService"]
+    SYNC["🔄 syncService"]
     SUPA["☁️ Supabase\n(cloud database)"]
     QUEUE["📋 Offline Queue\n(retry later)"]
+    DLQ["💀 Dead Letter Queue\n(permanent failures)"]
 
-    USER --> CTX
-    CTX -->|"1. Write immediately"| MMKV
-    CTX -->|"2. Try sync"| SYNC
+    USER --> STORE
+    STORE -->|"1. Update state +\nwrite to MMKV"| MMKV
+    STORE -->|"2. Try sync"| SYNC
     SYNC -->|"success"| SUPA
     SYNC -->|"failure\n(no internet)"| QUEUE
-    QUEUE -->|"retry when\nonline (3 attempts)"| SYNC
+    QUEUE -->|"retry with\nexponential backoff\n(5 attempts)"| SYNC
+    QUEUE -->|"permanent failure\nafter 5 retries"| DLQ
+    DLQ -->|"user taps Retry\nin Settings"| QUEUE
 
     style MMKV fill:#50c878,color:#1a1a1a
     style QUEUE fill:#f4d03f,color:#1a1a1a
+    style DLQ fill:#c13333,color:#ffffff
     style SUPA fill:#0f52ba,color:#ffffff
 ```
 
 **The flow in plain English:**
 
 1. User taps "Add to Collection" on a painting
-2. `CollectionContext` immediately writes to MMKV (local storage) — the UI updates instantly
-3. In the background, `SyncService` tries to write to Supabase
+2. Zustand store updates state and writes to MMKV instantly — the UI updates immediately
+3. In the background, `syncService` tries to write to Supabase
 4. If it succeeds, great — local and cloud are in sync
 5. If it fails (no internet), the operation is added to the `OfflineQueue`
-6. When the app detects connectivity, it replays the queue (up to 3 retries per operation)
+6. On next app launch, the queue replays with exponential backoff (1s, 2s, 4s, 8s, 16s — up to 5
+   retries per operation)
+7. If all retries fail, the operation moves to the **dead-letter queue** — visible in Settings where
+   the user can retry or discard
 
 ### 6c. The Sync System (Explained in Detail)
 
@@ -650,12 +666,14 @@ Every time the app opens, it runs a full sync to make sure local and cloud data 
 ```mermaid
 sequenceDiagram
     participant App as 📱 App Launch
-    participant Sync as 🔄 SyncService
+    participant Store as 🏪 Zustand Store
+    participant Sync as 🔄 syncService
     participant MMKV as ⚡ MMKV (Local)
     participant Supa as ☁️ Supabase (Cloud)
 
-    App->>Sync: syncOnLaunch(userId)
-    Sync->>Sync: Set isSyncing = true
+    App->>Store: useSyncOnLaunch()
+    Store->>Sync: syncOnLaunch(userId)
+    Sync->>Store: setSyncing(true)
     Note over Sync: Queues any writes during sync
 
     Sync->>Supa: Fetch user_collection
@@ -664,24 +682,23 @@ sequenceDiagram
     Sync->>Supa: Fetch user_palette
     Supa-->>Sync: Remote palette data
 
-    Sync->>MMKV: Read local collection
-    MMKV-->>Sync: Local collection entries
-
-    Sync->>MMKV: Read local palette
-    MMKV-->>Sync: Local palette data
+    Sync->>Store: Read local paintings
+    Store-->>Sync: Local paintings[]
 
     Note over Sync: 🔀 Merge using timestamps
     Note over Sync: Remote wins on tie
 
-    Sync->>MMKV: Write merged collection
-    Sync->>MMKV: Write merged palette
+    Sync->>Store: setPaintings(merged)
+    Note over Store: Updates state + MMKV
+    Sync->>Store: setPalettePaintingIds(merged)
 
-    Sync->>Sync: Set isSyncing = false
+    Sync->>Store: setSyncing(false)
 
     Sync->>Sync: Replay offline queue
-    Note over Sync: Retry failed operations (max 3)
+    Note over Sync: Exponential backoff (5 retries)
+    Note over Sync: Failures → dead-letter queue
 
-    Sync-->>App: ✅ Contexts refreshed
+    Sync-->>App: ✅ Store updated (subscribers re-render)
 ```
 
 #### Conflict Resolution
@@ -719,7 +736,10 @@ When a sync operation fails (no internet), it goes into the offline queue:
 ```
 
 The queue uses its own separate MMKV instance (`sync-queue`) so it persists even if the app crashes.
-When connectivity returns, operations are replayed in order, with up to 3 retry attempts each.
+When the app launches and sync runs, queued operations are replayed with **exponential backoff** (
+1s,
+2s, 4s, 8s, 16s — up to 5 attempts). Operations that permanently fail move to the **dead-letter
+queue**, which is visible in Settings where the user can retry or discard them.
 
 ---
 
@@ -1110,150 +1130,108 @@ These provide consistent page-level structure.
 
 ---
 
-## 10. The Context System (State Management)
+## 10. State Management (Zustand Store)
 
-Palette uses React's **Context API** for global state management. The contexts are nested inside
-each other in a specific order — each one depends on the ones above it.
+Palette uses **Zustand** for global state management. Zustand is a lightweight (1.1 KB) library that
+provides a single store with selector-based subscriptions — components only re-render when the
+specific piece of state they use changes.
 
-### Context Nesting Order
+### Why Zustand (not Context)?
+
+React Context has a fundamental limitation: when any value in a context changes, ALL consumers
+re-render. With Zustand, you subscribe to specific slices:
+
+```tsx
+// Only re-renders when palettePaintingIds changes — NOT when paintings or syncing changes
+const palettePaintingIds = useAppStore((s) => s.palettePaintingIds);
+```
+
+### Store Architecture
 
 ```mermaid
 flowchart TD
-    APP["App.tsx"]
-    GH["GestureHandlerRootView\n(gesture support)"]
-    QC["QueryClientProvider\n(TanStack React Query)"]
-    TH["ThemeProvider\n(dark/light mode, MMKV-backed)"]
-    AU["AuthProvider\n(Supabase auth session)"]
-    PP["PaintingsProvider\n(facade context)"]
-    SY["↳ SyncProvider\n(cloud sync engine)"]
-    CO["↳ CollectionProvider\n(painting collection)"]
-    PA["↳ PaletteProvider\n(8-painting palette)"]
-    NAV["ApplicationNavigator\n(screen routing)"]
+    STORE["🏪 Zustand Store\n(src/store/index.ts)"]
+    COL["collectionSlice\n• paintings[]\n• addToCollection\n• toggleSeen\n• ..."]
+    PAL["paletteSlice\n• palettePaintingIds[]\n• addToPalette\n• removeFromPalette\n• ..."]
+    SYN["syncSlice\n• syncing\n• syncError\n• deadLetterQueue[]"]
+    MMKV["⚡ MMKV\n(persistence)"]
+    SYNC_SVC["syncService\n(Supabase sync)"]
 
-    APP --> GH --> QC --> TH --> AU --> PP
-    PP --> SY --> CO --> PA
-    PA --> NAV
+    STORE --> COL
+    STORE --> PAL
+    STORE --> SYN
+    COL -->|"auto-persists"| MMKV
+    PAL -->|"auto-persists"| MMKV
+    SYN -->|"dead letter queue"| MMKV
+    COL -.->|"mutations trigger"| SYNC_SVC
+    PAL -.->|"mutations trigger"| SYNC_SVC
 
-    style PP fill:#d4af37,color:#1a1a1a
-    style SY fill:#0f52ba,color:#ffffff
-    style CO fill:#50c878,color:#1a1a1a
-    style PA fill:#800020,color:#ffffff
+    style STORE fill:#d4af37,color:#1a1a1a
+    style MMKV fill:#50c878,color:#1a1a1a
+    style SYNC_SVC fill:#0f52ba,color:#ffffff
 ```
 
-### Each Context Explained
-
-#### AuthContext (`contexts/AuthContext.tsx`)
-
-**What it manages:** User login state — who is logged in, their session, and auth errors.
-
-| State       | Type              | Description                           |
-|-------------|-------------------|---------------------------------------|
-| `user`      | `User \| null`    | The currently logged-in Supabase user |
-| `session`   | `Session \| null` | The auth session (contains tokens)    |
-| `loading`   | `boolean`         | Whether auth is still initializing    |
-| `authError` | `string \| null`  | Any authentication error message      |
-
-| Action                    | What It Does                                                 |
-|---------------------------|--------------------------------------------------------------|
-| `signIn(email, password)` | Logs in via Supabase                                         |
-| `signUp(email, password)` | Creates a new account                                        |
-| `signOut()`               | Logs out, clears offline queue and sync timestamps from MMKV |
-
-**How to use it:**
+### How to Use the Store
 
 ```tsx
-const { user, signIn, signOut } = useAuth();
+import { useAppStore } from '@/store';
 
-if (!user) {
-  return <LoginScreen />;
+// Method 1: Select specific state (recommended — fine-grained re-renders)
+function PaletteCount() {
+  const count = useAppStore((s) => s.palettePaintingIds.length);
+  return <Text>{count}/8</Text>;
 }
+
+// Method 2: Select actions (stable references — never cause re-renders)
+function AddButton({ paintingId }) {
+  const addToPalette = useAppStore((s) => s.addToPalette);
+  return <Button onPress={() => addToPalette(paintingId)} />;
+}
+
+// Method 3: Use the facade hook (backward-compatible, includes sync triggers)
+import { usePaintings } from '@/contexts/PaintingsContext';
+const { paintings, addToCollection, syncing } = usePaintings();
 ```
 
-#### CollectionContext (`contexts/CollectionContext.tsx`)
+### AuthContext (the one remaining React Context)
 
-**What it manages:** The user's personal painting collection — all the paintings they've added, with
-their "Seen" / "Want to Visit" status.
+**What it manages:** User authentication state and identity.
 
-| State       | Type         | Description                            |
-|-------------|--------------|----------------------------------------|
-| `paintings` | `Painting[]` | All paintings in the user's collection |
+| State         | Type              | Description                           |
+|---------------|-------------------|---------------------------------------|
+| `user`        | `User \| null`    | The currently logged-in Supabase user |
+| `session`     | `Session \| null` | The auth session (contains tokens)    |
+| `loading`     | `boolean`         | Whether auth is still initializing    |
+| `authError`   | `string \| null`  | Any authentication error message      |
+| `curatorName` | `string`          | User's display name (synced to auth)  |
 
-| Action                             | What It Does                              |
-|------------------------------------|-------------------------------------------|
-| `addToCollection(painting)`        | Adds a painting to the collection         |
-| `removeFromCollection(paintingId)` | Removes a painting                        |
-| `isInCollection(paintingId)`       | Checks if a painting is in the collection |
-| `toggleSeen(paintingId)`           | Toggles the "Seen" status                 |
-| `toggleWantToVisit(paintingId)`    | Toggles the "Want to Visit" status        |
-| `getPaintingsByArtist(name)`       | Gets all paintings by an artist           |
-| `getPaintingsByMuseum(museumId)`   | Gets all paintings from a museum          |
+| Action                               | What It Does                                      |
+|--------------------------------------|---------------------------------------------------|
+| `signIn(email, password)`            | Logs in via Supabase email/password               |
+| `signUp(email, password)`            | Creates a new account with email confirmation     |
+| `signInWithOAuth('apple'\|'google')` | Logs in via Apple or Google                       |
+| `resetPassword(email)`               | Sends a password reset email                      |
+| `signOut()`                          | Logs out, clears offline queue and sync data      |
+| `deleteAccount()`                    | Deletes all user data and the account             |
+| `updateProfile({ curatorName })`     | Updates curator name (persisted to auth metadata) |
 
-**Pattern:** Every mutation writes to MMKV immediately (instant UI update), then calls
-`syncService.upsertCollectionEntry()` in the background.
+### The `usePaintings()` Facade Hook
 
-#### PaletteContext (`contexts/PaletteContext.tsx`)
-
-**What it manages:** The user's curated 8-painting palette — their "top 8" display.
-
-| State                | Type       | Description                   |
-|----------------------|------------|-------------------------------|
-| `palettePaintingIds` | `string[]` | Array of painting IDs (max 8) |
-
-| Action                            | What It Does                                              |
-|-----------------------------------|-----------------------------------------------------------|
-| `addToPalette(paintingId)`        | Adds a painting (if < 8)                                  |
-| `removeFromPalette(paintingId)`   | Removes a painting                                        |
-| `isPaintingInPalette(paintingId)` | Checks if a painting is in the palette                    |
-| `getPalettePaintings()`           | Returns the full Painting objects for all palette entries |
-
-**Constraint:** Maximum 8 paintings. Enforced both in the context and in the database.
-
-#### SyncContext (`contexts/SyncContext.tsx`)
-
-**What it manages:** The cloud sync engine — whether sync is in progress, any sync errors, and the
-sync service instance.
-
-| State       | Type             | Description                             |
-|-------------|------------------|-----------------------------------------|
-| `syncing`   | `boolean`        | Whether a sync is currently in progress |
-| `syncError` | `string \| null` | Any sync error message                  |
-
-| Provided                 | What It Does                                          |
-|--------------------------|-------------------------------------------------------|
-| `syncService`            | The `SyncService` instance for manual sync operations |
-| `reportSyncError(error)` | Reports a sync error to the UI                        |
-
-**Behavior:** On mount (when user is authenticated and data is loaded), automatically runs
-`syncService.syncOnLaunch(userId)`.
-
-#### PaintingsContext — The Facade (`contexts/PaintingsContext.tsx`)
-
-**What it is:** A **facade** that combines Collection + Palette + Sync into one easy-to-use hook.
-
-**What is a facade?** Imagine you have three remote controls — one for the TV, one for the sound
-system, one for the lights. A facade is like a universal remote that combines all three into one.
-Instead of importing three different contexts, you import one:
+For backward compatibility, existing screens can still use `usePaintings()` which reads from the
+Zustand store and triggers sync operations automatically:
 
 ```tsx
-// ❌ Without the facade (messy — three separate imports)
-const { paintings, addToCollection } = useCollection();
-const { palettePaintingIds, addToPalette } = usePalette();
-const { syncing, syncError } = useSync();
-
-// ✅ With the facade (clean — one import)
 const {
   paintings,
-  addToCollection,
+  addToCollection,      // Updates store + triggers Supabase sync
   palettePaintingIds,
-  addToPalette,
+  addToPalette,         // Updates store + triggers Supabase sync
   syncing,
   syncError,
 } = usePaintings();
 ```
 
-**How it works internally:** `PaintingsProvider` wraps `SyncProvider` → `CollectionProvider` →
-`PaletteProvider` and uses a `RefCapture` component to wire up `_refreshFromStorage` callbacks so
-that when sync completes, both Collection and Palette contexts refresh their data from MMKV.
+New code should prefer direct store selectors for better performance.
 
 ---
 
@@ -1592,24 +1570,25 @@ Most screens have a 1:1 relationship with a custom hook:
 | MuseumCollection | `useMuseumCollection(museumId, visitId)` |
 | LikedPaintings   | `useLikedPaintings(visitId)`             |
 
-### Pattern 3: MMKV-First Writes
+### Pattern 3: Store-First Writes
 
-**Rule:** Always write to MMKV first, then sync to Supabase in the background.
+**Rule:** Always update the Zustand store (which auto-persists to MMKV), then sync to Supabase in
+the background.
 
 ```tsx
-// ✅ Correct pattern (used in CollectionContext)
-async function addToCollection(painting: Painting) {
-  // 1. Update local state immediately
-  setPaintings((prev) => [...prev, painting]);
-
-  // 2. Write to MMKV (instant, survives app restart)
-  storage.set('paintings_collection', JSON.stringify([...paintings, painting]));
-
-  // 3. Sync to Supabase in background (may fail — that's OK)
-  syncService.upsertCollectionEntry(userId, painting).catch((err) => {
-    // Failed? It's queued in the offline queue for retry
-  });
+// ✅ Correct pattern (used in store/collectionSlice.ts)
+addToCollection: (painting: Painting) => {
+  // 1. Update Zustand state + write to MMKV (both instant)
+  const updated = [...get().paintings, painting];
+  set({ paintings: updated });
+  storage.set(STORAGE_KEYS.PAINTINGS, JSON.stringify(updated));
 }
+
+// The facade hook (PaintingsContext.tsx) then triggers sync:
+const addToCollection = (painting: Painting) => {
+  addToCollectionStore(painting);           // Store + MMKV
+  syncCollectionEntry(painting.id, {...});  // Supabase (fire-and-forget)
+};
 ```
 
 ### Pattern 4: Adding a New Museum API
@@ -1834,47 +1813,35 @@ The `user_collection` table already has a `notes TEXT` column. If it didn't, you
 ALTER TABLE public.user_collection ADD COLUMN notes TEXT;
 ```
 
-### Step 3: Update the Context (`src/contexts/CollectionContext.tsx`)
+### Step 3: Update the Store (`src/store/collectionSlice.ts`)
 
 Add a new action to update notes:
 
 ```typescript
-// Add to the context value
-const updateNotes = async (paintingId: string, notes: string) => {
-  // 1. Update local state
-  setPaintings((prev) =>
-    prev.map((p) => (p.id === paintingId ? { ...p, notes } : p)),
-  );
-
-  // 2. Persist to MMKV
+// Add to the collectionSlice
+updateNotes: (paintingId: string, notes: string) => {
+  const { paintings } = get();
   const updated = paintings.map((p) =>
     p.id === paintingId ? { ...p, notes } : p,
   );
-  storage.set('paintings_collection', JSON.stringify(updated));
+  set({ paintings: updated });
+  storage.set(STORAGE_KEYS.PAINTINGS, JSON.stringify(updated));
+},
+```
 
-  // 3. Sync to Supabase
-  await syncService.upsertCollectionEntry(userId, { paintingId, notes });
+### Step 4: Add Sync Trigger in the Facade Hook (`src/contexts/PaintingsContext.tsx`)
+
+Wire up the sync call in `usePaintings()`:
+
+```typescript
+const updateNotes = (paintingId: string, notes: string) => {
+  updateNotesStore(paintingId, notes);
+  syncCollectionEntry(paintingId, { notes });
 };
 ```
 
-### Step 4: Update the Sync Service (`src/services/sync/syncStrategy.ts`)
-
-Make sure the `upsertCollectionEntry` method includes the `notes` field when writing to Supabase:
-
-```typescript
-async upsertCollectionEntry(userId: string, entry: CollectionEntry) {
-  const { error } = await supabase
-    .from('user_collection')
-    .upsert({
-      user_id: userId,
-      painting_id: entry.paintingId,
-      is_seen: entry.isSeen,
-      want_to_visit: entry.wantToVisit,
-      notes: entry.notes, // ← Add this
-    });
-  // ... error handling ...
-}
-```
+The sync service (`src/store/syncService.ts`) already handles `notes` in the
+`upsertCollectionEntry` payload — no changes needed there.
 
 ### Step 5: Update the Screen (`src/screens/PaintingDetail/PaintingDetail.tsx`)
 
@@ -1934,8 +1901,8 @@ notesInput: {
 ```mermaid
 flowchart LR
     A["1. Update Type\n(painting.ts)"] --> B["2. Update Schema\n(schema.sql)"]
-    B --> C["3. Update Context\n(CollectionContext)"]
-    C --> D["4. Update Sync\n(syncStrategy.ts)"]
+    B --> C["3. Update Store\n(collectionSlice.ts)"]
+    C --> D["4. Update Facade\n(PaintingsContext.tsx)"]
     D --> E["5. Update Screen\n(PaintingDetail)"]
     E --> F["6. Update Styles\n(.styles.ts)"]
 
