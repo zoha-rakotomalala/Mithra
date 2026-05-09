@@ -1,6 +1,6 @@
 import type { Painting } from '@/types/painting';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -18,6 +18,7 @@ import { museumImageSource } from '@/utils/imageSource';
 
 import { EmptyState, SyncErrorBanner } from '@/components/molecules';
 import { useCollectionFilter } from '@/hooks/domain/collection/useCollectionFilter';
+import { useAppStore } from '@/store';
 import { collectionStyles as styles } from './Collection.styles';
 
 // Memoized painting card
@@ -28,58 +29,91 @@ const PaintingCard = React.memo(
   }: {
     readonly onPress: () => void;
     readonly painting: Painting;
-  }) => (
-    <TouchableOpacity
-      activeOpacity={0.7}
-      onPress={onPress}
-      style={styles.gridItem}
-    >
-      <View style={styles.paintingCard}>
-        {painting.imageUrl ? (
-          <FastImage
-            resizeMode={FastImage.resizeMode.cover}
-            source={museumImageSource(
-              painting.thumbnailUrl || painting.imageUrl,
-            )}
-            style={styles.paintingImage}
-          />
-        ) : (
-          <View
-            style={[
-              styles.paintingPlaceholder,
-              { backgroundColor: painting.color },
-            ]}
-          >
-            <View style={styles.artFrame}>
-              <Text style={styles.paintingIcon}>🎨</Text>
+  }) => {
+    const [imageLoading, setImageLoading] = useState(true);
+    const [imageError, setImageError] = useState(false);
+    const imageUri = painting.thumbnailUrl || painting.imageUrl;
+
+    return (
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={onPress}
+        style={styles.gridItem}
+      >
+        <View style={styles.paintingCard}>
+          {imageUri && !imageError ? (
+            <View style={{ flex: 1 }}>
+              <FastImage
+                resizeMode={FastImage.resizeMode.cover}
+                source={museumImageSource(imageUri)}
+                style={styles.paintingImage}
+                onLoadEnd={() => setImageLoading(false)}
+                onError={() => { setImageLoading(false); setImageError(true); }}
+              />
+              {imageLoading && (
+                <View style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                  backgroundColor: COLORS.charcoal,
+                  justifyContent: 'center', alignItems: 'center',
+                }}>
+                  <ActivityIndicator color={COLORS.gold} size="small" />
+                </View>
+              )}
             </View>
-          </View>
-        )}
+          ) : (
+            <View style={{
+              flex: 1,
+              backgroundColor: COLORS.charcoal,
+              justifyContent: 'center',
+              alignItems: 'center',
+              borderWidth: 1,
+              borderColor: COLORS.gold + '30',
+            }}>
+              <Text style={{
+                color: COLORS.gold,
+                fontSize: 24,
+                fontWeight: '200',
+                letterSpacing: 2,
+              }}>
+                {painting.title?.charAt(0)?.toUpperCase() || '◆'}
+              </Text>
+              <Text style={{
+                color: COLORS.gold + '60',
+                fontSize: 8,
+                letterSpacing: 2,
+                marginTop: 4,
+                textTransform: 'uppercase',
+              }}>
+                NO IMAGE
+              </Text>
+            </View>
+          )}
 
-        {/* Status Badge */}
-        {painting.isSeen ? (
-          <View style={styles.seenBadge}>
-            <Text style={styles.badgeIcon}>S</Text>
-          </View>
-        ) : null}
-        {painting.wantToVisit ? (
-          <View style={styles.wantToVisitBadge}>
-            <Text style={styles.badgeIcon}>W</Text>
-          </View>
-        ) : null}
-      </View>
+          {/* Status Badge */}
+          {painting.isSeen ? (
+            <View style={styles.seenBadge}>
+              <Text style={styles.badgeIcon}>S</Text>
+            </View>
+          ) : null}
+          {painting.wantToVisit ? (
+            <View style={styles.wantToVisitBadge}>
+              <Text style={styles.badgeIcon}>W</Text>
+            </View>
+          ) : null}
+        </View>
 
-      <Text numberOfLines={2} style={styles.paintingTitle}>
-        {painting.title}
-      </Text>
-      <Text numberOfLines={1} style={styles.paintingArtist}>
-        {painting.artist}
-      </Text>
-      {painting.year ? (
-        <Text style={styles.paintingYear}>{painting.year}</Text>
-      ) : null}
-    </TouchableOpacity>
-  ),
+        <Text numberOfLines={2} style={styles.paintingTitle}>
+          {painting.title}
+        </Text>
+        <Text numberOfLines={1} style={styles.paintingArtist}>
+          {painting.artist}
+        </Text>
+        {painting.year ? (
+          <Text style={styles.paintingYear}>{painting.year}</Text>
+        ) : null}
+      </TouchableOpacity>
+    );
+  },
 );
 
 export function Collection() {
@@ -96,6 +130,23 @@ export function Collection() {
     syncError,
     handlePaintingPress,
   } = useCollectionFilter();
+
+  const isLoaded = useAppStore((s) => s.isLoaded);
+
+  // New device: store not loaded yet or first sync in progress with no local data
+  if (!isLoaded || (syncing && paintings.length === 0)) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar backgroundColor={COLORS.black} barStyle="light-content" />
+        <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+          <ActivityIndicator color={COLORS.gold} size="large" />
+          <Text style={{ color: COLORS.cream, marginTop: 16, fontSize: 14, letterSpacing: 1 }}>
+            LOADING COLLECTION...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const renderEmpty = () => (
     <EmptyState

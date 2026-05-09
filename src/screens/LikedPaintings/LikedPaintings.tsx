@@ -15,9 +15,8 @@ import { useLikedPaintings } from '@/hooks/domain/visits/useLikedPaintings';
 import { likedPaintingsStyles as styles } from './LikedPaintings.styles';
 import { Paths } from '@/navigation/paths';
 import type { RootScreenProps } from '@/navigation/types';
-import { createSyncService } from '@/services/syncService';
+import { upsertCollectionEntry } from '@/store/syncService';
 import { useAuth } from '@/contexts/AuthContext';
-import { storage } from '@/App';
 import type { Painting } from '@/types/painting';
 import type { Painting as CachedPainting } from '@/types/database';
 import type { UserCollectionEntry } from '@/types/database';
@@ -64,13 +63,7 @@ export function LikedPaintings() {
           updated_at: now,
         };
 
-        const syncService = createSyncService(storage);
-        syncService.upsertCollectionEntry(user.id, entry).catch((err) => {
-          console.error(
-            '[LikedPaintings] Failed to upsert collection entry:',
-            err?.message || err,
-          );
-        });
+        upsertCollectionEntry(user.id, entry).catch(() => {});
       }
 
       navigation.navigate(Paths.PaintingDetail, { paintingId: item.id });

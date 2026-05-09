@@ -1,131 +1,106 @@
 /**
- * PaintingsContext — Backward-compatible facade that composes
- * CollectionContext, PaletteContext, and SyncContext.
+ * PaintingsContext — Backward-compatible facade that reads from the Zustand store.
  *
- * Consumers can continue using `usePaintings()` unchanged.
- * New code should prefer the focused hooks: useCollection, usePalette, useSync.
+ * Existing screens can continue using `usePaintings()` unchanged.
+ * New code should use `useAppStore(selector)` directly for fine-grained subscriptions.
  */
-import type { MMKV } from 'react-native-mmkv';
+import { useAppStore } from '@/store';
+import { useSyncActions } from '@/store/useSync';
+import type { Painting } from '@/types/painting';
 
-import React, { useCallback, useRef, useState } from 'react';
-
-import { SyncProvider, useSync } from '@/contexts/SyncContext';
-import {
-  CollectionProvider,
-  useCollection,
-} from '@/contexts/CollectionContext';
-import { PaletteProvider, usePalette } from '@/contexts/PaletteContext';
-
-type PaintingsProviderProps = {
-  readonly children: React.ReactNode;
-  readonly storage: MMKV;
-};
-
-/**
- * Inner component that wires cross-context behavior
- * (e.g. removeFromCollection also removes from palette)
- */
-function PaintingsInner({ children }: { readonly children: React.ReactNode }) {
-  return <>{children}</>;
-}
-
-export function PaintingsProvider({
-  children,
-  storage,
-}: PaintingsProviderProps) {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const collectionRefreshRef = useRef<(() => void) | null>(null);
-  const paletteRefreshRef = useRef<(() => void) | null>(null);
-
-  const handleLoaded = useCallback(() => {
-    setIsLoaded(true);
-  }, []);
-
-  const handleSyncComplete = useCallback(() => {
-    collectionRefreshRef.current?.();
-    paletteRefreshRef.current?.();
-  }, []);
-
-  return (
-    <SyncProvider
-      storage={storage}
-      isLoaded={isLoaded}
-      onSyncComplete={handleSyncComplete}
-    >
-      <CollectionProvider storage={storage} onLoaded={handleLoaded}>
-        <PaletteProvider storage={storage}>
-          <RefCapture
-            collectionRefreshRef={collectionRefreshRef}
-            paletteRefreshRef={paletteRefreshRef}
-          >
-            <PaintingsInner>{children}</PaintingsInner>
-          </RefCapture>
-        </PaletteProvider>
-      </CollectionProvider>
-    </SyncProvider>
-  );
-}
-
-/**
- * Captures _refreshFromStorage refs from child contexts so the
- * sync-complete callback can trigger them.
- */
-function RefCapture({
-  children,
-  collectionRefreshRef,
-  paletteRefreshRef,
-}: {
-  readonly children: React.ReactNode;
-  collectionRefreshRef: React.MutableRefObject<(() => void) | null>;
-  paletteRefreshRef: React.MutableRefObject<(() => void) | null>;
-}) {
-  const { _refreshFromStorage: refreshCollection } = useCollection();
-  const { _refreshFromStorage: refreshPalette } = usePalette();
-
-  collectionRefreshRef.current = refreshCollection;
-  paletteRefreshRef.current = refreshPalette;
-
-  return <>{children}</>;
-}
-
-/**
- * Facade hook — backward compatible with the original API.
- * Combines all three focused contexts into a single object.
- */
 export function usePaintings() {
-  const collection = useCollection();
-  const palette = usePalette();
-  const sync = useSync();
+  const paintings = useAppStore((s) => s.paintings);
+  const addToCollectionStore = useAppStore((s) => s.addToCollection);
+  const removeFromCollectionStore = useAppStore((s) => s.removeFromCollection);
+  const isInCollection = useAppStore((s) => s.isInCollection);
+  const toggleSeenStore = useAppStore((s) => s.toggleSeen);
+  const toggleWantToVisitStore = useAppStore((s) => s.toggleWantToVisit);
+  const getPaintingsByArtist = useAppStore((s) => s.getPaintingsByArtist);
+  const getPaintingsByMuseum = useAppStore((s) => s.getPaintingsByMuseum);
+  const palettePaintingIds = useAppStore((s) => s.palettePaintingIds);
+  const addToPaletteStore = useAppStore((s) => s.addToPalette);
+  const removeFromPaletteStore = useAppStore((s) => s.removeFromPalette);
+  const isPaintingInPalette = useAppStore((s) => s.isPaintingInPalette);
+  const getPalettePaintings = useAppStore((s) => s.getPalettePaintings);
+  const syncing = useAppStore((s) => s.syncing);
+  const syncError = useAppStore((s) => s.syncError);
 
-  // Preserve original behavior: removeFromCollection also removes from palette
-  const removeFromCollection = useCallback(
-    (paintingId: string) => {
-      collection.removeFromCollection(paintingId);
-      palette.removeFromPalette(paintingId);
-    },
-    [collection.removeFromCollection, palette.removeFromPalette],
-  );
+  const { syncCollectionEntry, syncDeleteEntry, syncPalette } = useSyncActions();
+
+  const addToCollection = (painting: Painting) => {
+    addToCollectionStore(painting);
+    syncCollectionEntry(painting.id, {
+      is_seen: painting.isSeen || false,
+      want_to_visit: painting.wantToVisit || false,
+      seen_date: painting.seenDate || null,
+      date_added: painting.dateAdded || new Date().toISOString(),
+      notes: painting.notes || null,
+    });
+  };
+
+  const removeFromCollection = (paintingId: string) => {
+    removeFromCollectionStore(paintingId);
+    syncDeleteEntry(paintingId);
+  };
+
+  const toggleSeen = (paintingId: string) => {
+    toggleSeenStore(paintingId);
+    const updated = useAppStore.getState().paintings.find((p) => p.id === paintingId);
+    if (updated) {
+      syncCollectionEntry(paintingId, {
+        is_seen: updated.isSeen || false,
+        want_to_visit: false,
+        seen_date: updated.isSeen ? (updated.seenDate || new Date().toISOString()) : null,
+        date_added: updated.dateAdded || new Date().toISOString(),
+        notes: updated.notes || null,
+      });
+    }
+  };
+
+  const toggleWantToVisit = (paintingId: string) => {
+    toggleWantToVisitStore(paintingId);
+    const updated = useAppStore.getState().paintings.find((p) => p.id === paintingId);
+    if (updated) {
+      syncCollectionEntry(paintingId, {
+        is_seen: false,
+        want_to_visit: updated.wantToVisit || false,
+        seen_date: null,
+        date_added: updated.dateAdded || new Date().toISOString(),
+        notes: updated.notes || null,
+      });
+    }
+  };
+
+  const addToPalette = (paintingId: string): boolean => {
+    const result = addToPaletteStore(paintingId);
+    if (result) {
+      const ids = useAppStore.getState().palettePaintingIds;
+      syncPalette(ids);
+    }
+    return result;
+  };
+
+  const removeFromPalette = (paintingId: string) => {
+    removeFromPaletteStore(paintingId);
+    const ids = useAppStore.getState().palettePaintingIds;
+    syncPalette(ids);
+  };
 
   return {
-    // Collection
-    paintings: collection.paintings,
-    addToCollection: collection.addToCollection,
+    paintings,
+    addToCollection,
     removeFromCollection,
-    isInCollection: collection.isInCollection,
-    toggleSeen: collection.toggleSeen,
-    toggleWantToVisit: collection.toggleWantToVisit,
-    getPaintingsByArtist: collection.getPaintingsByArtist,
-    getPaintingsByMuseum: collection.getPaintingsByMuseum,
-
-    // Palette
-    palettePaintingIds: palette.palettePaintingIds,
-    addToPalette: palette.addToPalette,
-    removeFromPalette: palette.removeFromPalette,
-    isPaintingInPalette: palette.isPaintingInPalette,
-    getPalettePaintings: palette.getPalettePaintings,
-
-    // Sync
-    syncing: sync.syncing,
-    syncError: sync.syncError,
+    isInCollection,
+    toggleSeen,
+    toggleWantToVisit,
+    getPaintingsByArtist,
+    getPaintingsByMuseum,
+    palettePaintingIds,
+    addToPalette,
+    removeFromPalette,
+    isPaintingInPalette,
+    getPalettePaintings,
+    syncing,
+    syncError,
   };
 }

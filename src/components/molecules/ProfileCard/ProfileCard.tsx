@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import FastImage from 'react-native-fast-image';
 import { COLORS } from '@/constants/colors';
 
 const { width } = Dimensions.get('window');
@@ -16,12 +17,13 @@ const CARD_WIDTH = (width - 64) / 3;
 const CARD_HEIGHT = CARD_WIDTH * 1.3;
 
 export type ProfileCardProps = {
+  readonly avatarUrl?: string | null;
   readonly isFlipped: boolean;
   readonly onPress: () => void;
   readonly profile: UserProfile;
 };
 
-export function ProfileCard({ isFlipped, onPress, profile }: ProfileCardProps) {
+export function ProfileCard({ avatarUrl, isFlipped, onPress, profile }: ProfileCardProps) {
   const flipAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -71,16 +73,24 @@ export function ProfileCard({ isFlipped, onPress, profile }: ProfileCardProps) {
           ]}
         >
           <View style={styles.frontInner}>
-            <View
-              style={[
-                styles.initialCircle,
-                { backgroundColor: profile.profileColor },
-              ]}
-            >
-              <Text style={styles.initial}>
-                {profile.username.charAt(0).toUpperCase()}
-              </Text>
-            </View>
+            {avatarUrl ? (
+              <FastImage
+                source={{ uri: avatarUrl }}
+                style={styles.avatarImage}
+                resizeMode={FastImage.resizeMode.cover}
+              />
+            ) : (
+              <View
+                style={[
+                  styles.initialCircle,
+                  { backgroundColor: profile.profileColor },
+                ]}
+              >
+                <Text style={styles.initial}>
+                  {profile.username.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
 
             <Text style={styles.frontLabel}>CURATOR</Text>
           </View>
@@ -154,6 +164,14 @@ const styles = StyleSheet.create({
     fontSize: 40,
     fontWeight: '300',
     letterSpacing: 2,
+  },
+  avatarImage: {
+    borderColor: COLORS.gold,
+    borderRadius: CARD_WIDTH * 0.3,
+    borderWidth: 2,
+    height: CARD_WIDTH * 0.6,
+    marginBottom: 12,
+    width: CARD_WIDTH * 0.6,
   },
   initialCircle: {
     alignItems: 'center',

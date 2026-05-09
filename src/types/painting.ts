@@ -32,6 +32,7 @@ export type Painting = {
 };
 
 export type UserProfile = {
+  avatarUrl?: string | null;
   profileColor: string;
   stats: {
     paintings: number;
