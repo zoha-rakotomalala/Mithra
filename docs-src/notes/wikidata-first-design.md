@@ -370,6 +370,15 @@ runtime (`ky` 1.8 over RN's `fetch`) or the Supabase cache phase in `searchAllMu
 before the API phase and is not inside its try/catch. The next measurement is in the app itself:
 search with `useCache: false` and read the Metro console for the `❌ <museum> API failed:` lines.
 
+**Repaired (commit `612e9ec` on this branch).** Rijksmuseum, Louvre and the Met now return
+paintings with each adapter's own code against the live APIs: Rijksmuseum 6 of 6 Rembrandt
+paintings with title, artist, year, medium, dimensions and image (titles by Getty AAT language
+and preferred-term ids; artist resolved from the actor URI, one cached fetch per painter;
+`type=painting` on the search); *Benares* by Marius Bauer found by title. Louvre 4 Delacroix
+with images under `P195 = Q3044768 | Q19675`, SPARQL rows folded per painting. Met 12 paintings
+from a Vermeer search through `/v1.1/search`. Left for phase 1: the Louvre still goes through
+SPARQL, and `gsrlimit` counts rows, not paintings, so a request for 8 can return 4 distinct ones.
+
 ## 9. Costs and risks, stated plainly
 
 - **Wikidata is community data.** Labels can be wrong, duplicates exist, a painting can be
