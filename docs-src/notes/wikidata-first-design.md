@@ -302,6 +302,45 @@ numbers, before image loading.
 Phases 1 to 3 are the product change. Phase 5 is the redesign and should wait for a real-museum
 test of phase 3.
 
+### Phase 0 results (2026-10-02, 23:35)
+
+Each adapter's search request was reproduced outside the app exactly as `src/services/*Service.ts`
+builds it: same URL, same parameters, same keys the app sends when no `.env` exists (empty string,
+or `DEMO_KEY`), same 10 s timeout. Two runs each, from a Paris home connection. Script:
+`prompts/palette_adapter_probe.py`. This tests the HTTP layer; adapter parsing was not run.
+
+| Adapter | Result | Latency | Finding |
+|---|---|---|---|
+| Rijksmuseum | works | 0.29 s + 0.16 s per item | Search returns ids only; the app then makes 2 calls per painting. |
+| Art Institute of Chicago | works | 0.04 s | 133,118 hits for "Monet", all 20 with image. |
+| Cleveland | works | 0.66 s | 12 hits, all with image. |
+| Victoria and Albert | works | 0.20 s | 13,780 hits. |
+| National Gallery London | works | 0.09 s | Elasticsearch endpoint, 10 hits with image. |
+| SMK Copenhagen | works | 0.48 s | 122 hits, 12 with image. |
+| Smithsonian | works, on `DEMO_KEY` | 1.29 s | The demo key is shared and rate-limited; a free key fixes it. |
+| Wikidata | works | 0.65 s | SPARQL route; see section 2 for why it is the fragile one. |
+| Louvre (via Wikidata) | works | 2.14 s | Filters on *location* (`P276`), not *collection* (`P195`); slowest of the working set. |
+| **Met** | **broken, HTTP 410** | 0.12 s | `/v1/search` **was retired on 2026-10-01**, yesterday. The reply names the replacement: `/v1.1/search` with `limit` and `offset`. Verified: it answers in 0.15 s with the same shape. A one-line fix. |
+| **Joconde** | **broken** | 0.14 s | `data.culture.gouv.fr/api/explore/...` now returns the portal's JavaScript shell, not JSON. The Opendatasoft API behind it is gone. The data still exists (POP, `api.pop.culture.gouv.fr`) under a different API; needs a rewrite, not a patch. |
+| **Paris Musées** | **broken, HTTP 403** | 0.17 s | Needs `PARIS_API_KEY`; the app sends an empty bearer. Free key on registration. |
+| **Europeana** | **broken, HTTP 401** | 0.17 s | "Empty API key provided". Free key on registration. |
+| **Harvard** | **broken, HTTP 401** | 0.28 s | Needs `HARVARD_API_KEY`. Free key on registration. |
+
+**9 of 14 answer; 5 fail.** Of the 5: three are missing free API keys (Paris Musées, Europeana,
+Harvard), one is a one-line endpoint change (Met, retired yesterday), one needs real work (Joconde).
+So the catalog felt broken for two reasons that have nothing to do with the museums: no `.env` on
+this install, and one endpoint retired this week. The three key-gated sources are the ones with the
+widest reach (Europeana alone federates thousands of institutions).
+
+What this changes in the plan:
+- Phase 4 is smaller than feared. Keep all 9 working adapters as enrichment. Fix the Met now.
+  Register the three free keys. Decide on Joconde after the Orsay test shows whether Wikidata's
+  Orsay coverage is enough on its own.
+- Wikidata-first is still the right core: even with all 14 working, the user is usually in a museum
+  none of them covers, and the Met's retirement shows that every museum API is a moving target.
+- The app needs a visible per-adapter health signal in Settings (last success, last error), so
+  "more than half do not work" is a number on a screen, not a feeling after a bad visit.
+
 ## 9. Costs and risks, stated plainly
 
 - **Wikidata is community data.** Labels can be wrong, duplicates exist, a painting can be
@@ -395,5 +434,6 @@ visit-and-palette story is. Above it, identification leads.
 ## Appendix: probes
 
 - `/Users/zoharak/.kiro/crew/workspace/prompts/wikidata_probe.py`: SPARQL vs plain API, timed.
+- `/Users/zoharak/.kiro/crew/workspace/prompts/palette_adapter_probe.py`: phase 0, the 14 adapters as the app calls them.
 - `/Users/zoharak/.kiro/crew/workspace/prompts/wikidata_museums.py`: paintings per collection,
   totals, labels and countries. Output JSON reused for the directory script in phase 2.
