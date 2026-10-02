@@ -341,6 +341,35 @@ What this changes in the plan:
 - The app needs a visible per-adapter health signal in Settings (last success, last error), so
   "more than half do not work" is a number on a screen, not a feeling after a bad visit.
 
+### Phase 0b: the adapters' own code (2026-10-02, 23:50)
+
+Zoha reported from the app that Rijksmuseum, Smithsonian, Wikidata, National Gallery and SMK fail
+too, although their endpoints answered above. So the real TypeScript was run: each adapter module
+loaded under Jest with the live network, `react-native-config` mocked to `{}` (no `.env`, as on this
+install), `adapter.search({ query, maxResults: 10, searchType: 'artist' })`, then the app's own
+`filterByQuality` with the Search screen's thresholds.
+
+| Adapter | Raw | After quality filter | Finding |
+|---|---|---|---|
+| Cleveland | 10 | 10 | fine |
+| Chicago | 9 | 9 | fine |
+| V&A | 10 | 9 | fine |
+| National Gallery | 10 | 10 | fine in Node |
+| SMK | 7 | 7 | fine in Node |
+| Smithsonian | 2 | 2 | fine in Node, on `DEMO_KEY` |
+| Wikidata | 5 | 3 | fine in Node, 3.6 s |
+| **Rijksmuseum** | **0** | 0 | **Parser bug.** The search returns 1,447 Rembrandts, the parser drops every one. `extractTitle` looks for `classified_as[0]._label === 'Primary Name'`; the live records carry no `_label` on names (only Getty AAT ids, `300417200`), so every title becomes `Untitled` and `parseLinkedArtObject` returns `null`. `extractArtist` reads `produced_by.carried_out_by`, which is absent; the creator sits under `produced_by.part[].carried_out_by`. The search also omits `type=painting` (1,447 hits vs 24 paintings). The adapter was written against a Linked Art shape the API no longer serves. |
+| **Louvre** | **0** | 0 | **Wrong Wikidata filter.** It filters on *location* `P276=Q19675`; only 113 paintings on all of Wikidata carry that. The Louvre's paintings are filed under *collection* `P195=Q3044768` (Department of Paintings of the Louvre): 10,522 paintings, 75 for Delacroix. `Q19675` under `P195` gives 8. |
+| Met | throws | | HTTP 410, as above. |
+| Harvard, Europeana, Paris Musées | 0 | | 401 / 401 / 403, empty keys, as above. |
+| Joconde | 0 | | `Unexpected token '<'`: the HTML shell parsed as JSON, as above. |
+
+So in Node 7 of 14 return paintings. Four that pass here (National Gallery, SMK, Smithsonian,
+Wikidata) fail in the running app, which means a layer this probe cannot run: the React Native
+runtime (`ky` 1.8 over RN's `fetch`) or the Supabase cache phase in `searchAllMuseums`, which runs
+before the API phase and is not inside its try/catch. The next measurement is in the app itself:
+search with `useCache: false` and read the Metro console for the `❌ <museum> API failed:` lines.
+
 ## 9. Costs and risks, stated plainly
 
 - **Wikidata is community data.** Labels can be wrong, duplicates exist, a painting can be
