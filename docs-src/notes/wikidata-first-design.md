@@ -469,6 +469,19 @@ The Orsay test (phase 3) gives the first real number: of N paintings scanned in 
 resolve on the spot. Below about half, the identification story is not yet the headline and the
 visit-and-palette story is. Above it, identification leads.
 
+## 13. Parked: "want to visit" as a planning mode (2026-10-03)
+
+Not for this branch. Recorded so the idea survives.
+
+Two moods, one collection. In the museum, search and scan are scoped to the place and what is
+kept is *seen*, in this visit's palette. At home, the same field searches everywhere and what is
+kept is *want to visit*, carrying its museum. The collection then groups want-to-visit by museum
+("Van Gogh Museum 7, Orsay 3"), and a new visit opens with "you wanted N paintings here". Seeing
+one moves it from wanted to seen. Open question Zoha raised: an artist's full list of works
+could come from the artist's own Wikidata entry (works by creator `P170`), which the current
+adapters cannot do. The `wantToVisit` field, the Collection filter and the visits tables exist;
+the frame, the grouping and the artist lookup do not. Own branch, after the API work.
+
 ## Appendix: probes
 
 - `/Users/zoharak/.kiro/crew/workspace/prompts/wikidata_probe.py`: SPARQL vs plain API, timed.
