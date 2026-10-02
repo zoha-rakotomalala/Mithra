@@ -3,6 +3,13 @@ import { generateColorFromString } from '@/utils/colorGenerator';
 import { museumApi } from './museumApiClient';
 
 const MET_API_BASE = 'https://collectionapi.metmuseum.org/public/collection/v1';
+/**
+ * Search moved to v1.1 on 2026-10-01; v1/search now answers HTTP 410 Gone.
+ * Object details are still served under v1.
+ */
+const MET_SEARCH_URL =
+  'https://collectionapi.metmuseum.org/public/collection/v1.1/search';
+const MET_SEARCH_LIMIT = 40;
 const objectCache = new Map<string, any>();
 
 export type MetSearchParams = {
@@ -31,9 +38,11 @@ export async function searchMetMuseum(
     const queryParameters = new URLSearchParams({
       hasImages: hasImages.toString(),
       q: query.trim(),
+      limit: MET_SEARCH_LIMIT.toString(),
+      offset: '0',
     });
 
-    const searchUrl = `${MET_API_BASE}/search?${queryParameters.toString()}`;
+    const searchUrl = `${MET_SEARCH_URL}?${queryParameters.toString()}`;
     console.log('🏛️ Searching Met Museum:', searchUrl);
 
     const data = await museumApi.get(searchUrl).json<any>();
@@ -44,8 +53,8 @@ export async function searchMetMuseum(
       return { paintings: [], totalResults: 0 };
     }
 
-    // Fetch details for first 40 objects
-    const objectsToFetch = objectIDs.slice(0, 40);
+    // v1.1 honours `limit`, so this is already at most MET_SEARCH_LIMIT ids
+    const objectsToFetch = objectIDs.slice(0, MET_SEARCH_LIMIT);
     const paintings = await fetchObjectDetails(objectsToFetch);
 
     // Filter to paintings only, remove nulls

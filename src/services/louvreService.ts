@@ -6,10 +6,21 @@ import { museumApi } from './museumApiClient';
 const WIKIDATA_ENDPOINT = 'https://query.wikidata.org/sparql';
 const LOUVRE_DATA_BASE = 'https://collections.louvre.fr/ark:/53355';
 
+/**
+ * Wikidata files the Louvre's paintings under the Department of Paintings
+ * (Q3044768, ~10,500 paintings), a handful directly under the museum (Q19675).
+ * Filtering on *location* P276=Q19675 instead reaches 113, which is why the
+ * adapter looked empty.
+ */
+const LOUVRE_COLLECTIONS = ['Q3044768', 'Q19675'];
+
 const SPARQL_HEADERS = {
   Accept: 'application/json',
   'Content-Type': 'application/x-www-form-urlencoded',
-  'User-Agent': 'PaletteApp/1.0 (art collection mobile app)',
+  // Wikimedia's robot policy asks for a contact URL; without one requests
+  // fall in the throttled class.
+  'User-Agent':
+    'PaletteApp/1.0 (https://github.com/zoha-rakotomalala/palette; art collection mobile app)',
 };
 
 interface LouvreSearchParams {
@@ -49,6 +60,10 @@ export async function searchLouvre(
     }
 
     const searchTerm = query.trim().replace(/"/g, '\\"');
+    const collectionFilter = LOUVRE_COLLECTIONS.map((q) => `P195=${q}`).join(
+      '|',
+    );
+    const collectionValues = LOUVRE_COLLECTIONS.map((q) => `wd:${q}`).join(' ');
 
     // Use mwapi:Generator for full-text search — "Search" mode is invalid on www.wikidata.org
     const sparqlQuery = `
@@ -59,7 +74,7 @@ export async function searchLouvre(
               bd:serviceParam wikibase:endpoint "www.wikidata.org";
                               wikibase:api "Generator";
                               mwapi:generator "search";
-                              mwapi:gsrsearch "${searchTerm} haswbstatement:P31=Q3305213 haswbstatement:P276=Q19675";
+                              mwapi:gsrsearch "${searchTerm} haswbstatement:P31=Q3305213 haswbstatement:${collectionFilter}";
                               mwapi:gsrlimit "${limit}".
               ?title wikibase:apiOutput mwapi:title.
             }
@@ -67,8 +82,9 @@ export async function searchLouvre(
           } LIMIT ${limit}
         }
         hint:Prior hint:runFirst "true".
+        VALUES ?collection { ${collectionValues} }
         ?painting wdt:P31 wd:Q3305213;
-                  wdt:P276 wd:Q19675.
+                  wdt:P195 ?collection.
         OPTIONAL { ?painting wdt:P170 ?artist. }
         OPTIONAL { ?painting wdt:P18 ?image. }
         OPTIONAL { ?painting wdt:P9394 ?louvreId. }
@@ -90,9 +106,32 @@ export async function searchLouvre(
 
     const bindings = data.results?.bindings || [];
 
+    // SPARQL yields one row per value of a multi-valued OPTIONAL (a painting
+    // with two materials comes back twice). Fold rows by painting, joining
+    // the medium labels, before parsing.
+    const byPainting = new Map<string, any>();
+    for (const row of bindings) {
+      const key = row.painting?.value ?? JSON.stringify(row);
+      const seen = byPainting.get(key);
+      if (!seen) {
+        byPainting.set(key, { ...row });
+        continue;
+      }
+      const medium = row.mediumLabel?.value;
+      const seenMedium = seen.mediumLabel?.value;
+      if (medium && seenMedium && !seenMedium.split(', ').includes(medium)) {
+        seen.mediumLabel = {
+          ...seen.mediumLabel,
+          value: `${seenMedium}, ${medium}`,
+        };
+      }
+    }
+
     // Try to enrich with Louvre JSON for items that have a louvreId
     const paintings = await Promise.all(
-      bindings.map((item: any) => parseLouvreResult(item)),
+      Array.from(byPainting.values()).map((item: any) =>
+        parseLouvreResult(item),
+      ),
     );
 
     const filtered = paintings.filter((p): p is Painting => p !== null);

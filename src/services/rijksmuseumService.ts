@@ -7,11 +7,31 @@ const RIJKS_SEARCH_API = 'https://data.rijksmuseum.nl/search/collection';
 const IIIF_BASE = 'https://iiif.micr.io';
 
 /**
+ * Getty AAT concept ids the Rijksmuseum Linked Art records use in place of
+ * human-readable `_label`s (the records carry none). Matched by URI suffix.
+ */
+const AAT = {
+  english: '300388277',
+  dutch: '300388256',
+  preferredTerm: '300404670',
+  height: '300055644',
+  width: '300055647',
+  materialsStatement: '300435429',
+} as const;
+
+/**
  * In-memory IIIF ID cache (kintopp-style).
  * Maps Rijksmuseum object URI → resolved IIIF ID (e.g., "AmWMg").
  * Once resolved, images can be constructed directly without the 3-hop chain.
  */
 const iiifCache = new Map<string, string>();
+
+/**
+ * Maps a Rijksmuseum actor URI (https://id.rijksmuseum.nl/2103429) to its
+ * display name. Artists are referenced by URI only, so each one costs a fetch
+ * the first time it appears.
+ */
+const actorNameCache = new Map<string, string>();
 
 /**
  * Extract IIIF ID from a micr.io URL.
@@ -46,9 +66,11 @@ export async function searchRijksmuseum(
       return { paintings: [], totalResults: 0 };
     }
 
-    // Build search URL
+    // Build search URL. Without `type`, the API returns every object kind
+    // (prints, drawings, photos): 1,447 Rembrandts instead of 24 paintings.
     const searchParams = new URLSearchParams({
       imageAvailable: 'true',
+      type: 'painting',
     });
 
     if (params.searchType === 'artist') {
@@ -133,9 +155,9 @@ async function parseLinkedArtObject(data: any): Promise<Painting | null> {
     if (!types.includes('HumanMadeObject')) return null;
 
     const title = extractTitle(data);
-    if (!title || title === 'Untitled') return null;
+    if (!title) return null;
 
-    const artist = cleanArtistName(extractArtist(data));
+    const artist = cleanArtistName(await resolveArtist(data));
     const imageUrl = (await resolveImageUrl(data)) ?? undefined;
     const year = extractYear(data);
     const dimensions = extractDimensions(data);
@@ -256,27 +278,111 @@ function extractFirstId(field: any): string | null {
   return items[0]?.id ?? null;
 }
 
-function extractTitle(data: any): string {
-  if (data._label) return data._label;
-  const names = data.identified_by || [];
-  const title = names.find(
-    (item: any) =>
-      item.type === 'Name' &&
-      (item.classified_as?.[0]?._label === 'Primary Name' ||
-        !item.classified_as),
-  );
-  return title?.content || 'Untitled';
+/** True when any concept in `list` is the given Getty AAT id. */
+function hasConcept(list: any, aatId: string): boolean {
+  if (!list) return false;
+  const items = Array.isArray(list) ? list : [list];
+  return items.some((c: any) => {
+    if (typeof c?.id === 'string' && c.id.endsWith(`/${aatId}`)) return true;
+    return hasConcept(c?.equivalent, aatId);
+  });
 }
 
-function extractArtist(data: any): string {
-  if (data.produced_by?.carried_out_by) {
-    const creators = Array.isArray(data.produced_by.carried_out_by)
-      ? data.produced_by.carried_out_by
-      : [data.produced_by.carried_out_by];
-    const artist = creators[0];
-    return (
-      artist?._label || artist?.identified_by?.[0]?.content || 'Unknown Artist'
+function isEnglish(node: any): boolean {
+  return hasConcept(node?.language, AAT.english);
+}
+
+function isDutch(node: any): boolean {
+  return hasConcept(node?.language, AAT.dutch);
+}
+
+function isPreferred(node: any): boolean {
+  return hasConcept(node?.classified_as, AAT.preferredTerm);
+}
+
+/** The English `@value` of a `notation` list, or any value as fallback. */
+function notationText(node: any): string | undefined {
+  const notes = Array.isArray(node?.notation) ? node.notation : [];
+  const en = notes.find((n: any) => n['@language'] === 'en');
+  return (en ?? notes[0])?.['@value'];
+}
+
+/**
+ * Pick the display title. The records carry several Names per object with no
+ * `_label`: English and Dutch, each in preferred and alternate forms, keyed by
+ * Getty AAT ids. Order: English preferred, English, Dutch preferred, Dutch, any.
+ */
+function extractTitle(data: any): string | undefined {
+  if (typeof data._label === 'string' && data._label) return data._label;
+  const names = (data.identified_by || []).filter(
+    (n: any) => n?.type === 'Name' && typeof n.content === 'string',
+  );
+  const pick =
+    names.find((n: any) => isEnglish(n) && isPreferred(n)) ??
+    names.find(isEnglish) ??
+    names.find((n: any) => isDutch(n) && isPreferred(n)) ??
+    names.find(isDutch) ??
+    names[0];
+  const content = pick?.content?.trim();
+  return content || undefined;
+}
+
+/**
+ * Artists are not inlined: `produced_by.part[].carried_out_by[]` holds actor
+ * URIs only, so the first one is fetched (and cached) to read its name.
+ * Attributed works ("attributed to", "workshop of") carry the actor under
+ * `part[].assigned_by[].assigned` instead. The legacy
+ * `produced_by.carried_out_by` shape is still honoured.
+ */
+async function resolveArtist(data: any): Promise<string> {
+  const production = data.produced_by;
+  if (!production) return 'Unknown Artist';
+
+  const actors: any[] = [];
+  const push = (field: any) => {
+    if (!field) return;
+    actors.push(...(Array.isArray(field) ? field : [field]));
+  };
+  push(production.carried_out_by);
+  const parts = Array.isArray(production.part) ? production.part : [];
+  for (const part of parts) {
+    push(part?.carried_out_by);
+    const assignments = Array.isArray(part?.assigned_by)
+      ? part.assigned_by
+      : [];
+    for (const assignment of assignments) {
+      if (assignment?.assigned_property === 'carried_out_by') {
+        push(assignment.assigned);
+      }
+    }
+  }
+
+  const actor = actors.find((a) => a && (a._label || a.id));
+  if (!actor) return 'Unknown Artist';
+  if (actor._label) return actor._label;
+  if (typeof actor.id !== 'string') return 'Unknown Artist';
+
+  const cached = actorNameCache.get(actor.id);
+  if (cached) return cached;
+
+  try {
+    const person = await museumApi
+      .get(actor.id, {
+        headers: { Accept: 'application/ld+json' },
+        timeout: 12000,
+      })
+      .json<any>();
+    const names = (person.identified_by || []).filter(
+      (n: any) => n?.type === 'Name' && typeof n.content === 'string',
     );
+    const name =
+      names.find(isPreferred)?.content ?? names[0]?.content ?? person._label;
+    if (name) {
+      actorNameCache.set(actor.id, name);
+      return name;
+    }
+  } catch (error) {
+    console.error(`Error resolving Rijks actor ${actor.id}:`, error);
   }
   return 'Unknown Artist';
 }
@@ -300,39 +406,60 @@ function extractYear(data: any): number | undefined {
   return undefined;
 }
 
+/**
+ * Height and width are typed by AAT id (via `classified_as[].equivalent`) or
+ * by an English `notation`; `_label` is accepted when present.
+ */
 function extractDimensions(data: any): string | undefined {
   if (!data.dimension) return undefined;
   const dims = Array.isArray(data.dimension)
     ? data.dimension
     : [data.dimension];
-  const height = dims.find((d: any) =>
-    d.classified_as?.[0]?._label?.toLowerCase().includes('height'),
-  );
-  const width = dims.find((d: any) =>
-    d.classified_as?.[0]?._label?.toLowerCase().includes('width'),
-  );
+  const isKind = (d: any, aatId: string, word: string) => {
+    const cls = d?.classified_as;
+    if (hasConcept(cls, aatId)) return true;
+    const list = Array.isArray(cls) ? cls : [cls];
+    return list.some(
+      (c: any) =>
+        c?._label?.toLowerCase().includes(word) ||
+        notationText(c)?.toLowerCase().includes(word),
+    );
+  };
+  const height = dims.find((d: any) => isKind(d, AAT.height, 'height'));
+  const width = dims.find((d: any) => isKind(d, AAT.width, 'width'));
   if (height?.value && width?.value) {
-    const unit = height.unit?._label || 'cm';
+    const unit = height.unit?._label ?? 'cm';
     return `${height.value} × ${width.value} ${unit}`;
   }
   return undefined;
 }
 
+/**
+ * Prefer the museum's own English materials statement ("oil on panel");
+ * fall back to the material and technique notations.
+ */
 function extractMedium(data: any): string | undefined {
+  const statements = (data.referred_to_by || []).filter(
+    (r: any) =>
+      typeof r?.content === 'string' &&
+      hasConcept(r.classified_as, AAT.materialsStatement),
+  );
+  const statement = statements.find(isEnglish) ?? statements[0];
+  if (statement?.content) return statement.content;
+
   const materials: string[] = [];
-  if (data.made_of) {
-    const mats = Array.isArray(data.made_of) ? data.made_of : [data.made_of];
-    materials.push(...mats.map((m: any) => m._label).filter(Boolean));
-  }
-  if (data.produced_by?.technique) {
-    const techs = Array.isArray(data.produced_by.technique)
-      ? data.produced_by.technique
-      : [data.produced_by.technique];
-    materials.push(...techs.map((t: any) => t._label).filter(Boolean));
-  }
+  const collect = (field: any) => {
+    if (!field) return;
+    const list = Array.isArray(field) ? field : [field];
+    for (const item of list) {
+      const text = item?._label ?? notationText(item);
+      if (text) materials.push(text);
+    }
+  };
+  collect(data.made_of);
+  collect(data.produced_by?.technique);
   return materials.length > 0 ? materials.join(', ') : undefined;
 }
-
 function generateIdFromUrl(url: string): string {
   const match = url.match(/([^\/]+)$/);
   return match ? match[1] : Date.now().toString();
