@@ -98,6 +98,30 @@ export function isDuplicate(
 }
 
 /**
+ * Words that mark an object as something other than a painting. Matched as
+ * whole words (optionally plural): `print` must not reject *Le Printemps*,
+ * nor `book` *The Bookseller*.
+ */
+const NON_PAINTING_WORDS = [
+  'photograph',
+  'photo',
+  'exhibition',
+  'catalogue',
+  'book',
+  'print',
+  'poster',
+  'drawing', // Unless explicitly a painting
+  'sculpture',
+  'textile',
+  'furniture',
+  'ceramic',
+];
+const NON_PAINTING_PATTERN = new RegExp(
+  `\\b(?:${NON_PAINTING_WORDS.join('|')})s?\\b`,
+  'i',
+);
+
+/**
  * Filter out non-painting items (for problematic sources like Europeana)
  */
 export function isPaintingLike(painting: Painting): boolean {
@@ -105,26 +129,8 @@ export function isPaintingLike(painting: Painting): boolean {
   const description = painting.description?.toLowerCase() || '';
   const medium = painting.medium?.toLowerCase() || '';
 
-  // Exclude obvious non-paintings
-  const excludeTerms = [
-    'photograph',
-    'photo',
-    'exhibition',
-    'catalogue',
-    'book',
-    'print',
-    'poster',
-    'drawing', // Unless explicitly a painting
-    'sculpture',
-    'textile',
-    'furniture',
-    'ceramic',
-  ];
-
-  // Check if it's explicitly excluded
-  const isExcluded = excludeTerms.some(
-    (term) => title.includes(term) || description.includes(term),
-  );
+  const isExcluded =
+    NON_PAINTING_PATTERN.test(title) || NON_PAINTING_PATTERN.test(description);
 
   if (isExcluded) {
     // But allow if explicitly called a painting
@@ -206,7 +212,7 @@ export function filterByQuality(
 ): Painting[] {
   const {
     requireImage = true,
-    requireArtist = true,
+    requireArtist = false,
     requireYear = false,
     paintingsOnly = true,
     minRelevanceScore = 20,

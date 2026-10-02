@@ -86,7 +86,9 @@ export async function searchAllMuseums(
     onProgressUpdate,
     qualityFilters = {
       requireImage: true,
-      requireArtist: true,
+      // Anonymous Old Masters are paintings too; relevance scoring already
+      // ranks a named artist above an unknown one.
+      requireArtist: false,
       paintingsOnly: true,
       minRelevanceScore: 15,
     },
@@ -113,22 +115,33 @@ export async function searchAllMuseums(
   let cachedPaintings: Painting[] = [];
 
   if (useCache) {
+    // A cache failure must never take the search down: Supabase is a
+    // convenience layer here, the museum APIs are the source. Each read is
+    // guarded on its own so one museum's cache error costs that museum only.
     const cachePromises = museumIds.map(async (museumId) => {
-      const cached = await getCachedPaintings(museumId, query, searchType);
-      if (cached.length > 0) {
-        cacheStats.hits++;
+      try {
+        const cached = await getCachedPaintings(museumId, query, searchType);
+        if (cached.length > 0) {
+          cacheStats.hits++;
 
-        // Check if cache is stale
-        const freshness = await getCacheFreshness(museumId, query, searchType);
-        if (freshness.shouldRevalidate) {
-          cacheStats.stale++;
+          // Check if cache is stale
+          const freshness = await getCacheFreshness(
+            museumId,
+            query,
+            searchType,
+          );
+          if (freshness.shouldRevalidate) {
+            cacheStats.stale++;
+          }
+
+          return { museumId, paintings: cached };
         }
-
-        return { museumId, paintings: cached };
-      } else {
         cacheStats.misses++;
-        return { museumId, paintings: [] };
+      } catch (error) {
+        console.warn(`⚠️ ${museumId} cache read failed, skipping:`, error);
+        cacheStats.misses++;
       }
+      return { museumId, paintings: [] };
     });
 
     const cacheResults = await Promise.all(cachePromises);
@@ -171,26 +184,38 @@ export async function searchAllMuseums(
         maxResultsPerMuseum,
       );
 
-      // Update cache with fresh results
+      // Update cache with fresh results. A failed write must not discard the
+      // paintings the museum just returned.
       if (useCache) {
-        const updateResult = await updateCacheWithFreshResults(
-          museumId,
-          query,
-          searchType,
-          freshPaintings,
-        );
+        try {
+          const updateResult = await updateCacheWithFreshResults(
+            museumId,
+            query,
+            searchType,
+            freshPaintings,
+          );
 
-        updateStats.added += updateResult.added;
-        updateStats.updated += updateResult.updated;
+          updateStats.added += updateResult.added;
+          updateStats.updated += updateResult.updated;
 
-        // Replace legacy IDs with database UUIDs, tag source museum for badges
-        for (const painting of freshPaintings) {
-          (painting as any).sourceMuseumId = museumId;
-          const uuid = updateResult.legacyToUuid[painting.id];
-          if (uuid) {
-            (painting as any).id = uuid;
+          // Replace legacy IDs with database UUIDs
+          for (const painting of freshPaintings) {
+            const uuid = updateResult.legacyToUuid[painting.id];
+            if (uuid) {
+              (painting as any).id = uuid;
+            }
           }
+        } catch (error) {
+          console.warn(
+            `⚠️ ${museumId} cache write failed, keeping results:`,
+            error,
+          );
         }
+      }
+
+      // Tag source museum for badges
+      for (const painting of freshPaintings) {
+        (painting as any).sourceMuseumId = museumId;
       }
 
       return { museumId, paintings: freshPaintings };

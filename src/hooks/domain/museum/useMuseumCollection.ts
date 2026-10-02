@@ -40,7 +40,7 @@ export function useMuseumCollection(museumId: string, visitId: string) {
         maxResultsPerMuseum: 50,
         qualityFilters: {
           requireImage: true,
-          requireArtist: true,
+          requireArtist: false,
           paintingsOnly: true,
           minRelevanceScore: 10,
         },

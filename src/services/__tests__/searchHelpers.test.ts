@@ -3,6 +3,7 @@ import {
   cleanArtistName,
   removeDuplicates,
   filterByQuality,
+  isPaintingLike,
   sortByRelevance,
 } from '../utils/searchHelpers';
 
@@ -78,7 +79,51 @@ describe('removeDuplicates', () => {
   });
 });
 
+describe('isPaintingLike', () => {
+  it('keeps titles where an excluded word is only a substring', () => {
+    expect(isPaintingLike(makePainting({ title: 'Le Printemps' }))).toBe(true);
+    expect(isPaintingLike(makePainting({ title: 'The Bookseller' }))).toBe(
+      true,
+    );
+    expect(
+      isPaintingLike(makePainting({ title: 'Photogenic Drawing Room' })),
+    ).toBe(false);
+  });
+
+  it('rejects whole-word non-painting terms, singular and plural', () => {
+    expect(
+      isPaintingLike(makePainting({ title: 'Photograph of a canal' })),
+    ).toBe(false);
+    expect(isPaintingLike(makePainting({ title: 'Two prints' }))).toBe(false);
+    expect(
+      isPaintingLike(
+        makePainting({ title: 'Portrait', description: 'Exhibition poster' }),
+      ),
+    ).toBe(false);
+  });
+
+  it('lets an excluded word through when the medium says painting', () => {
+    expect(
+      isPaintingLike(
+        makePainting({
+          title: 'After a print by Dürer',
+          medium: 'oil on panel',
+        }),
+      ),
+    ).toBe(true);
+  });
+});
+
 describe('filterByQuality', () => {
+  it('keeps anonymous works by default', () => {
+    const result = filterByQuality(
+      [makePainting({ id: 'p1', artist: 'Unknown Artist' })],
+      'Test Painting',
+      { paintingsOnly: false, minRelevanceScore: 0 },
+    );
+    expect(result).toHaveLength(1);
+  });
+
   it('filters out paintings without images when requireImage=true', () => {
     const paintings = [
       makePainting({ id: 'p1', imageUrl: 'https://img.example.com/1.jpg' }),
