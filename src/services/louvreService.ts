@@ -1,217 +1,122 @@
 import type { Painting } from '@/types/painting';
-import { cleanArtistName } from './utils/searchHelpers';
-import { generateColorFromString } from '@/utils/colorGenerator';
-import { museumApi } from './museumApiClient';
 
-const WIKIDATA_ENDPOINT = 'https://query.wikidata.org/sparql';
-const LOUVRE_DATA_BASE = 'https://collections.louvre.fr/ark:/53355';
+import { museumApi } from './museumApiClient';
+import { searchWikidataRecords } from './wikidataService';
 
 /**
- * Wikidata files the Louvre's paintings under the Department of Paintings
- * (Q3044768, ~10,500 paintings), a handful directly under the museum (Q19675).
- * Filtering on *location* P276=Q19675 instead reaches 113, which is why the
- * adapter looked empty.
+ * Musée du Louvre has no search API of its own. Wikidata files its paintings
+ * under the Department of Paintings (Q3044768, ~10,500) and a handful directly
+ * under the museum (Q19675), so the search runs through the Wikidata adapter
+ * with that collection filter. Records carrying a Louvre ark id (P9394) are
+ * then enriched from the museum's own collection JSON, which has the official
+ * photograph and the catalogue page.
  */
 const LOUVRE_COLLECTIONS = ['Q3044768', 'Q19675'];
+const LOUVRE_ARK_PROPERTY = 'P9394';
+const LOUVRE_COLLECTION_BASE = 'https://collections.louvre.fr/ark:/53355/cl';
 
-const SPARQL_HEADERS = {
-  Accept: 'application/json',
-  'Content-Type': 'application/x-www-form-urlencoded',
-  // Wikimedia's robot policy asks for a contact URL; without one requests
-  // fall in the throttled class.
-  'User-Agent':
-    'PaletteApp/1.0 (https://github.com/zoha-rakotomalala/palette; art collection mobile app)',
+type LouvreRecord = {
+  image?: { urlImage?: string; urlThumbnail?: string }[];
+  url?: string;
 };
 
-interface LouvreSearchParams {
-  query: string;
+type LouvreSearchParameters = {
   limit?: number;
-}
+  query: string;
+};
 
-interface LouvreSearchResult {
+type LouvreSearchResult = {
   paintings: Painting[];
   totalResults: number;
-}
+};
 
 /**
- * Convert a Wikimedia Commons image URL to a thumbnail URL
+ * Official photograph and catalogue URL for a Louvre ark id such as
+ * `010065872`. Returns an empty object when the fetch fails: Wikidata's data
+ * stands on its own.
  */
-function getWikimediaThumbnail(
-  imageUrl: string,
-  width = 400,
-): string | undefined {
-  if (!imageUrl?.includes('upload.wikimedia.org')) return undefined;
-  const match = imageUrl.match(/\/commons\/(.+\/([^/]+))$/);
-  if (!match) return undefined;
-  return `https://upload.wikimedia.org/wikipedia/commons/thumb/${match[1]}/${width}px-${match[2]}`;
+async function louvreEnrichment(
+  arkId: string,
+): Promise<Pick<Painting, 'imageUrl' | 'objectURL' | 'thumbnailUrl'>> {
+  try {
+    const record = await museumApi
+      .get(`${LOUVRE_COLLECTION_BASE}${arkId}.json`)
+      .json<LouvreRecord>();
+    const image = record.image?.[0];
+    return {
+      imageUrl: image?.urlImage,
+      objectURL: record.url,
+      thumbnailUrl: image?.urlThumbnail ?? image?.urlImage,
+    };
+  } catch {
+    return {};
+  }
 }
 
 /**
- * Search Musée du Louvre via Wikidata SPARQL (paintings located at the Louvre)
+ * Search the Louvre's paintings. Wikidata supplies the records; the Louvre's
+ * collection JSON supplies the official image where an ark id exists.
  */
 export async function searchLouvre(
-  params: LouvreSearchParams,
+  parameters: LouvreSearchParameters,
 ): Promise<LouvreSearchResult> {
   try {
-    const { query, limit = 20 } = params;
+    const { limit = 20, query } = parameters;
 
-    if (!query || query.trim().length === 0) {
-      return { paintings: [], totalResults: 0 };
-    }
+    const { records, totalResults } = await searchWikidataRecords({
+      collections: LOUVRE_COLLECTIONS,
+      externalIdProperties: [LOUVRE_ARK_PROPERTY],
+      idPrefix: 'louvre',
+      limit,
+      location: 'Paris, France',
+      museum: 'Musée du Louvre',
+      query,
+    });
 
-    const searchTerm = query.trim().replace(/"/g, '\\"');
-    const collectionFilter = LOUVRE_COLLECTIONS.map((q) => `P195=${q}`).join(
-      '|',
-    );
-    const collectionValues = LOUVRE_COLLECTIONS.map((q) => `wd:${q}`).join(' ');
-
-    // Use mwapi:Generator for full-text search — "Search" mode is invalid on www.wikidata.org
-    const sparqlQuery = `
-      SELECT ?painting ?paintingLabel ?artistLabel ?image ?louvreId ?year ?mediumLabel WHERE {
-        {
-          SELECT ?painting WHERE {
-            SERVICE wikibase:mwapi {
-              bd:serviceParam wikibase:endpoint "www.wikidata.org";
-                              wikibase:api "Generator";
-                              mwapi:generator "search";
-                              mwapi:gsrsearch "${searchTerm} haswbstatement:P31=Q3305213 haswbstatement:${collectionFilter}";
-                              mwapi:gsrlimit "${limit}".
-              ?title wikibase:apiOutput mwapi:title.
-            }
-            BIND(IRI(CONCAT("http://www.wikidata.org/entity/", ?title)) AS ?painting)
-          } LIMIT ${limit}
-        }
-        hint:Prior hint:runFirst "true".
-        VALUES ?collection { ${collectionValues} }
-        ?painting wdt:P31 wd:Q3305213;
-                  wdt:P195 ?collection.
-        OPTIONAL { ?painting wdt:P170 ?artist. }
-        OPTIONAL { ?painting wdt:P18 ?image. }
-        OPTIONAL { ?painting wdt:P9394 ?louvreId. }
-        OPTIONAL { ?painting wdt:P571 ?yearDate. BIND(YEAR(?yearDate) as ?year) }
-        OPTIONAL { ?painting wdt:P186 ?medium. }
-        SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
-      } LIMIT ${limit}
-    `;
-
-    console.log('🇫🇷 Searching Louvre via Wikidata');
-
-    const data = await museumApi
-      .post(WIKIDATA_ENDPOINT, {
-        body: `query=${encodeURIComponent(sparqlQuery)}`,
-        headers: SPARQL_HEADERS,
-        timeout: 20000,
-      })
-      .json<any>();
-
-    const bindings = data.results?.bindings || [];
-
-    // SPARQL yields one row per value of a multi-valued OPTIONAL (a painting
-    // with two materials comes back twice). Fold rows by painting, joining
-    // the medium labels, before parsing.
-    const byPainting = new Map<string, any>();
-    for (const row of bindings) {
-      const key = row.painting?.value ?? JSON.stringify(row);
-      const seen = byPainting.get(key);
-      if (!seen) {
-        byPainting.set(key, { ...row });
-        continue;
-      }
-      const medium = row.mediumLabel?.value;
-      const seenMedium = seen.mediumLabel?.value;
-      if (medium && seenMedium && !seenMedium.split(', ').includes(medium)) {
-        seen.mediumLabel = {
-          ...seen.mediumLabel,
-          value: `${seenMedium}, ${medium}`,
-        };
-      }
-    }
-
-    // Try to enrich with Louvre JSON for items that have a louvreId
     const paintings = await Promise.all(
-      Array.from(byPainting.values()).map((item: any) =>
-        parseLouvreResult(item),
-      ),
+      records.map(async ({ externalIds, painting }) => {
+        const arkId = externalIds[LOUVRE_ARK_PROPERTY];
+        if (!arkId) return painting;
+        const official = await louvreEnrichment(arkId);
+        return {
+          ...painting,
+          // Same id scheme as before the fold, so paintings already kept in
+          // a collection still match a fresh search result.
+          id: `louvre-${arkId}`,
+          imageUrl: official.imageUrl ?? painting.imageUrl,
+          objectURL: official.objectURL ?? painting.objectURL,
+          thumbnailUrl: official.thumbnailUrl ?? painting.thumbnailUrl,
+        };
+      }),
     );
 
-    const filtered = paintings.filter((p): p is Painting => p !== null);
+    // A painting with no image at all is not a result the Search screen can
+    // show; the previous adapter dropped these too.
+    const withImage = paintings.filter((p) => Boolean(p.imageUrl));
 
-    return { paintings: filtered, totalResults: filtered.length };
+    return { paintings: withImage, totalResults };
   } catch (error) {
     console.error('Error searching Louvre:', error);
     return { paintings: [], totalResults: 0 };
   }
 }
 
-/**
- * Parse a Wikidata result into a Painting, optionally enriching from Louvre JSON
- */
-async function parseLouvreResult(item: any): Promise<Painting | null> {
-  try {
-    const title = item.paintingLabel?.value || 'Untitled';
-    const artistRaw = item.artistLabel?.value || 'Unknown Artist';
-    const artist = cleanArtistName(artistRaw);
-
-    let imageUrl = item.image?.value;
-    let thumbnailUrl = imageUrl ? getWikimediaThumbnail(imageUrl) : undefined;
-
-    const louvreId = item.louvreId?.value;
-
-    // Try to fetch richer data from Louvre JSON
-    if (louvreId) {
-      try {
-        const louvreData = await museumApi
-          .get(`${LOUVRE_DATA_BASE}/${louvreId}.json`)
-          .json<any>();
-        if (louvreData.image) {
-          imageUrl = louvreData.image;
-          thumbnailUrl = thumbnailUrl || louvreData.image;
-        }
-      } catch {
-        // Louvre JSON fetch failed, continue with Wikidata data
-      }
-    }
-
-    if (!imageUrl) return null;
-
-    const qMatch = item.painting?.value?.match(/Q\d+$/);
-    const id = louvreId || (qMatch ? qMatch[0] : 'unknown');
-
-    return {
-      id: `louvre-${id}`,
-      title,
-      artist,
-      year: item.year?.value ? parseInt(item.year.value) : undefined,
-      medium: item.mediumLabel?.value,
-      dimensions: undefined,
-      museum: 'Musée du Louvre',
-      location: 'Paris, France',
-      description: undefined,
-      imageUrl,
-      thumbnailUrl: thumbnailUrl || imageUrl,
-      color: generateColorFromString(title),
-      isSeen: false,
-      wantToVisit: false,
-    };
-  } catch (error) {
-    console.error('Error parsing Louvre result:', error);
-    return null;
-  }
-}
-
 import type {
-  MuseumServiceAdapter,
-  MuseumSearchParams,
+  MuseumSearchParams as MuseumSearchParameters,
   MuseumSearchResult,
+  MuseumServiceAdapter,
 } from './types/museumAdapter';
+
 import { registerAdapter } from './museumAdapterRegistry';
 
 export const louvreAdapter: MuseumServiceAdapter = {
   museumId: 'LOUVRE',
-  async search(params: MuseumSearchParams): Promise<MuseumSearchResult> {
+  async search(
+    parameters: MuseumSearchParameters,
+  ): Promise<MuseumSearchResult> {
     return searchLouvre({
-      query: params.query,
-      limit: params.maxResults,
+      limit: parameters.maxResults,
+      query: parameters.query,
     });
   },
 };

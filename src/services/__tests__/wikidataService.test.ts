@@ -263,12 +263,12 @@ describe('searchWikidataRecords', () => {
     expect(result.records[0].painting.imageUrl).toBeUndefined();
   });
 
-  it('converts millimetres and ignores unknown units; decade-precision dates give no year', async () => {
+  it('converts millimetres and ignores unknown units; century-precision dates give no year', async () => {
     const odd = {
       claims: {
         P2048: [qty('+1200', 'Q174789')],
         P2049: [qty('+3', 'Q999999')],
-        P571: [time('+1640-00-00T00:00:00Z', 8)],
+        P571: [time('+1600-00-00T00:00:00Z', 7)],
       },
       id: 'Q4',
       labels: { en: { value: 'Odd' } },

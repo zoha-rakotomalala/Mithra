@@ -27,6 +27,9 @@ const PAINTING_CLASS = 'Q3305213';
 /** Wikidata caps `srlimit` and `wbgetentities` ids at 50 for anonymous clients. */
 const MAX_BATCH = 50;
 
+/** Wikidata time precision codes: 7 century, 8 decade, 9 year. */
+const DECADE_PRECISION = 8;
+
 /** Label languages, in order of preference. A record with none is dropped. */
 const LANGUAGES = ['en', 'fr', 'nl'];
 
@@ -236,12 +239,17 @@ function stringValue(claim: Claim | undefined): string | undefined {
   return typeof value === 'string' ? value : undefined;
 }
 
-/** Year of an inception claim, when its precision is a year or finer. */
+/**
+ * Year of an inception claim. Wikidata files circa dates at decade precision
+ * (the Mona Lisa: 1503, precision 8), so a decade is accepted and the stated
+ * year is used; a century or coarser gives no year.
+ */
 function yearValue(claim: Claim | undefined): number | undefined {
   const value = claimValue(claim) as
     | { precision?: number; time?: string }
     | undefined;
-  if (!value?.time || (value.precision ?? 0) < 9) return undefined;
+  if (!value?.time || (value.precision ?? 0) < DECADE_PRECISION)
+    return undefined;
   const match = /^([+-]?\d+)-/.exec(value.time);
   if (!match) return undefined;
   const year = Number.parseInt(match[1], 10);
