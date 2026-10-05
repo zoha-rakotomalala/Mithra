@@ -435,6 +435,13 @@ and interleaves the ids, creator first. The Supabase `search_cache` CHECK accept
 lost, cached results were only ever counted. Removed: the toggle, seven styles, the type-dependent
 placeholder, the "works by / paintings titled" alert.
 
+Later the same morning (`1e76eaf`, `24d78fc`): migration `20261005110000_search_cache_any.sql`
+widens the CHECK to `any|artist|title` and the cache is used again for one-field searches; the
+"Popular Artists" chips (a hand-written list of three names per museum) are replaced by the last
+eight queries that found something, persisted in MMKV, with a Clear action. The scan feature from
+July (`3b48c9d` on `feature/scan-painting-vision`) is merged into this branch (`424e4a5`) so the
+Search screen carries the SCAN button and the one field together.
+
 ## 9. Costs and risks, stated plainly
 
 - **Wikidata is community data.** Labels can be wrong, duplicates exist, a painting can be
