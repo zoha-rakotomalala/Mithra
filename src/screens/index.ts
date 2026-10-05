@@ -11,4 +11,5 @@ export { MuseumCollection } from './MuseumCollection';
 export { LikedPaintings } from './LikedPaintings';
 export { VisitPalette } from './VisitPalette';
 export { ViewPalette } from './ViewPalette';
+export { ScanPainting } from './ScanPainting';
 export { Auth } from './Auth';

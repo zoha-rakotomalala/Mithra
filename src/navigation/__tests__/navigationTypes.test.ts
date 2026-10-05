@@ -22,6 +22,7 @@ describe('Navigation Types', () => {
       Paths.ViewPalette,
       Paths.Auth,
       Paths.Search,
+      Paths.ScanPainting,
     ];
 
     rootStackPaths.forEach((path) => {
@@ -54,6 +55,13 @@ describe('Navigation Types', () => {
     };
     const withoutParams: RootStackParamList['search'] = undefined;
     expect(withParams!.museumId).toBe('MET');
+    expect(withoutParams).toBeUndefined();
+  });
+
+  it('ScanPainting accepts an optional visitId param', () => {
+    const withParams: RootStackParamList['scanPainting'] = { visitId: 'v1' };
+    const withoutParams: RootStackParamList['scanPainting'] = undefined;
+    expect(withParams!.visitId).toBe('v1');
     expect(withoutParams).toBeUndefined();
   });
 });

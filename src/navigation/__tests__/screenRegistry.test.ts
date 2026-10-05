@@ -21,6 +21,7 @@ const ROOT_STACK_SCREENS = new Set([
   Paths.ViewPalette,
   Paths.Auth,
   Paths.Search,
+  Paths.ScanPainting,
 ]);
 
 // Screens registered in TabNavigator.tsx
@@ -63,6 +64,8 @@ const NAVIGATION_TARGETS: { target: string; from: string }[] = [
   { target: Paths.PaintingDetail, from: 'ViewPalette' },
   // From Settings (when not logged in)
   { target: Paths.Auth, from: 'Settings' },
+  // From Search (scan a painting)
+  { target: Paths.ScanPainting, from: 'Search' },
 ];
 
 // Paths that exist in the enum but are not registered in any navigator.
@@ -90,6 +93,7 @@ describe('Screen Registry', () => {
       Paths.LikedPaintings,
       Paths.VisitPalette,
       Paths.ViewPalette,
+      Paths.ScanPainting,
       Paths.Auth,
     ];
     const unregistered = allPaths.filter(
@@ -117,6 +121,7 @@ describe('Screen Registry', () => {
       Paths.VisitPalette, // navigated from VisitDetail with { visitId }
       Paths.ViewPalette, // navigated from VisitDetail with { visitId }
       Paths.Search, // navigated from VisitDetail with { museumId, visitId }
+      Paths.ScanPainting, // navigated from Search with optional { visitId }
     ];
 
     const missing = requiresRootStack.filter((p) => !ROOT_STACK_SCREENS.has(p));

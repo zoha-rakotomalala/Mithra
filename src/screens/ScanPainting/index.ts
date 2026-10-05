@@ -1,0 +1,1 @@
+export { ScanPainting } from './ScanPainting';

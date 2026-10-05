@@ -25,6 +25,10 @@ export function useSearch() {
     [navigation],
   );
 
+  const handleScanPress = useCallback(() => {
+    navigation.navigate(Paths.ScanPainting, visitId ? { visitId } : undefined);
+  }, [navigation, visitId]);
+
   const goBack = useCallback(() => {
     navigation.goBack();
   }, [navigation]);
@@ -32,6 +36,7 @@ export function useSearch() {
   return {
     ...museumSearch,
     handlePaintingPress,
+    handleScanPress,
     goBack,
     hasVisitId: !!visitId,
   };

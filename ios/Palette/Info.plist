@@ -33,6 +33,10 @@
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
+	<key>NSCameraUsageDescription</key>
+	<string>Palette needs camera access to photograph and identify artwork.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Palette needs photo library access to select artwork images.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
