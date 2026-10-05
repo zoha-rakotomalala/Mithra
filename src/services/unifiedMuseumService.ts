@@ -113,15 +113,10 @@ export async function searchAllMuseums(
   const cacheStats = { hits: 0, misses: 0, stale: 0 };
   const updateStats = { added: 0, updated: 0 };
 
-  // The search_cache table's CHECK constraint accepts only 'artist' and
-  // 'title', so the one-field search is not cached until a migration widens
-  // it. The cache is a convenience layer; the museum APIs are the source.
-  const cacheable = useCache && searchType !== 'any';
-
   // PHASE 1: Get cached results immediately
   let cachedPaintings: Painting[] = [];
 
-  if (cacheable) {
+  if (useCache) {
     // A cache failure must never take the search down: Supabase is a
     // convenience layer here, the museum APIs are the source. Each read is
     // guarded on its own so one museum's cache error costs that museum only.
@@ -193,7 +188,7 @@ export async function searchAllMuseums(
 
       // Update cache with fresh results. A failed write must not discard the
       // paintings the museum just returned.
-      if (cacheable) {
+      if (useCache) {
         try {
           const updateResult = await updateCacheWithFreshResults(
             museumId,

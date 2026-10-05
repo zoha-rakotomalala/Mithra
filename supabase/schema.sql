@@ -123,7 +123,7 @@ CREATE TABLE public.search_cache
 (
     id                  UUID        DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
     query               TEXT                                   NOT NULL,
-    search_type         TEXT                                   NOT NULL CHECK (search_type = ANY (ARRAY['artist'::text, 'title'::text])),
+    search_type         TEXT                                   NOT NULL CHECK (search_type = ANY (ARRAY['any'::text, 'artist'::text, 'title'::text])),
     museum_id           TEXT                                   NOT NULL,
     painting_ids        TEXT[] NOT NULL,
     last_verified_at    TIMESTAMPTZ DEFAULT NOW(),

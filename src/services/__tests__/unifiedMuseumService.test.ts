@@ -85,15 +85,22 @@ describe('searchAllMuseums cache resilience', () => {
     expect((result.paintings[0] as any).sourceMuseumId).toBe('FAKE');
   });
 
-  it("does not touch the cache for an 'any' search (schema allows artist|title only)", async () => {
+  it("caches an 'any' search under its own key", async () => {
+    mockGetCached.mockResolvedValue([]);
+
     const result = await searchAllMuseums({
       query: 'Night Watch',
       searchType: 'any',
       museumIds: ['FAKE'],
     });
 
-    expect(mockGetCached).not.toHaveBeenCalled();
-    expect(mockUpdateCache).not.toHaveBeenCalled();
+    expect(mockGetCached).toHaveBeenCalledWith('FAKE', 'Night Watch', 'any');
+    expect(mockUpdateCache).toHaveBeenCalledWith(
+      'FAKE',
+      'Night Watch',
+      'any',
+      expect.any(Array),
+    );
     expect(mockSearch).toHaveBeenCalledWith(
       expect.objectContaining({ searchType: 'any' }),
     );
