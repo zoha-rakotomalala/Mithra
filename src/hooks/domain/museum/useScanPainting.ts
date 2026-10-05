@@ -12,7 +12,7 @@ import type { RootStackParamList } from '@/navigation/types';
 import { Paths } from '@/navigation/paths';
 import type { Painting } from '@/types/painting';
 import { usePaintings } from '@/contexts/PaintingsContext';
-import { TIER_1_MUSEUMS } from '@/services/museumRegistry';
+import { DEFAULT_MUSEUMS } from '@/services/museumRegistry';
 import {
   getLikedUuidsForVisit,
   likePainting,
@@ -31,7 +31,9 @@ export type ScanPhase =
   | 'error';
 
 /** Museums scanned against. Tier 1 gives the best precision/latency balance. */
-const SCAN_MUSEUMS = TIER_1_MUSEUMS;
+// Scan candidates resolve against the universal catalog, so a painting in a
+// museum without an API is found too.
+const SCAN_MUSEUMS = DEFAULT_MUSEUMS;
 
 const IMAGE_PICKER_OPTIONS = {
   includeBase64: true,
@@ -49,7 +51,8 @@ async function ensureAndroidCameraPermission(): Promise<boolean> {
       {
         buttonNegative: 'Cancel',
         buttonPositive: 'OK',
-        message: 'Palette needs your camera to photograph and identify artwork.',
+        message:
+          'Palette needs your camera to photograph and identify artwork.',
         title: 'Camera Permission',
       },
     );
@@ -62,8 +65,7 @@ async function ensureAndroidCameraPermission(): Promise<boolean> {
 export function useScanPainting() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const route = useRoute();
-  const { visitId } =
-    (route.params as { visitId?: string } | undefined) ?? {};
+  const { visitId } = (route.params as { visitId?: string } | undefined) ?? {};
 
   const { addToCollection, isInCollection, toggleSeen } = usePaintings();
 
@@ -85,43 +87,40 @@ export function useScanPainting() {
     };
   }, [visitId]);
 
-  const runVisionPipeline = useCallback(
-    async (asset: Asset) => {
-      if (!asset.base64) {
-        setPhase('error');
-        setErrorMessage('Could not read the captured image. Please try again.');
+  const runVisionPipeline = useCallback(async (asset: Asset) => {
+    if (!asset.base64) {
+      setPhase('error');
+      setErrorMessage('Could not read the captured image. Please try again.');
+      return;
+    }
+
+    setPreviewUri(asset.uri ?? null);
+    setPhase('analyzing');
+    setErrorMessage(null);
+
+    try {
+      const identifier = resolveIdentifier();
+      const candidates = await identifier.identify(asset.base64);
+
+      if (candidates.length === 0) {
+        setMatches([]);
+        setPhase('noMatch');
         return;
       }
 
-      setPreviewUri(asset.uri ?? null);
-      setPhase('analyzing');
-      setErrorMessage(null);
-
-      try {
-        const identifier = resolveIdentifier();
-        const candidates = await identifier.identify(asset.base64);
-
-        if (candidates.length === 0) {
-          setMatches([]);
-          setPhase('noMatch');
-          return;
-        }
-
-        setPhase('searching');
-        const found = await runScanSearch(candidates, SCAN_MUSEUMS);
-        setMatches(found);
-        setPhase(found.length > 0 ? 'results' : 'noMatch');
-      } catch (error) {
-        setPhase('error');
-        setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : 'Something went wrong while identifying the artwork.',
-        );
-      }
-    },
-    [],
-  );
+      setPhase('searching');
+      const found = await runScanSearch(candidates, SCAN_MUSEUMS);
+      setMatches(found);
+      setPhase(found.length > 0 ? 'results' : 'noMatch');
+    } catch (error) {
+      setPhase('error');
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Something went wrong while identifying the artwork.',
+      );
+    }
+  }, []);
 
   const scanWithCamera = useCallback(async () => {
     const permitted = await ensureAndroidCameraPermission();

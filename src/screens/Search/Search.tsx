@@ -325,8 +325,12 @@ export function Search() {
                   </>
                 )}
                 <Text style={styles.emptyHint}>
-                  {selectedMuseums.length} museum
-                  {selectedMuseums.length > 1 ? 's' : ''} • 2.5M+ artworks
+                  {selectedMuseums.length === 1 &&
+                  selectedMuseums[0] === 'WIKIDATA'
+                    ? 'Searching every museum'
+                    : `Searching ${selectedMuseums.length} source${
+                        selectedMuseums.length > 1 ? 's' : ''
+                      }`}
                 </Text>
               </View>
             ) : isLoadingCache ? (

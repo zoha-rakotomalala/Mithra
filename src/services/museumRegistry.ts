@@ -11,7 +11,6 @@ export type MuseumConfig = {
   name: string;
   requiresApiKey: boolean;
   shortName: string;
-  tier: 1 | 2 | 3; // 1 = Default, 2 = Optional, 3 = Advanced
 };
 
 export const MUSEUMS: Record<string, MuseumConfig> = {
@@ -24,7 +23,6 @@ export const MUSEUMS: Record<string, MuseumConfig> = {
     name: 'Art Institute of Chicago',
     requiresApiKey: false,
     shortName: 'AIC',
-    tier: 1,
   },
   CLEVELAND: {
     color: '#457B9D',
@@ -35,7 +33,6 @@ export const MUSEUMS: Record<string, MuseumConfig> = {
     name: 'Cleveland Museum of Art',
     requiresApiKey: false,
     shortName: 'CMA',
-    tier: 1,
   },
   EUROPEANA: {
     color: '#1E3A8A',
@@ -46,7 +43,6 @@ export const MUSEUMS: Record<string, MuseumConfig> = {
     name: 'Europeana',
     requiresApiKey: false,
     shortName: 'Europeana',
-    tier: 3,
   },
   HARVARD: {
     color: '#A4161A',
@@ -57,7 +53,6 @@ export const MUSEUMS: Record<string, MuseumConfig> = {
     name: 'Harvard Art Museums',
     requiresApiKey: false,
     shortName: 'Harvard',
-    tier: 2,
   },
   JOCONDE: {
     id: 'JOCONDE',
@@ -68,7 +63,6 @@ export const MUSEUMS: Record<string, MuseumConfig> = {
     description: '600,000+ artworks from 350+ French museums',
     enabled: true,
     requiresApiKey: false,
-    tier: 3,
   },
   LOUVRE: {
     id: 'LOUVRE',
@@ -79,7 +73,6 @@ export const MUSEUMS: Record<string, MuseumConfig> = {
     description: '500,000+ works including the Mona Lisa',
     enabled: true,
     requiresApiKey: false,
-    tier: 2,
   },
   ORSAY: {
     color: '#B45309',
@@ -91,7 +84,6 @@ export const MUSEUMS: Record<string, MuseumConfig> = {
     name: "Musée d'Orsay",
     requiresApiKey: false,
     shortName: 'Orsay',
-    tier: 2,
   },
   MET: {
     color: '#d4af37',
@@ -102,7 +94,6 @@ export const MUSEUMS: Record<string, MuseumConfig> = {
     name: 'Metropolitan Museum of Art',
     requiresApiKey: false,
     shortName: 'MET',
-    tier: 1,
   },
   NG: {
     color: '#2D6A4F',
@@ -113,7 +104,6 @@ export const MUSEUMS: Record<string, MuseumConfig> = {
     name: 'National Gallery',
     requiresApiKey: false,
     shortName: 'NG',
-    tier: 2,
   },
   PARIS: {
     color: '#DB2777',
@@ -124,7 +114,6 @@ export const MUSEUMS: Record<string, MuseumConfig> = {
     name: 'Paris Musées',
     requiresApiKey: false,
     shortName: 'Paris',
-    tier: 3,
   },
   RIJKS: {
     color: '#E63946',
@@ -135,7 +124,6 @@ export const MUSEUMS: Record<string, MuseumConfig> = {
     name: 'Rijksmuseum',
     requiresApiKey: false,
     shortName: 'Rijks',
-    tier: 1,
   },
   SMK: {
     id: 'SMK',
@@ -146,7 +134,6 @@ export const MUSEUMS: Record<string, MuseumConfig> = {
     description: '240,000+ works of Danish and international art',
     enabled: true,
     requiresApiKey: false,
-    tier: 2,
   },
   SMITHSONIAN: {
     id: 'SMITHSONIAN',
@@ -157,7 +144,6 @@ export const MUSEUMS: Record<string, MuseumConfig> = {
     description: '5.1M+ items across 19 museums',
     enabled: true,
     requiresApiKey: true,
-    tier: 2,
   },
   VA: {
     color: '#6A4C93',
@@ -168,23 +154,35 @@ export const MUSEUMS: Record<string, MuseumConfig> = {
     name: 'Victoria and Albert Museum',
     requiresApiKey: false,
     shortName: 'V&A',
-    tier: 2,
   },
   WIKIDATA: {
     id: 'WIKIDATA',
-    name: 'Wikidata',
+    name: 'Every museum (Wikidata)',
     shortName: 'Wikidata',
     color: '#339966',
     country: 'Global',
-    description: '500,000+ paintings from global collections',
+    description: '1,000,000+ paintings from every museum Wikidata knows',
     enabled: true,
     requiresApiKey: false,
-    tier: 3,
   },
 };
 
+/**
+ * The scope a search starts with. Wikidata covers every museum, including
+ * the ones without an API; the museum adapters are enrichment, not the
+ * catalog, so none of them needs to be on by default.
+ */
+export const DEFAULT_MUSEUMS = ['WIKIDATA'];
+
+/** Every enabled museum: Wikidata first, the rest alphabetical by name. */
 export function getAllMuseums(): MuseumConfig[] {
-  return Object.values(MUSEUMS).filter((m) => m.enabled);
+  return Object.values(MUSEUMS)
+    .filter((m) => m.enabled)
+    .sort((a, b) => {
+      if (a.id === 'WIKIDATA') return -1;
+      if (b.id === 'WIKIDATA') return 1;
+      return a.name.localeCompare(b.name);
+    });
 }
 
 export function getMuseumById(id: string): MuseumConfig | undefined {
@@ -194,20 +192,3 @@ export function getMuseumById(id: string): MuseumConfig | undefined {
 export function getMuseumsByIds(ids: string[]): MuseumConfig[] {
   return ids.map((id) => MUSEUMS[id]).filter(Boolean);
 }
-
-export function getMuseumsByTier(tier: 1 | 2 | 3): MuseumConfig[] {
-  return Object.values(MUSEUMS).filter((m) => m.enabled && m.tier === tier);
-}
-
-// Quick access to commonly used museum groups
-export const TIER_1_MUSEUMS = ['MET', 'RIJKS', 'CHICAGO', 'CLEVELAND']; // Best 4
-export const TIER_2_MUSEUMS = [
-  'HARVARD',
-  'VA',
-  'NG',
-  'SMK',
-  'LOUVRE',
-  'ORSAY',
-  'SMITHSONIAN',
-]; // Optional
-export const TIER_3_MUSEUMS = ['EUROPEANA', 'PARIS', 'JOCONDE', 'WIKIDATA']; // Advanced

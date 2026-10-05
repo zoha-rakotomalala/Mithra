@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { usePaintings } from '@/contexts/PaintingsContext';
-import { getAllMuseums, TIER_1_MUSEUMS } from '@/services/museumRegistry';
+import { DEFAULT_MUSEUMS, getAllMuseums } from '@/services/museumRegistry';
 import {
   searchAllMuseums,
   type ProgressUpdate,
@@ -38,7 +38,7 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
   const [isLoadingCache, setIsLoadingCache] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedMuseums, setSelectedMuseums] = useState<string[]>(
-    initialMuseumId ? [initialMuseumId] : TIER_1_MUSEUMS,
+    initialMuseumId ? [initialMuseumId] : DEFAULT_MUSEUMS,
   );
   const [showMuseumPicker, setShowMuseumPicker] = useState(false);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());

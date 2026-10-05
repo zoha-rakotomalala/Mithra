@@ -3,8 +3,8 @@ import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 import { SectionHeader } from '@/components/molecules';
 import {
+  DEFAULT_MUSEUMS,
   getAllMuseums,
-  getMuseumsByTier,
   type MuseumConfig,
 } from '@/services/museumRegistry';
 
@@ -20,9 +20,8 @@ export function MuseumSelector({
   selectedMuseums,
 }: MuseumSelectorProps) {
   const allMuseums = getAllMuseums();
-  const tier1 = getMuseumsByTier(1);
-  const tier2 = getMuseumsByTier(2);
-  const tier3 = getMuseumsByTier(3);
+  const everywhere = allMuseums.filter((m) => DEFAULT_MUSEUMS.includes(m.id));
+  const withOwnApi = allMuseums.filter((m) => !DEFAULT_MUSEUMS.includes(m.id));
 
   const toggleMuseum = (museumId: string) => {
     if (selectedMuseums.includes(museumId)) {
@@ -38,12 +37,8 @@ export function MuseumSelector({
     onMuseumsChange(allMuseums.map((m) => m.id));
   };
 
-  const selectQuick = () => {
-    onMuseumsChange(tier1.map((m) => m.id));
-  };
-
-  const unselectAll = () => {
-    onMuseumsChange(['MET']);
+  const selectDefault = () => {
+    onMuseumsChange(DEFAULT_MUSEUMS);
   };
 
   const renderMuseum = (museum: MuseumConfig) => {
@@ -97,18 +92,15 @@ export function MuseumSelector({
     <View style={styles.container}>
       {/* Quick Actions */}
       <View style={styles.quickActions}>
-        <TouchableOpacity onPress={selectQuick} style={styles.quickButton}>
-          <Text style={styles.quickButtonText}>Quick (4)</Text>
-        </TouchableOpacity>
         <TouchableOpacity onPress={selectAll} style={styles.quickButton}>
           <Text style={styles.quickButtonText}>All ({allMuseums.length})</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={unselectAll}
+          onPress={selectDefault}
           style={[styles.quickButton, styles.quickButtonClear]}
         >
           <Text style={[styles.quickButtonText, styles.quickButtonClearText]}>
-            Clear
+            Reset
           </Text>
         </TouchableOpacity>
       </View>
@@ -125,35 +117,23 @@ export function MuseumSelector({
         showsVerticalScrollIndicator={false}
         style={styles.scrollView}
       >
-        {/* Tier 1: Best Collections */}
+        <View style={styles.section}>
+          <SectionHeader title="EVERYWHERE" titleStyle={styles.sectionTitle} />
+          <Text style={styles.sectionSubtitle}>
+            One catalog for every museum, with or without an API
+          </Text>
+          {everywhere.map(renderMuseum)}
+        </View>
+
         <View style={styles.section}>
           <SectionHeader
-            title="BEST COLLECTIONS"
+            title="MUSEUMS WITH THEIR OWN API"
             titleStyle={styles.sectionTitle}
           />
           <Text style={styles.sectionSubtitle}>
-            Fast, reliable, high-quality
+            Add one to search it directly; some need a free key
           </Text>
-          {tier1.map(renderMuseum)}
-        </View>
-
-        {/* Tier 2: More Options */}
-        <View style={styles.section}>
-          <SectionHeader
-            title="MORE MUSEUMS"
-            titleStyle={styles.sectionTitle}
-          />
-          <Text style={styles.sectionSubtitle}>Specialized collections</Text>
-          {tier2.map(renderMuseum)}
-        </View>
-
-        {/* Tier 3: Advanced */}
-        <View style={styles.section}>
-          <SectionHeader title="ADVANCED" titleStyle={styles.sectionTitle} />
-          <Text style={styles.sectionSubtitle}>
-            Aggregators · Variable quality
-          </Text>
-          {tier3.map(renderMuseum)}
+          {withOwnApi.map(renderMuseum)}
         </View>
       </ScrollView>
     </View>
