@@ -568,52 +568,6 @@ function inferLocationFromMuseum(museum: string): string | undefined {
   return undefined;
 }
 
-/**
- * Get suggestions for popular artists (for autocomplete)
- */
-export function getPopularArtists(): string[] {
-  return [
-    'Vincent van Gogh',
-    'Pablo Picasso',
-    'Claude Monet',
-    'Leonardo da Vinci',
-    'Rembrandt',
-    'Johannes Vermeer',
-    'Michelangelo',
-    'Salvador Dalí',
-    'Frida Kahlo',
-    'Gustav Klimt',
-    'Edvard Munch',
-    'Sandro Botticelli',
-    'Caravaggio',
-    'Paul Cézanne',
-    'Henri Matisse',
-    'Wassily Kandinsky',
-    'Jackson Pollock',
-    'Andy Warhol',
-    'Raphael',
-    'Diego Velázquez',
-  ];
-}
-
-/**
- * Get suggestions for popular museums
- */
-export function getPopularMuseums(): string[] {
-  return [
-    'Louvre',
-    'Museum of Modern Art',
-    'Metropolitan Museum of Art',
-    'Rijksmuseum',
-    'Van Gogh Museum',
-    'Uffizi Gallery',
-    'Prado Museum',
-    'National Gallery',
-    'Tate Modern',
-    'Hermitage Museum',
-  ];
-}
-
 import type {
   MuseumSearchParams as MuseumSearchParameters,
   MuseumSearchResult,

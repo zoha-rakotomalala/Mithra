@@ -372,15 +372,29 @@ export const searchStyles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  popularTitle: {
+  recentHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'center',
+    gap: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+
+  recentTitle: {
     fontSize: FONT_SIZE['3xl'],
     fontWeight: '600',
     color: COLORS.text,
-    marginBottom: SPACING.md,
     letterSpacing: 1,
   },
 
-  artistChips: {
+  recentClear: {
+    fontSize: FONT_SIZE.sm,
+    color: 'rgba(212, 175, 55, 0.7)',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+
+  recentChips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
@@ -388,7 +402,7 @@ export const searchStyles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
 
-  artistChip: {
+  recentChip: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     backgroundColor: COLORS.cream,
@@ -397,7 +411,7 @@ export const searchStyles = StyleSheet.create({
     borderColor: 'rgba(212, 175, 55, 0.3)',
   },
 
-  artistChipText: {
+  recentChipText: {
     fontSize: FONT_SIZE.md,
     color: COLORS.text,
     fontWeight: '600',

@@ -146,9 +146,10 @@ export function Search() {
     showMuseumPicker,
     setShowMuseumPicker,
     allMuseums,
-    popularArtists,
+    recentSearches,
     handleSearch,
-    handleArtistSearch,
+    handleRecentSearch,
+    handleClearRecentSearches,
     isAlreadyInCollection,
     clearSearch,
     visitId: activeVisitId,
@@ -299,17 +300,25 @@ export function Search() {
           ListEmptyComponent={() =>
             !isLoadingCache && !hasSearched ? (
               <View style={styles.emptyState}>
-                {popularArtists.length > 0 && (
+                {recentSearches.length > 0 && (
                   <>
-                    <Text style={styles.popularTitle}>Popular Artists</Text>
-                    <View style={styles.artistChips}>
-                      {popularArtists.slice(0, 6).map((artist) => (
+                    <View style={styles.recentHeader}>
+                      <Text style={styles.recentTitle}>Recent</Text>
+                      <TouchableOpacity
+                        accessibilityLabel="Clear recent searches"
+                        onPress={handleClearRecentSearches}
+                      >
+                        <Text style={styles.recentClear}>Clear</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <View style={styles.recentChips}>
+                      {recentSearches.map((query) => (
                         <TouchableOpacity
-                          key={artist}
-                          onPress={() => handleArtistSearch(artist)}
-                          style={styles.artistChip}
+                          key={query}
+                          onPress={() => handleRecentSearch(query)}
+                          style={styles.recentChip}
                         >
-                          <Text style={styles.artistChipText}>{artist}</Text>
+                          <Text style={styles.recentChipText}>{query}</Text>
                         </TouchableOpacity>
                       ))}
                     </View>

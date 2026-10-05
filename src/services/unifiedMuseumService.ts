@@ -297,40 +297,6 @@ async function searchSingleMuseumAPI(
   return result.paintings;
 }
 
-export function getPopularArtistsByMuseums(museumIds: string[]): string[] {
-  const allArtists: string[] = [];
-
-  const artistsByMuseum: Record<string, string[]> = {
-    MET: ['Vincent van Gogh', 'Claude Monet', 'Rembrandt'],
-    RIJKS: ['Rembrandt', 'Johannes Vermeer', 'Frans Hals'],
-    CLEVELAND: ['Pablo Picasso', 'Claude Monet', 'El Greco'],
-    CHICAGO: [
-      'Georges Seurat',
-      'Vincent van Gogh',
-      'Henri de Toulouse-Lautrec',
-    ],
-    HARVARD: ['Rembrandt', 'Pablo Picasso', 'Albrecht Dürer'],
-    VA: ['John Constable', 'J.M.W. Turner', 'Raphael'],
-    EUROPEANA: ['Vermeer', 'Monet', 'Van Gogh'],
-    PARIS: ['Auguste Rodin', 'Eugène Delacroix', 'Gustave Courbet'],
-    NG: ['J.M.W. Turner', 'John Constable', 'Leonardo da Vinci'],
-    SMK: ['Vilhelm Hammershøi', 'P.S. Krøyer', 'Anna Ancher'],
-    SMITHSONIAN: ['John Singer Sargent', 'Mary Cassatt', 'Winslow Homer'],
-    LOUVRE: ['Leonardo da Vinci', 'Eugène Delacroix', 'Jacques-Louis David'],
-    JOCONDE: ['Claude Monet', 'Paul Cézanne', 'Nicolas Poussin'],
-    WIKIDATA: ['Rembrandt', 'Vermeer', 'Caravaggio'],
-  };
-
-  museumIds.forEach((museumId) => {
-    const artists = artistsByMuseum[museumId];
-    if (artists) {
-      allArtists.push(...artists.slice(0, 3));
-    }
-  });
-
-  return Array.from(new Set(allArtists)).slice(0, 12);
-}
-
 export function getMuseumBadgeInfo(painting: Painting): {
   shortName: string;
   color: string;

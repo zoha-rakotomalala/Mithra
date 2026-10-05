@@ -3,10 +3,14 @@ import { Alert } from 'react-native';
 import { usePaintings } from '@/contexts/PaintingsContext';
 import { getAllMuseums, TIER_1_MUSEUMS } from '@/services/museumRegistry';
 import {
-  getPopularArtistsByMuseums,
   searchAllMuseums,
   type ProgressUpdate,
 } from '@/services/unifiedMuseumService';
+import {
+  clearRecentSearches,
+  getRecentSearches,
+  rememberSearch,
+} from '@/services/recentSearches';
 import type { Painting } from '@/types/painting';
 import {
   getLikedUuidsForVisit,
@@ -38,6 +42,9 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
   );
   const [showMuseumPicker, setShowMuseumPicker] = useState(false);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+  const [recentSearches, setRecentSearches] = useState<string[]>(() =>
+    getRecentSearches(),
+  );
 
   // Load liked painting UUIDs when visitId is provided
   useEffect(() => {
@@ -95,8 +102,9 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
     }
   }, []);
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+  const runSearch = async (query: string) => {
+    const trimmed = query.trim();
+    if (!trimmed) return;
     if (selectedMuseums.length === 0) {
       Alert.alert('Notice', 'Please select at least one museum to search');
       return;
@@ -107,7 +115,7 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
 
     try {
       const result = await searchAllMuseums({
-        query: searchQuery,
+        query: trimmed,
         searchType: 'any',
         museumIds: selectedMuseums,
         maxResultsPerMuseum: 20,
@@ -120,9 +128,12 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
       if (result.paintings.length === 0) {
         Alert.alert(
           'No Results',
-          `Nothing found for "${searchQuery}".\n\nTry the artist's name or the painting's title, or select more museums.`,
+          `Nothing found for "${trimmed}".\n\nTry the artist's name or the painting's title, or select more museums.`,
           [{ text: 'OK' }],
         );
+      } else {
+        // Only a search that found something is worth offering again.
+        setRecentSearches(rememberSearch(trimmed));
       }
     } catch (error) {
       Alert.alert(
@@ -136,27 +147,16 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
     }
   };
 
-  const handleArtistSearch = async (artistName: string) => {
-    setSearchQuery(artistName);
-    setIsLoadingCache(true);
-    setHasSearched(true);
+  const handleSearch = () => runSearch(searchQuery);
 
-    try {
-      const result = await searchAllMuseums({
-        query: artistName,
-        searchType: 'artist',
-        museumIds: selectedMuseums,
-        maxResultsPerMuseum: 20,
-        useCache: true,
-        onProgressUpdate: handleProgressUpdate,
-      });
+  const handleRecentSearch = (query: string) => {
+    setSearchQuery(query);
+    return runSearch(query);
+  };
 
-      setSearchResults(result.paintings);
-    } catch {
-      Alert.alert('Search Error', 'Failed to search paintings by artist.');
-    } finally {
-      setIsLoadingCache(false);
-    }
+  const handleClearRecentSearches = () => {
+    clearRecentSearches();
+    setRecentSearches([]);
   };
 
   const isAlreadyInCollection = useCallback(
@@ -186,8 +186,6 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
     setHasSearched(false);
   };
 
-  const popularArtists = getPopularArtistsByMuseums(selectedMuseums);
-
   return {
     searchQuery,
     setSearchQuery,
@@ -199,9 +197,10 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
     showMuseumPicker,
     setShowMuseumPicker,
     allMuseums,
-    popularArtists,
+    recentSearches,
     handleSearch,
-    handleArtistSearch,
+    handleRecentSearch,
+    handleClearRecentSearches,
     isAlreadyInCollection,
     clearSearch,
     visitId,
