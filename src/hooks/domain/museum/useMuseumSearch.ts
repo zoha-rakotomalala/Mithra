@@ -5,7 +5,6 @@ import { getAllMuseums, TIER_1_MUSEUMS } from '@/services/museumRegistry';
 import {
   getPopularArtistsByMuseums,
   searchAllMuseums,
-  type SearchType,
   type ProgressUpdate,
 } from '@/services/unifiedMuseumService';
 import type { Painting } from '@/types/painting';
@@ -31,7 +30,6 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
   const allMuseums = getAllMuseums();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchType, setSearchType] = useState<SearchType>('artist');
   const [searchResults, setSearchResults] = useState<Painting[]>([]);
   const [isLoadingCache, setIsLoadingCache] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -110,7 +108,7 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
     try {
       const result = await searchAllMuseums({
         query: searchQuery,
-        searchType,
+        searchType: 'any',
         museumIds: selectedMuseums,
         maxResultsPerMuseum: 20,
         useCache: true,
@@ -122,7 +120,7 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
       if (result.paintings.length === 0) {
         Alert.alert(
           'No Results',
-          `No ${searchType === 'artist' ? 'works by' : 'paintings titled'} "${searchQuery}" found.\n\nTry different keywords or select more museums.`,
+          `Nothing found for "${searchQuery}".\n\nTry the artist's name or the painting's title, or select more museums.`,
           [{ text: 'OK' }],
         );
       }
@@ -140,7 +138,6 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
 
   const handleArtistSearch = async (artistName: string) => {
     setSearchQuery(artistName);
-    setSearchType('artist');
     setIsLoadingCache(true);
     setHasSearched(true);
 
@@ -194,8 +191,6 @@ export function useMuseumSearch(options: UseMuseumSearchOptions = {}) {
   return {
     searchQuery,
     setSearchQuery,
-    searchType,
-    setSearchType,
     searchResults,
     isLoadingCache,
     hasSearched,

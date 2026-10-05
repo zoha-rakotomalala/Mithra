@@ -1,3 +1,4 @@
+import type { SearchType } from './types/museumAdapter';
 import type { Painting } from '@/types/painting';
 import { cleanArtistName } from './utils/searchHelpers';
 import { generateColorFromString } from '@/utils/colorGenerator';
@@ -44,7 +45,7 @@ function extractIiifId(url: string): string | null {
 
 interface RijksSearchParams {
   query: string;
-  searchType: 'artist' | 'title';
+  searchType: SearchType;
   limit?: number;
 }
 
@@ -66,39 +67,33 @@ export async function searchRijksmuseum(
       return { paintings: [], totalResults: 0 };
     }
 
-    // Build search URL. Without `type`, the API returns every object kind
-    // (prints, drawings, photos): 1,447 Rembrandts instead of 24 paintings.
-    const searchParams = new URLSearchParams({
-      imageAvailable: 'true',
-      type: 'painting',
-    });
-
-    if (params.searchType === 'artist') {
-      searchParams.set('creator', query.trim());
-    } else {
-      searchParams.set('title', query.trim());
-      searchParams.set('description', query.trim());
-    }
-
-    const searchUrl = `${RIJKS_SEARCH_API}?${searchParams.toString()}`;
-    console.log('🇳🇱 Searching Rijksmuseum:', searchUrl);
-
-    const data = await museumApi.get(searchUrl).json<any>();
-    const totalItems = data.partOf?.totalItems || 0;
-
-    const rawItems = Array.isArray(data.orderedItems) ? data.orderedItems : [];
-    const validItems = rawItems.filter(
-      (item: any) => item && typeof item.id === 'string',
+    // The Rijksmuseum search indexes creator and title separately, so the
+    // one-field search ('any') runs both and interleaves the ids, creator
+    // first, so an exact artist match is not pushed out by title hits.
+    const indexes: ('artist' | 'title')[] =
+      params.searchType === 'any' ? ['artist', 'title'] : [params.searchType];
+    const hits = await Promise.all(
+      indexes.map((index) => searchObjectIds(query.trim(), index)),
     );
 
-    if (validItems.length === 0) {
+    const objectIds: string[] = [];
+    const seen = new Set<string>();
+    const longest = Math.max(...hits.map((h) => h.ids.length));
+    for (let i = 0; i < longest && objectIds.length < limit; i++) {
+      for (const hit of hits) {
+        const id = hit.ids[i];
+        if (id && !seen.has(id) && objectIds.length < limit) {
+          seen.add(id);
+          objectIds.push(id);
+        }
+      }
+    }
+    const totalItems = Math.max(...hits.map((h) => h.total));
+
+    if (objectIds.length === 0) {
       return { paintings: [], totalResults: 0 };
     }
-
-    const objectIds = validItems.slice(0, limit).map((item: any) => item.id);
-    console.log(
-      `🇳🇱 Rijks search: ${rawItems.length} raw → ${objectIds.length} to resolve`,
-    );
+    console.log(`🇳🇱 Rijks search: ${objectIds.length} ids to resolve`);
 
     const paintings = await resolveObjects(objectIds);
     console.log(`🇳🇱 Rijksmuseum: ${paintings.length} paintings resolved`);
@@ -108,6 +103,38 @@ export async function searchRijksmuseum(
     console.error('Error searching Rijksmuseum:', error);
     return { paintings: [], totalResults: 0 };
   }
+}
+
+/**
+ * One search index (creator or title+description), ids only. Without
+ * `type=painting` the API returns every object kind (prints, drawings,
+ * photos): 1,447 Rembrandts instead of 24 paintings.
+ */
+async function searchObjectIds(
+  query: string,
+  index: 'artist' | 'title',
+): Promise<{ ids: string[]; total: number }> {
+  const searchParams = new URLSearchParams({
+    imageAvailable: 'true',
+    type: 'painting',
+  });
+  if (index === 'artist') {
+    searchParams.set('creator', query);
+  } else {
+    searchParams.set('title', query);
+    searchParams.set('description', query);
+  }
+  const searchUrl = `${RIJKS_SEARCH_API}?${searchParams.toString()}`;
+  console.log('🇳🇱 Searching Rijksmuseum:', searchUrl);
+
+  const data = await museumApi.get(searchUrl).json<any>();
+  const rawItems = Array.isArray(data.orderedItems) ? data.orderedItems : [];
+  return {
+    ids: rawItems
+      .filter((item: any) => item && typeof item.id === 'string')
+      .map((item: any) => item.id as string),
+    total: data.partOf?.totalItems || 0,
+  };
 }
 
 /**

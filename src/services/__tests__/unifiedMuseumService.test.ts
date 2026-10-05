@@ -85,6 +85,21 @@ describe('searchAllMuseums cache resilience', () => {
     expect((result.paintings[0] as any).sourceMuseumId).toBe('FAKE');
   });
 
+  it("does not touch the cache for an 'any' search (schema allows artist|title only)", async () => {
+    const result = await searchAllMuseums({
+      query: 'Night Watch',
+      searchType: 'any',
+      museumIds: ['FAKE'],
+    });
+
+    expect(mockGetCached).not.toHaveBeenCalled();
+    expect(mockUpdateCache).not.toHaveBeenCalled();
+    expect(mockSearch).toHaveBeenCalledWith(
+      expect.objectContaining({ searchType: 'any' }),
+    );
+    expect(result.paintings).toHaveLength(1);
+  });
+
   it('keeps anonymous paintings by default', async () => {
     mockGetCached.mockResolvedValue([]);
     mockSearch.mockResolvedValue({

@@ -138,8 +138,6 @@ export function Search() {
   const {
     searchQuery,
     setSearchQuery,
-    searchType,
-    setSearchType,
     searchResults,
     isLoadingCache,
     hasSearched,
@@ -207,46 +205,6 @@ export function Search() {
             <Text style={styles.headerTitle}>SEARCH</Text>
           </View>
 
-          {/* Search Type Selector */}
-          <View style={styles.searchTypeRow}>
-            <Text style={styles.searchTypeLabel}>Search by:</Text>
-            <View style={styles.searchTypeButtons}>
-              <TouchableOpacity
-                onPress={() => setSearchType('artist')}
-                style={[
-                  styles.searchTypeButton,
-                  searchType === 'artist' && styles.searchTypeButtonActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.searchTypeButtonText,
-                    searchType === 'artist' &&
-                      styles.searchTypeButtonTextActive,
-                  ]}
-                >
-                  Artist
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setSearchType('title')}
-                style={[
-                  styles.searchTypeButton,
-                  searchType === 'title' && styles.searchTypeButtonActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.searchTypeButtonText,
-                    searchType === 'title' && styles.searchTypeButtonTextActive,
-                  ]}
-                >
-                  Title
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
           {/* Search Bar */}
           <View style={styles.searchRow}>
             <View style={styles.searchBar}>
@@ -256,11 +214,7 @@ export function Search() {
                 autoCorrect={false}
                 onChangeText={setSearchQuery}
                 onSubmitEditing={handleSearch}
-                placeholder={
-                  searchType === 'artist'
-                    ? 'Artist name...'
-                    : 'Painting title...'
-                }
+                placeholder="Artist or painting title..."
                 placeholderTextColor={COLORS.textMuted}
                 returnKeyType="search"
                 style={styles.searchInput}
@@ -335,7 +289,7 @@ export function Search() {
           ListEmptyComponent={() =>
             !isLoadingCache && !hasSearched ? (
               <View style={styles.emptyState}>
-                {searchType === 'artist' && popularArtists.length > 0 && (
+                {popularArtists.length > 0 && (
                   <>
                     <Text style={styles.popularTitle}>Popular Artists</Text>
                     <View style={styles.artistChips}>

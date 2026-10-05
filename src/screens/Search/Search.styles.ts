@@ -56,54 +56,6 @@ export const searchStyles = StyleSheet.create({
     textTransform: 'uppercase',
   },
 
-  // Search Type Row
-  searchTypeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
-  },
-
-  searchTypeLabel: {
-    fontSize: FONT_SIZE.sm,
-    color: 'rgba(212, 175, 55, 0.7)',
-    marginRight: SPACING.sm,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-
-  searchTypeButtons: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-  },
-
-  searchTypeButton: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 6,
-    backgroundColor: 'transparent',
-    borderRadius: 2,
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.5)',
-  },
-
-  searchTypeButtonActive: {
-    backgroundColor: COLORS.gold,
-    borderColor: COLORS.gold,
-  },
-
-  searchTypeButtonText: {
-    fontSize: FONT_SIZE.sm,
-    color: 'rgba(212, 175, 55, 0.7)',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-
-  searchTypeButtonTextActive: {
-    fontSize: FONT_SIZE.sm,
-    fontWeight: '700',
-    color: COLORS.black,
-    letterSpacing: 1,
-  },
-
   // Search Bar
   searchRow: {
     flexDirection: 'row',

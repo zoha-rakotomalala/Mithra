@@ -1,3 +1,4 @@
+import type { SearchType } from './types/museumAdapter';
 import type { Painting } from '@/types/painting';
 import { supabase } from '@/services/supabase';
 import { getMuseumMap } from '@/services/museumCache';
@@ -46,7 +47,7 @@ function convertToPainting(db: any): Painting {
 export async function getCachedPaintings(
   museumLegacyId: string,
   searchQuery: string,
-  searchType: 'artist' | 'title',
+  searchType: SearchType,
 ): Promise<Painting[]> {
   try {
     const query = searchQuery.toLowerCase().trim();
@@ -88,7 +89,7 @@ export async function getCachedPaintings(
 export async function updateCacheWithFreshResults(
   museumLegacyId: string,
   searchQuery: string,
-  searchType: 'artist' | 'title',
+  searchType: SearchType,
   freshPaintings: Painting[],
 ): Promise<{
   added: number;
@@ -238,7 +239,7 @@ export async function updateCacheWithFreshResults(
 export async function getCacheFreshness(
   museumLegacyId: string,
   searchQuery: string,
-  searchType: 'artist' | 'title',
+  searchType: SearchType,
 ): Promise<{
   exists: boolean;
   ageMinutes: number;
