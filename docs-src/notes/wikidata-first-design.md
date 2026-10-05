@@ -419,6 +419,22 @@ circa dates that way. 227 lines became 118; ESLint 93 to 1 on the file.
 This is the shape for every museum without an API: Orsay, Prado, Mauritshuis are each a collection
 Q-id, a name, a city, and optionally an external-id property to enrich from.
 
+### Orsay added, toggle removed (2026-10-05, commits `e3f496a`, `5cf24e8`)
+
+**Orsay** (`orsayService.ts`, registered `ORSAY`, tier 2): collection `Q23402`, 4,916 paintings on
+Wikidata, 1,832 with an image, 4,875 with a Musée d'Orsay artwork id (`P4659`) that gives the page
+on the museum's site. No enrichment: the museum has no API and its website returns 403 to scripts.
+Live: 6 Van Goghs in 1.4 s with year, medium, image and page; *Olympia*; *Bal du moulin de la
+Galette* as the only result for its title. This is the adapter the Orsay test visit runs on.
+
+**One search field** (step 6). `SearchType` gains `'any'`, defined once in `types/museumAdapter`.
+The Search screen always sends it; the popular-artist chips still send `'artist'`. Only the
+Rijksmuseum needed the distinction (separate creator and title indexes): for `'any'` it runs both
+and interleaves the ids, creator first. The Supabase `search_cache` CHECK accepts only
+`artist|title`, so `'any'` searches skip the cache until a migration widens it; nothing visible is
+lost, cached results were only ever counted. Removed: the toggle, seven styles, the type-dependent
+placeholder, the "works by / paintings titled" alert.
+
 ## 9. Costs and risks, stated plainly
 
 - **Wikidata is community data.** Labels can be wrong, duplicates exist, a painting can be
