@@ -26,6 +26,7 @@ import {
   Auth,
   Search,
   Settings,
+  ScanPainting,
 } from '@/screens';
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -89,6 +90,11 @@ function AuthenticatedNavigator() {
       <Stack.Screen
         component={Settings}
         name={Paths.Settings}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        component={ScanPainting}
+        name={Paths.ScanPainting}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

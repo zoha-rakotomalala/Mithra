@@ -19,6 +19,7 @@ export type RootStackParamList = {
   [Paths.LikedPaintings]: { visitId: string };
   [Paths.VisitPalette]: { visitId: string };
   [Paths.ViewPalette]: { visitId: string };
+  [Paths.ScanPainting]: { visitId?: string } | undefined;
   [Paths.Auth]: undefined;
   Main: undefined;
 };

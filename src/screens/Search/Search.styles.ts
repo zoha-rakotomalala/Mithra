@@ -56,6 +56,32 @@ export const searchStyles = StyleSheet.create({
     textTransform: 'uppercase',
   },
 
+  headerSpacer: {
+    flex: 1,
+  },
+
+  scanButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 6,
+    borderRadius: 2,
+    borderWidth: 1,
+    borderColor: COLORS.gold,
+  },
+
+  scanButtonIcon: {
+    fontSize: FONT_SIZE.lg,
+    marginRight: 4,
+  },
+
+  scanButtonText: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '700',
+    color: COLORS.gold,
+    letterSpacing: 1,
+  },
+
   // Search Type Row
   searchTypeRow: {
     flexDirection: 'row',

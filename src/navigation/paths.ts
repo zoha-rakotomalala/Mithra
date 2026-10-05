@@ -14,5 +14,6 @@ export const enum Paths {
   LikedPaintings = 'likedPaintings',
   VisitPalette = 'visitPalette',
   ViewPalette = 'viewPalette',
+  ScanPainting = 'scanPainting',
   Auth = 'auth',
 }

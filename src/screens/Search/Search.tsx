@@ -157,6 +157,7 @@ export function Search() {
     handleLike,
     isLiked,
     handlePaintingPress,
+    handleScanPress,
     goBack,
     hasVisitId,
   } = useSearch();
@@ -205,6 +206,15 @@ export function Search() {
               </TouchableOpacity>
             )}
             <Text style={styles.headerTitle}>SEARCH</Text>
+            <View style={styles.headerSpacer} />
+            <TouchableOpacity
+              accessibilityLabel="Scan a painting"
+              onPress={handleScanPress}
+              style={styles.scanButton}
+            >
+              <Text style={styles.scanButtonIcon}>📷</Text>
+              <Text style={styles.scanButtonText}>SCAN</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Search Type Selector */}
