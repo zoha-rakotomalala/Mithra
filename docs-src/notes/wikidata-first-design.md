@@ -379,6 +379,30 @@ with images under `P195 = Q3044768 | Q19675`, SPARQL rows folded per painting. M
 from a Vermeer search through `/v1.1/search`. Left for phase 1: the Louvre still goes through
 SPARQL, and `gsrlimit` counts rows, not paintings, so a request for 8 can return 4 distinct ones.
 
+### Phase 1 result: Wikidata adapter on the plain API (2026-10-05, commit `8c588ab`)
+
+`wikidataService.ts` no longer touches `query.wikidata.org`. Two calls: `list=search` with
+`haswbstatement:P31=Q3305213` and an optional `P195=<museum>|...` filter (ranked, about 0.3 s),
+then `wbgetentities` in batches of 50 for labels, descriptions and claims, plus one batch for the
+labels of referenced items (painter, museum, material). Contact URL in the User-Agent. Label
+fallback en, fr, nl; a record with no label is dropped rather than shown as a bare Q-id. Claims are
+read with rank and end time, so an ended loan (Liberty's 1874 stay at the Luxembourg Museum) no
+longer outranks the current home. Dimensions convert mm, m and inches to cm; decade-precision dates
+give no year. Deadline and back-off were not added: `museumApiClient` already retries 429 twice
+with its own timeout, and the plain API has not needed more.
+
+New contract for museum adapters: `searchWikidataRecords({ query, collections, museum, location,
+idPrefix, externalIdProperties })` returns the parsed painting plus `inventoryNumber` (P217,
+matched to the credited collection) and the requested external ids (e.g. `P9394`, the Louvre ark).
+This is what the Louvre fold (step 2) and later Orsay, Prado, Mauritshuis call.
+
+Measured with the adapter's own code against the live API: *The Night Watch* rank 1 among 27
+homonyms, 1.3 s for 10 full records; *Benares* the only result inside the Rijksmuseum (0.6 s, with
+`SK-A-4975`); 8 of 8 Delacroix in the Louvre Department of Paintings with ark ids, 1.1 s; 20
+Marius Bauer paintings with no bare Q-id title. Unit tests (`__tests__/wikidataService.test.ts`)
+run on recorded response shapes, no network. Still open: the "move to tier 1" half of the phase,
+and the on-device check.
+
 ## 9. Costs and risks, stated plainly
 
 - **Wikidata is community data.** Labels can be wrong, duplicates exist, a painting can be
