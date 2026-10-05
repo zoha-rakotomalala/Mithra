@@ -87,26 +87,39 @@ usually standing somewhere else.
                     └──────────────────────────────┘   else: Commons image, or user's photo
 ```
 
-### 4.1 Museum directory, from Wikidata
+### 4.1 Museum directory, from Wikidata (built 2026-10-05, commit `0b677e8`)
 
-Yes, the list of museums can come from Wikidata. Rule for "a museum the user can stand in":
+The list of museums comes from Wikidata and lives in a Supabase table, `museums`, refreshed on the
+1st of each month by `tools/update-museums.mjs` through `.github/workflows/update-museums.yml`.
+The app also ships `src/data/museums.json` as the offline fallback; the workflow commits it when
+it changes. A table rather than a shipped file because it updates without a release, every user
+sees the same list, and it can later carry what Wikidata does not know (visit counts, "verified
+open").
 
-- appears as a `P195` collection on at least N paintings (N = 100 is a reasonable floor), **and**
-- has coordinates (`P625`), so it is a place, not an agency or a private collection, **and**
-- is not a dissolved body (no `P576`).
+Columns: `qid`, `name`, `city`, `country`, `lat`, `lng`, `painting_count`, `image_count`,
+`collection_qids`, `website`, `updated_at`. Public read under RLS, service-role write.
 
-This filters out *Munich Central Collecting Point*, *National Trust*, *Cultural Heritage Agency*
-and keeps every visitable museum. Sub-collections are a known wrinkle: the Louvre's paintings sit
-under *Department of Paintings of the Louvre* (`Q3044768`), not the Louvre itself; the directory
-needs a `P361` (part of) roll-up so the user sees "Louvre".
+Rule for "a museum the user can stand in", as implemented and measured:
 
-The directory is small: about 2,000 rows × (Q-id, name, city, country, lat, lon, painting count,
-parent) ≈ 150 KB. It can be:
+- appears as a `P195` collection on at least 100 paintings;
+- **departments and umbrella collections roll up into the museum they are part of (`P361`)**: the
+  Louvre's paintings sit under *Department of Paintings of the Louvre* (10,239) while the Louvre
+  itself carries 8; after the roll-up the Louvre reads 10,392 and `collection_qids` is
+  `[Q19675, Q3044768, Q3044753]`, which is exactly the filter a Wikidata search inside the Louvre
+  needs. Collections spread over several museums (the Bavarian State Painting Collections over the
+  Pinakotheken) attach to each part's `collection_qids` without splitting the count;
+- has coordinates (`P625`);
+- is not dissolved (`P576`) or ended (`P582`): the *Munich Central Collecting Point* closed in 1951
+  and still holds 14,767 paintings on Wikidata;
+- does not carry an organisation class (agency, company, trust, bare "collection") unless it also
+  carries a museum class: drops *National Trust*, *Cultural Heritage Agency of the Netherlands*;
+- city is the first city-class item up the `P131` chain, every parent followed (an arrondissement
+  lists both Paris and "Paris Centre"), so the Louvre reads Paris, not Saint-Germain-l'Auxerrois.
 
-- **(a) built monthly by a script and shipped as a static JSON** in the app bundle. This is not a
-  painting database; it is a list of places. It changes slowly. Cheap to keep.
-- **(b) queried live** at first launch and cached. Needs SPARQL once (the count query took 16 s
-  today). Fragile on a phone network.
+Dry run: 908 collections -> **679 museums**, 74 in France, 204 KB of JSON, 14 minutes under
+Wikidata's 504s and 429s (a monthly job tolerates that; a Supabase Edge Function's time limit would
+not, which is why it runs on GitHub Actions). Known gaps: 16 museums without a city; the Alte
+Pinakothek shows 156 own paintings, the rest being filed under the shared Bavarian collection.
 
 Recommendation: **(a)**. Paintings stay live; only the place list is shipped.
 
@@ -294,7 +307,7 @@ numbers, before image loading.
 |---|---|---|
 | 0 | Probe all 14 adapters, read-only. Table: works / broken / needs key. | Which "enrichment" sources are real. |
 | 1 | Rewrite `wikidataService.ts` on the plain API: contact UA, deadline, back-off, batching, label fallback, `P195` filter. Move to tier 1. | Latency, failure rate vs today, on device. |
-| 2 | Museum directory script (`tools/`), monthly; shipped JSON; Museums tab reads it; nearest-first with location. | Directory size; how many museums have coordinates. |
+| 2 | Museum directory: Supabase `museums` table, monthly GitHub Action, JSON fallback (**done 2026-10-05**). Next: the picker and the museum chip read it; nearest-first with location. | 679 museums; 145 collections without coordinates. |
 | 3 | Scan resolution chain (section 7); "Keep it anyway" local entry. | Scan success rate in a museum without an API. Test in Orsay or Carnavalet. |
 | 4 | Enrichment by inventory number for adapters that work (from phase 0). Retire the broken ones. | Fewer adapters, same or better images. |
 | 5 | Home screen to Option 1. | A real visit, start to finish, no search typed. |
@@ -441,6 +454,14 @@ widens the CHECK to `any|artist|title` and the cache is used again for one-field
 eight queries that found something, persisted in MMKV, with a Clear action. The scan feature from
 July (`3b48c9d` on `feature/scan-painting-vision`) is merged into this branch (`424e4a5`) so the
 Search screen carries the SCAN button and the one field together.
+
+**Decisions, 2026-10-05 with Zoha.** (1) Tiers are gone (`2478351`): there is one default scope,
+`DEFAULT_MUSEUMS = ['WIKIDATA']`, the adapters are enrichment, the picker shows "Everywhere" and
+"Museums with their own API". Scan resolves against Wikidata too. (2) Wikidata is the default
+catalog, with the 38%-have-an-image caveat standing. (3) The directory is a Supabase table refreshed
+monthly, not a shipped file (section 4.1). Still to wire: the picker and Search chip reading the
+`museums` table instead of the 15-entry registry, which is the step that makes "which museum am I
+in" answerable for 679 places rather than 15.
 
 ## 9. Costs and risks, stated plainly
 
