@@ -187,6 +187,26 @@ CREATE INDEX idx_palette_paintings_palette ON public.visit_palette_paintings (pa
 CREATE INDEX idx_palette_paintings_position ON public.visit_palette_paintings (palette_id, position);
 
 CREATE INDEX idx_search_cache_lookup ON public.search_cache (query, search_type, museum_id);
+
+-- Museum directory (Wikidata collections with >= 100 paintings and coordinates;
+-- refreshed monthly by tools/update-museums.mjs). Public read, service-role write.
+CREATE TABLE public.museums
+(
+    qid            TEXT PRIMARY KEY,
+    name           TEXT NOT NULL,
+    city           TEXT,
+    country        TEXT,
+    lat            DOUBLE PRECISION,
+    lng            DOUBLE PRECISION,
+    painting_count INTEGER     NOT NULL DEFAULT 0,
+    image_count    INTEGER     NOT NULL DEFAULT 0,
+    collection_qids TEXT[]     NOT NULL DEFAULT '{}',  -- P195 values that hold this museum's paintings (departments, shared collections)
+    website        TEXT,
+    updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX museums_lat_lng_idx ON public.museums (lat, lng);
+CREATE INDEX museums_painting_count_idx ON public.museums (painting_count DESC);
+CREATE INDEX museums_name_idx ON public.museums (lower(name));
 CREATE INDEX idx_search_cache_verified ON public.search_cache (last_verified_at);
 
 CREATE INDEX idx_user_collection_user_id ON public.user_collection (user_id);

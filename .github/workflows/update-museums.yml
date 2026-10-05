@@ -1,0 +1,61 @@
+name: Update museum directory
+
+# Rebuilds the museum directory from Wikidata on the 1st of each month,
+# upserts it into the Supabase `museums` table and commits the offline
+# fallback src/data/museums.json. See tools/update-museums.mjs.
+#
+# Needs two repository secrets (Settings -> Secrets and variables -> Actions):
+#   SUPABASE_URL               https://<ref>.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY  the service_role key (Project Settings -> API).
+#                              Never the anon key: RLS lets anon read only.
+
+on:
+  schedule:
+    - cron: '0 4 1 * *' # 04:00 UTC on the 1st
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build and commit the JSON only, do not write to Supabase
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-museums
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90 # Wikidata throttling can stretch a run to 15-20 min
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build the directory and upsert it
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            node tools/update-museums.mjs --dry-run
+          else
+            node tools/update-museums.mjs
+          fi
+
+      - name: Commit the offline fallback if it changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- src/data/museums.json; then
+            echo "museums.json unchanged"
+            exit 0
+          fi
+          git add src/data/museums.json
+          git commit -m "chore(data): Refresh the museum directory from Wikidata"
+          git push origin HEAD:${{ github.ref_name }}
