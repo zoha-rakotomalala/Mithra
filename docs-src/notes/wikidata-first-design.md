@@ -403,6 +403,22 @@ Marius Bauer paintings with no bare Q-id title. Unit tests (`__tests__/wikidataS
 run on recorded response shapes, no network. Still open: the "move to tier 1" half of the phase,
 and the on-device check.
 
+### Phase 1, step 2: the Louvre folded in (2026-10-05, commit `ae49d42`)
+
+`louvreService.ts` is now a call to `searchWikidataRecords` with the Department of Paintings filter
+(`Q3044768 | Q19675`), the museum name and city stamped on, and `P9394` (the Louvre ark id)
+requested. Records with an ark id are enriched from `collections.louvre.fr/ark:/53355/cl<id>.json`:
+official photograph, thumbnail and catalogue page. The previous code tried this at a URL without
+the `cl` prefix, which returned 404, so the enrichment had never fired. Ids are unchanged
+(`louvre-<ark id>` when known) so kept paintings still match. No SPARQL call remains in `src/`.
+
+Live: 8 of 8 Delacroix in 1.6 s, 7 with the Louvre's own image and link; the Mona Lisa with its
+year (1503), which needed decade-precision inception dates to count as a year, since Wikidata files
+circa dates that way. 227 lines became 118; ESLint 93 to 1 on the file.
+
+This is the shape for every museum without an API: Orsay, Prado, Mauritshuis are each a collection
+Q-id, a name, a city, and optionally an external-id property to enrich from.
+
 ## 9. Costs and risks, stated plainly
 
 - **Wikidata is community data.** Labels can be wrong, duplicates exist, a painting can be
