@@ -81,6 +81,18 @@ export const MUSEUMS: Record<string, MuseumConfig> = {
     requiresApiKey: false,
     tier: 2,
   },
+  ORSAY: {
+    color: '#B45309',
+    country: 'France',
+    description:
+      'Impressionism and 1848-1914 art; 4,900 paintings via Wikidata',
+    enabled: true,
+    id: 'ORSAY',
+    name: "Musée d'Orsay",
+    requiresApiKey: false,
+    shortName: 'Orsay',
+    tier: 2,
+  },
   MET: {
     color: '#d4af37',
     country: 'USA',
@@ -195,6 +207,7 @@ export const TIER_2_MUSEUMS = [
   'NG',
   'SMK',
   'LOUVRE',
+  'ORSAY',
   'SMITHSONIAN',
 ]; // Optional
 export const TIER_3_MUSEUMS = ['EUROPEANA', 'PARIS', 'JOCONDE', 'WIKIDATA']; // Advanced

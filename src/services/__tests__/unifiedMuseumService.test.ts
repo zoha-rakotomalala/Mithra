@@ -22,6 +22,7 @@ jest.mock('@/services/wikidataService', () => ({}));
 jest.mock('@/services/smkService', () => ({}));
 jest.mock('@/services/smithsonianService', () => ({}));
 jest.mock('@/services/louvreService', () => ({}));
+jest.mock('@/services/orsayService', () => ({}));
 
 const mockGetCached = jest.fn();
 const mockGetFreshness = jest.fn();

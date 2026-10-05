@@ -90,6 +90,12 @@ export const MUSEUM_BADGES: Record<string, MuseumBadgeInfo> = {
     color: MUSEUM_COLORS.louvre,
     tier: 2,
   },
+  ORSAY: {
+    id: 'ORSAY',
+    shortName: 'Orsay',
+    color: MUSEUM_COLORS.orsay,
+    tier: 2,
+  },
   SMITHSONIAN: {
     id: 'SMITHSONIAN',
     shortName: 'Smith.',

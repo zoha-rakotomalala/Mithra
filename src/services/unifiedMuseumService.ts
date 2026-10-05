@@ -20,6 +20,7 @@ import './wikidataService';
 import './smkService';
 import './smithsonianService';
 import './louvreService';
+import './orsayService';
 import { getMuseumsByIds } from './museumRegistry';
 import {
   cleanArtistName,

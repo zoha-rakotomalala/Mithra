@@ -95,6 +95,7 @@ export const MUSEUM_COLORS = {
   va: '#8b0000', // V&A burgundy
   smk: '#059669', // SMK green
   louvre: '#7C3AED', // Louvre purple
+  orsay: '#B45309', // Orsay amber, the station clock
   smithsonian: '#DC2626', // Smithsonian red
 
   // Tier 3 museums
